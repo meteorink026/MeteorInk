@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="MeteorInk — Fan-Fic Novels">
+  <title>MeteorInk — Fan-Fic Novels</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .fanfic-page{min-height:100vh;padding:130px 5vw 80px;background:#030711}
+    .fanfic-page-shell{max-width:1100px;margin:auto}
+    .fanfic-page-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:24px}
+    .fanfic-page-head h1{font-family:var(--serif);font-size:56px;line-height:1;margin:8px 0 10px}
+    .fanfic-page-head p:not(.section-kicker){color:#9faabd;max-width:680px;margin:0;line-height:1.6}
+    .fanfic-page-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .fanfic-page-tabs{display:flex;gap:6px;padding:4px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.025)}
+    .fanfic-page-tab{border:0;border-radius:7px;padding:9px 15px;background:transparent;color:#8f9bad;font:600 12px/1 var(--sans);cursor:pointer}
+    .fanfic-page-tab:hover{color:#dbe2ec;background:rgba(255,255,255,.04)}
+    .fanfic-page-tab.active{color:#10141d;background:#e7aa31}
+    .fanfic-results{min-height:300px}
+    .fanfic-page-empty{min-height:390px;border:1px dashed rgba(231,170,49,.28);border-radius:13px;display:grid;place-items:center;text-align:center;padding:35px;background:radial-gradient(circle at 50% 35%,rgba(231,170,49,.06),transparent 48%)}
+    .fanfic-page-empty-inner{max-width:560px}.fanfic-page-empty .star{font-size:34px;color:var(--gold2);margin-bottom:12px}
+    .fanfic-page-empty h2{font-family:var(--serif);font-size:32px;margin-bottom:8px}.fanfic-page-empty p{color:#9faabd}.asset-pagination-wrap{width:100%;margin-top:20px}.asset-pagination{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:20px auto 4px}.asset-pagination button{min-width:40px;height:40px;padding:0 12px;border:1px solid rgba(231,170,49,.22);border-radius:9px;background:rgba(5,12,22,.82);color:#cfd7e2;font-weight:700;cursor:pointer}.asset-pagination button.active{background:#e7aa31;border-color:#e7aa31;color:#090d14}.asset-pagination button:disabled{opacity:.45;cursor:not-allowed}.asset-pagination span{color:#8b98aa;font-size:12px;margin:0 6px}
+    .fanfic-back{display:inline-block;margin-top:22px;color:var(--gold2)}
+    @media(max-width:760px){.fanfic-page{padding:110px 16px 60px}.fanfic-page-head{align-items:flex-start;flex-direction:column}.fanfic-page-head h1{font-size:42px}.fanfic-page-actions{width:100%;justify-content:space-between}.fanfic-page-tabs{flex:1}.fanfic-page-tab{flex:1}}
+  </style>
+</head>
+<body>
+  <main class="fanfic-page">
+    <div class="fanfic-page-shell">
+      <header class="fanfic-page-head">
+        <div>
+          <p class="section-kicker">DISCOVER</p>
+          <h1>Fan-Fic Novels</h1>
+          <p>Explore every fan-fic novel on MeteorInk. Switch between the most viewed stories and the newest additions.</p>
+        </div>
+        <div class="fanfic-page-actions" role="tablist" aria-label="Fan-Fic Novels sorting">
+          <div class="fanfic-page-tabs">
+            <button class="fanfic-page-tab active" type="button" role="tab" aria-selected="true" data-sort="popular">Popular</button>
+            <button class="fanfic-page-tab" type="button" role="tab" aria-selected="false" data-sort="latest">Latest</button>
+          </div>
+        </div>
+      </header>
+      <section id="fanficResults" class="fanfic-results"></section>
+    </div>
+  </main>
+  <script src="meteorink-data.js"></script>
+  <script>
+    (function(){
+      const host=document.getElementById('fanficResults');
+      const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const isFanFic=n=>{
+        const genre=String(n.genre||'').toLowerCase().replace(/[–—]/g,'-');
+        return n.isFanFic===true || String(n.type||'').toLowerCase()==='fanfic' || /fan[- ]?fic|fan fiction/.test(genre);
+      };
+      const card=n=>`<article class="dynamic-story-card" data-id="${esc(n.id)}"><div class="dynamic-cover">${n.cover?`<img src="${esc(n.cover)}" alt="">`:'✦'}</div><div class="dynamic-card-body"><p class="dynamic-type">${esc(n.genre||'FAN-FIC')}</p><h3>${esc(n.title||'Untitled Novel')}</h3><p>${esc(n.authorName||'Unknown Author')}${MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName)?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p><small>${Number(n.views||0).toLocaleString()} views</small></div></article>`;
+      function render(sort){
+        let items=MeteorInkData.getNovels().filter(isFanFic);
+        if(sort==='latest') items.sort((a,b)=>new Date(b.publishedAt||0)-new Date(a.publishedAt||0));
+        else items.sort((a,b)=>Number(b.views||0)-Number(a.views||0));
+        if(!items.length){
+          host.innerHTML='<section class="fanfic-page-empty"><div class="fanfic-page-empty-inner"><div class="star">✦</div><h2>No fan-fic novels yet.</h2><p>Fan-fic novels will appear here automatically once they are added to the library.</p><a class="fanfic-back" href="index.html#home">Back to Home</a></div></section>';
+          return;
+        }
+        const perPage=12;let page=Number(window.__fanficPage||1),totalPages=Math.max(1,Math.ceil(items.length/perPage));page=Math.min(page,totalPages);window.__fanficPage=page;const pageItems=items.slice((page-1)*perPage,page*perPage);host.innerHTML=`<div class="dynamic-content-grid">${pageItems.map(card).join('')}</div>`;let pg=document.getElementById('fanficPagination');pg?.remove();if(totalPages>1){pg=document.createElement('div');pg.id='fanficPagination';pg.className='asset-pagination-wrap';let h='<nav class="asset-pagination"><button data-page="'+(page-1)+'" '+(page===1?'disabled':'')+'>Previous</button>';for(let i=Math.max(1,Math.min(page-3,totalPages-6));i<=Math.min(totalPages,Math.max(1,Math.min(page-3,totalPages-6))+6);i++)h+='<button data-page="'+i+'" class="'+(i===page?'active':'')+'">'+i+'</button>';h+='<span>Page '+page+' of '+totalPages+'</span><button data-page="'+(page+1)+'" '+(page===totalPages?'disabled':'')+'>Next</button></nav>';pg.innerHTML=h;host.parentNode.insertBefore(pg,host.nextSibling);pg.querySelectorAll('button[data-page]').forEach(b=>b.addEventListener('click',()=>{if(b.disabled)return;window.__fanficPage=Number(b.dataset.page);render(sort);window.scrollTo({top:0,behavior:'smooth'});}));}
+        host.querySelectorAll('.dynamic-story-card').forEach(c=>c.addEventListener('click',()=>{MeteorInkData.recordView(c.dataset.id);location.href='novel.html?id='+encodeURIComponent(c.dataset.id)}));
+      }
+      document.querySelectorAll('.fanfic-page-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.fanfic-page-tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');window.__fanficPage=1;render(b.dataset.sort)}));
+      render('popular');
+    })();
+  </script>
+  <script src="meteorink-app.js"></script>
+</body>
+</html>

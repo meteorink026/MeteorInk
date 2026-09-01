@@ -1,0 +1,2 @@
+MeteorInk shared logo asset.
+Use assets/logo.jpg for all future logo placements so the site's logo stays consistent.

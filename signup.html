@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>MeteorInk — Sign Up</title><link rel="stylesheet" href="styles.css"></head>
+<body class="auth-no-global-nav">
+<main class="auth-split-page signup-split-page">
+  <section class="auth-form-side"><section class="flow-card signup-card"><h1>Create Account</h1><p>Join MeteorInk and start your journey.</p>
+    <div class="social-signup"><button type="button" class="social-btn" id="googleSignup">Sign Up with Google</button><button type="button" class="social-btn" id="instagramSignup">Sign Up with Instagram</button></div><div class="form-divider"><span>or</span></div>
+    <form id="signupForm"><label>Your Name <span class="required">*</span></label><input type="text" id="name" required><label>Surname <span class="optional">(optional)</span></label><input type="text" id="surname"><label>Date of Birth <span class="required">*</span></label><input type="date" id="dateOfBirth" required><p class="auth-note">Standard account creation is available for users aged 18+. A future verified parental-consent flow may support younger users.</p><label>Gmail ID <span class="required">*</span></label><input type="email" id="gmail" placeholder="you@gmail.com" pattern="[A-Za-z0-9._%+-]+@gmail\.com" required><label>Password <span class="required">*</span></label><div class="password-field"><input type="password" id="password" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">◉</button></div><label>Confirm Password <span class="required">*</span></label><div class="password-field"><input type="password" id="confirmPassword" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">◉</button></div><p id="signupError" class="auth-error" hidden></p><button type="submit" class="gold-btn">Continue</button></form>
+    <p class="auth-switch"><a href="auth.html">Already have an account? Log In</a></p>
+  </section></section>
+  <section class="auth-scenery" aria-label="MeteorInk signup scenery"><a class="auth-brand-mark" href="index.html"><img src="assets/logo.jpg" alt="MeteorInk logo"></a><div class="auth-scenery-copy"><p class="section-kicker">BEGIN YOUR JOURNEY</p><h2>Create worlds.<br>Share stories.</h2><p>Build your presence on MeteorInk and become part of a growing universe of stories.</p></div></section>
+</main>
+<script src="meteorink-data.js"></script><script>
+async function hash(v){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const dob=document.getElementById('dateOfBirth'),now=new Date();dob.max=new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString().slice(0,10);
+document.querySelectorAll('.password-toggle').forEach(b=>b.onclick=function(){const i=this.parentElement.querySelector('input'),show=i.type==='password';i.type=show?'text':'password';this.setAttribute('aria-label',show?'Hide password':'Show password');this.setAttribute('aria-pressed',String(show));});
+document.getElementById('googleSignup').onclick=()=>{const next=new URLSearchParams(location.search).get('next');location.href='/auth/google'+(next==='writer'?'?next=writer':'');};
+document.getElementById('instagramSignup').onclick=()=>alert('Instagram OAuth is ready to be connected through the production authentication provider.');
+document.getElementById('signupForm').addEventListener('submit',async e=>{e.preventDefault();const error=document.getElementById('signupError');error.hidden=true;const email=document.getElementById('gmail').value.trim().toLowerCase(),birth=new Date(dob.value+'T00:00:00'),today=new Date();let age=today.getFullYear()-birth.getFullYear();if(today.getMonth()<birth.getMonth()||(today.getMonth()===birth.getMonth()&&today.getDate()<birth.getDate()))age--;if(age<18){error.textContent='Standard MeteorInk accounts currently require age 18+. A verified parental-consent flow can be added separately.';error.hidden=false;return;}if(!/^[^\s@]+@gmail\.com$/i.test(email)){error.textContent='Please enter a valid Gmail ID.';error.hidden=false;return;}const p=document.getElementById('password').value,c=document.getElementById('confirmPassword').value;if(p!==c){error.textContent='Password and Confirm Password must match.';error.hidden=false;return;}const pending={name:document.getElementById('name').value.trim(),surname:document.getElementById('surname').value.trim(),email,dob:dob.value,passwordHash:await hash(p),createdAt:new Date().toISOString()};localStorage.setItem('meteorink_pending_signup',JSON.stringify(pending));location.href='verify-gmail.html';});
+</script><script>
+(async function(){
+  if(!new URLSearchParams(location.search).has('googleComplete')) return;
+  try {
+    const r=await fetch('/api/me',{credentials:'same-origin'});
+    const data=await r.json();
+    if(!data.authenticated || !data.user) return;
+    const form=document.getElementById('signupForm');
+    const social=document.querySelector('.social-signup');
+    const divider=document.querySelector('.form-divider');
+    if(social) social.hidden=true;
+    if(divider) divider.hidden=true;
+    form.hidden=true;
+    const panel=document.createElement('div');
+    panel.className='flow-card google-complete-card';
+    panel.innerHTML=`
+      <h2>Complete your account</h2>
+      <p>Google verified your email. Add your date of birth to finish creating your MeteorInk account.</p>
+      <label>Your Name <span class="required">*</span></label>
+      <input id="googleName" type="text" required>
+      <label>Surname <span class="optional">(optional)</span></label>
+      <input id="googleSurname" type="text">
+      <label>Date of Birth <span class="required">*</span></label>
+      <input id="googleDob" type="date" required>
+      <p class="auth-note">Standard MeteorInk accounts currently require users to be 18+.</p>
+      <p id="googleCompleteError" class="auth-error" hidden></p>
+      <button id="googleCompleteSubmit" type="button" class="gold-btn">Finish Account</button>`;
+    form.parentNode.insertBefore(panel, form);
+    document.getElementById('googleName').value=data.user.name||'';
+    document.getElementById('googleSurname').value=data.user.surname||'';
+    const d=document.getElementById('googleDob');
+    const now=new Date(); d.max=new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString().slice(0,10);
+    document.getElementById('googleCompleteSubmit').onclick=async()=>{
+      const err=document.getElementById('googleCompleteError');err.hidden=true;
+      const res=await fetch('/api/google/complete-profile',{
+        method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+        body:JSON.stringify({name:document.getElementById('googleName').value.trim(),surname:document.getElementById('googleSurname').value.trim(),dob:d.value,next:new URLSearchParams(location.search).get('next')})
+      });
+      const out=await res.json();
+      if(!res.ok){err.textContent=out.error||'Could not complete your account.';err.hidden=false;return;}
+      const next=new URLSearchParams(location.search).get('next');location.href=next==='writer'?'index.html?oauth=success&next=writer':'index.html?oauth=success';
+    };
+  } catch(e) {
+    console.warn('Google account completion is available when MeteorInk is running through the local server.');
+  }
+})();
+</script><script src="meteorink-app.js"></script></body></html>

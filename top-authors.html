@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeteorInk — Top Authors</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .top-authors-page{
+      min-height:100vh;
+      padding:130px 5vw 70px;
+      background:
+        linear-gradient(180deg,rgba(3,7,17,.48),rgba(3,7,17,.82)),
+        url("assets/top-authors-background.png") center center/cover fixed no-repeat;
+    }
+    .top-authors-page-head{max-width:1100px;margin:0 auto 28px}
+    .top-authors-page-head h1{font-family:var(--serif);font-size:56px;line-height:1;margin:8px 0 12px}
+    .top-authors-page-head p{color:#9faabd;max-width:720px}
+    .top-authors-page-tabs{display:flex;gap:8px;margin-top:24px}
+    .top-authors-page-tabs button{min-height:38px;padding:0 18px;border:1px solid rgba(231,170,49,.25);border-radius:20px;background:rgba(4,10,20,.55);color:#9ba5b6;cursor:pointer}
+    .top-authors-page-tabs button.active{color:#171109;background:linear-gradient(135deg,#ffd05a,#c98c18);border-color:#eab23d;font-weight:700}
+    .top-authors-page-tabs .goat-page-btn{border-color:rgba(232,190,84,.5);color:#e8c96d;background:radial-gradient(circle at 50% 35%,rgba(255,215,106,.14),transparent 58%),linear-gradient(135deg,rgba(56,34,8,.9),rgba(10,13,22,.95));font-weight:800;letter-spacing:.6px}
+    .top-authors-page-tabs .goat-page-btn .crown{color:#ffd96d;margin-right:5px;transition:color .2s ease}
+    .top-authors-page-tabs .goat-page-btn.active .crown{color:#6fa6c7}
+    .top-authors-page-empty{max-width:1100px;min-height:390px;margin:auto;border:1px dashed rgba(231,170,49,.28);border-radius:13px;display:grid;place-items:center;text-align:center;padding:35px;background:rgba(5,11,22,.65)}
+    .top-authors-page-empty-inner{max-width:600px}
+    .top-authors-page-empty .star{font-size:34px;color:var(--gold2);margin-bottom:12px}
+    .top-authors-page-empty h2{font-family:var(--serif);font-size:32px;margin-bottom:8px}
+    .top-authors-page-empty p{color:#9faabd}
+    .top-authors-back{display:inline-block;margin-top:22px;color:var(--gold2)}
+  </style>
+</head>
+<body><main class="top-authors-page"><div class="top-authors-page-head"><p class="section-kicker">DISCOVER</p><h1>Top Authors</h1><p>Discover authors ranked by recent novel readership or all-time followers.</p><div class="top-authors-page-tabs" role="tablist"><button class="active" data-period="7days">7 Days</button><button data-period="month">1 Month</button><button class="goat-page-btn" data-period="goat"><span class="crown">♛</span>GOAT</button></div></div><section id="authorResults" class="dynamic-author-grid" style="max-width:1100px;margin:0 auto"></section></main><script src="meteorink-data.js"></script><script>const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const render=(period)=>{const authors=MeteorInkData.getCatalogAuthors?MeteorInkData.getCatalogAuthors():[];const novels=MeteorInkData.getCatalogNovels?MeteorInkData.getCatalogNovels():[];const totals={};novels.forEach(n=>{if(n.authorId){totals[n.authorId]=(totals[n.authorId]||0)+Number(n.views||0)}});const items=authors.map(a=>({...a,rankingViews:totals[a.id]||0})).sort((a,b)=>period==='goat'?Number(b.followers||0)-Number(a.followers||0):Number(b.rankingViews||0)-Number(a.rankingViews||0)).slice(0,50),host=document.getElementById('authorResults');if(!items.length){host.innerHTML=`<section class="top-authors-page-empty"><div class="top-authors-page-empty-inner"><div class="star">✦</div><h2>No top authors yet.</h2><p>Once authors begin publishing and building readership, rankings will appear here automatically.</p></div></section>`;return;}const avatarUrl=a=>{const m=String(a?.id||a?.name||'').match(/(\d+)$/);const n=m?((Number(m[1])-1)%70)+1:((Array.from(String(a?.name||'')).reduce((s,c)=>s+c.charCodeAt(0),0))%70)+1;return `https://i.pravatar.cc/300?img=${n}`};host.innerHTML=items.map(a=>`<article class="dynamic-author-card"><div class="dynamic-avatar"><img src="${avatarUrl(a)}" alt="${esc(a.name||'Author')} profile" loading="lazy"></div><div><h3>${esc(a.name||'Unnamed Author')}</h3><p>${period==='goat'?Number(a.followers||0).toLocaleString()+' followers':Number(a.rankingViews||0).toLocaleString()+' views from qualifying novels'}</p></div></article>`).join('')};document.querySelectorAll('.top-authors-page-tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.top-authors-page-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render(b.dataset.period)}));render('7days');</script><script src="meteorink-app.js"></script></body></html>

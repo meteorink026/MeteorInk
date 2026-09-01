@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adaptation Room — MeteorInk</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.adaptation-page{min-height:100vh;padding:135px 5vw 90px;background:radial-gradient(circle at 50% 0%,rgba(231,170,49,.09),transparent 34%),#030711;color:#f4f0e8}
+.adaptation-shell{max-width:1080px;margin:0 auto}
+.adaptation-hero{text-align:center;max-width:820px;margin:0 auto 54px}
+.adaptation-hero h1{font-family:var(--serif);font-size:clamp(44px,6vw,68px);line-height:1.02;margin:10px 0 16px}
+.adaptation-hero h1 span{color:#e7aa31}
+.adaptation-hero p:not(.section-kicker){color:#a7b2c2;line-height:1.75;font-size:14px}
+.adaptation-status{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(231,170,49,.28);border-radius:999px;padding:8px 12px;color:#e7aa31;background:rgba(231,170,49,.06);font-size:10px;letter-spacing:.12em;font-weight:800}
+.adaptation-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.adaptation-card{border:1px solid rgba(231,170,49,.18);border-radius:15px;background:rgba(7,14,25,.86);padding:22px 24px;min-height:190px;transition:transform .22s ease,border-color .22s ease,background .22s ease,box-shadow .22s ease}
+.adaptation-card .card-content{display:flex;align-items:center;gap:16px;height:100%}
+.adaptation-card:hover{transform:translateY(-3px);border-color:rgba(231,170,49,.34);background:rgba(8,16,28,.94);box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.adaptation-card:focus-within{border-color:rgba(231,170,49,.5);box-shadow:0 0 0 3px rgba(231,170,49,.08)}
+.adaptation-card .icon{width:50px;height:50px;flex:0 0 50px;display:grid;place-items:center;border-radius:8px;background:transparent;border:0;color:#e7aa31;font-size:50px;margin:0;overflow:hidden}
+.adaptation-card .icon img{width:50px;height:50px;object-fit:contain;display:block}
+.adaptation-card:first-of-type .icon img{transform:translateY(7px)}
+.adaptation-card .icon img[src*="build-beyond-text"]{transform:none}
+.adaptation-card .icon img[src*="author-first"]{transform:none}
+.adaptation-card h2{font-family:var(--serif);font-size:24px;line-height:1.15;margin:0 0 7px}
+.adaptation-card p{color:#929eaf;font-size:12px;line-height:1.55;margin:0}
+.adaptation-process{margin-top:22px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(7,14,25,.72);padding:25px}
+.adaptation-process h2{font-family:var(--serif);font-size:29px;margin:0 0 18px}
+.process-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.process-list div{border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:16px;background:rgba(255,255,255,.018);transition:border-color .2s ease,background .2s ease,transform .2s ease}
+.process-list div:hover{border-color:rgba(231,170,49,.22);background:rgba(231,170,49,.025);transform:translateY(-2px)}
+.process-list strong{display:block;color:#e7aa31;font-size:11px;letter-spacing:.08em;margin-bottom:7px}
+.process-list p{color:#909cad;font-size:11px;line-height:1.6;margin:0}
+.adaptation-cta{margin-top:22px;text-align:center;padding:30px;border:1px solid rgba(231,170,49,.22);border-radius:15px;background:linear-gradient(135deg,rgba(231,170,49,.08),rgba(4,10,18,.82))}
+.adaptation-cta h2{font-family:var(--serif);font-size:30px;margin:0 0 8px}.adaptation-cta .gold-btn,.adaptation-cta .outline-btn{margin:0 4px}.adaptation-cta p{color:#9daabc;font-size:12px;line-height:1.65;max-width:620px;margin:0 auto 18px}
+@media(max-width:800px){.adaptation-grid,.process-list{grid-template-columns:1fr}.adaptation-page{padding:115px 18px 60px}.adaptation-hero{margin-bottom:40px}.adaptation-card{min-height:0;padding:20px}.adaptation-card .card-content{gap:14px;align-items:center}.adaptation-card h2{font-size:22px}.adaptation-card p{font-size:12px;line-height:1.55}.adaptation-cta .gold-btn,.adaptation-cta .outline-btn{display:inline-block;margin:4px 2px}}
+@media(prefers-reduced-motion:reduce){.adaptation-card,.process-list div{transition:none}.adaptation-card:hover,.process-list div:hover{transform:none}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html#home" aria-label="MeteorInk home"><img src="assets/logo.jpg" alt="MeteorInk logo"></a>
+  <nav class="desktop-nav" aria-label="Primary navigation">
+    <a href="index.html#home">Home</a><a href="index.html#authors">Authors</a><a href="index.html#novels">Novels</a><a href="index.html#bookmark">Bookmark</a><a class="active" href="adaptation.html">Adaptation Room</a><a href="index.html#about">About Us</a><a href="index.html#contact">Contact</a>
+  </nav>
+  <div class="header-actions">
+    <label class="search-box"><span aria-hidden="true">⌕</span><input id="siteSearch" type="search" placeholder="Search novels and authors." aria-label="Search novels and authors" autocomplete="off"></label>
+    <a class="text-btn" href="auth.html">Log In</a><a class="gold-btn small" href="signup.html">Sign Up</a>
+    <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
+  </div>
+</header>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html#home">Home</a><a href="index.html#authors">Authors</a><a href="index.html#novels">Novels</a><a href="index.html#bookmark">Bookmark</a><a class="active" href="adaptation.html">Adaptation Room</a><a href="index.html#about">About Us</a><a href="index.html#contact">Contact</a>
+  <button data-modal="login">Log In</button><button data-modal="signup">Sign Up</button>
+</div>
+<main class="adaptation-page"><div class="adaptation-shell">
+  <header class="adaptation-hero"><span class="adaptation-status">✦ EARLY STAGE</span><p class="section-kicker">ADAPTATION ROOM</p><h1>Bring stories to <span>new forms.</span></h1><p>Adaptation Room is MeteorInk's dedicated space for the next stage of a story: connecting strong written worlds with opportunities in animation, film, audio, games and other formats.</p></header>
+  <section class="adaptation-grid" aria-label="Adaptation Room features">
+    <article class="adaptation-card"><div class="card-content"><div class="icon"><img src="assets/adaptation-room-discover-logo.png" alt="MeteorInk Adaptation Room logo"></div><div><h2>Discover Stories</h2><p>Browse stories with the kind of characters, worlds and narrative foundations that could translate well beyond text.</p></div></div></article>
+    <article class="adaptation-card"><div class="card-content"><div class="icon"><img src="assets/adaptation-room-author-first-logo.png" alt="MeteorInk Author First icon"></div><div><h2>Author First</h2><p>Authors remain at the center of the process. Adaptation interest should build around creator ownership, consent and clear communication.</p></div></div></article>
+    <article class="adaptation-card"><div class="card-content"><div class="icon"><img src="assets/adaptation-room-build-beyond-text-logo.png" alt="MeteorInk Build Beyond Text icon"></div><div><h2>Build Beyond Text</h2><p>Over time, this room can become a structured place for adaptation pitches, development conversations and creative partnerships.</p></div></div></article>
+  </section>
+  <section class="adaptation-process"><h2>How the room is intended to work</h2><div class="process-list"><div><strong>01 · DISCOVER</strong><p>Readers and potential creative partners find stories that stand out.</p></div><div><strong>02 · DEVELOP</strong><p>Interested parties can discuss the format, creative direction and practical requirements.</p></div><div><strong>03 · ADAPT</strong><p>When the right opportunity exists, the adaptation moves forward through proper agreements and production channels.</p></div></div></section>
+  <section class="adaptation-cta"><h2>The room is just getting started.</h2><p>MeteorInk is still building the systems behind this section. For now, explore the library or contact the team if you have an adaptation-related proposal.</p><a class="gold-btn" href="index.html#novels">Explore Novels</a> <a class="outline-btn" href="index.html#contact">Contact MeteorInk</a></section>
+</div></main>
+<script src="meteorink-app.js"></script>
+</body></html>

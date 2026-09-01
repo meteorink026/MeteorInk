@@ -1,0 +1,8 @@
+MeteorInk demo catalog
+
+The five demo authors and five demo novels are stored separately from real user content.
+To remove all demo content from a local development copy, open the browser console on the site and run:
+
+MeteorInkData.removeDemoCatalog(); location.reload();
+
+Demo records are marked with isDemo: true and are never written into the real author/novel collections.
