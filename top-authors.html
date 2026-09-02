@@ -32,5 +32,15 @@
     .top-authors-page-empty p{color:#9faabd}
     .top-authors-back{display:inline-block;margin-top:22px;color:var(--gold2)}
   </style>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MWX483HZEH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-MWX483HZEH');
+  </script>
+
 </head>
 <body><main class="top-authors-page"><div class="top-authors-page-head"><p class="section-kicker">DISCOVER</p><h1>Top Authors</h1><p>Discover authors ranked by recent novel readership or all-time followers.</p><div class="top-authors-page-tabs" role="tablist"><button class="active" data-period="7days">7 Days</button><button data-period="month">1 Month</button><button class="goat-page-btn" data-period="goat"><span class="crown">♛</span>GOAT</button></div></div><section id="authorResults" class="dynamic-author-grid" style="max-width:1100px;margin:0 auto"></section></main><script src="meteorink-data.js"></script><script>const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const render=(period)=>{const authors=MeteorInkData.getCatalogAuthors?MeteorInkData.getCatalogAuthors():[];const novels=MeteorInkData.getCatalogNovels?MeteorInkData.getCatalogNovels():[];const totals={};novels.forEach(n=>{if(n.authorId){totals[n.authorId]=(totals[n.authorId]||0)+Number(n.views||0)}});const items=authors.map(a=>({...a,rankingViews:totals[a.id]||0})).sort((a,b)=>period==='goat'?Number(b.followers||0)-Number(a.followers||0):Number(b.rankingViews||0)-Number(a.rankingViews||0)).slice(0,50),host=document.getElementById('authorResults');if(!items.length){host.innerHTML=`<section class="top-authors-page-empty"><div class="top-authors-page-empty-inner"><div class="star">✦</div><h2>No top authors yet.</h2><p>Once authors begin publishing and building readership, rankings will appear here automatically.</p></div></section>`;return;}const avatarUrl=a=>{const m=String(a?.id||a?.name||'').match(/(\d+)$/);const n=m?((Number(m[1])-1)%70)+1:((Array.from(String(a?.name||'')).reduce((s,c)=>s+c.charCodeAt(0),0))%70)+1;return `https://i.pravatar.cc/300?img=${n}`};host.innerHTML=items.map(a=>`<article class="dynamic-author-card"><div class="dynamic-avatar"><img src="${avatarUrl(a)}" alt="${esc(a.name||'Author')} profile" loading="lazy"></div><div><h3>${esc(a.name||'Unnamed Author')}</h3><p>${period==='goat'?Number(a.followers||0).toLocaleString()+' followers':Number(a.rankingViews||0).toLocaleString()+' views from qualifying novels'}</p></div></article>`).join('')};document.querySelectorAll('.top-authors-page-tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.top-authors-page-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render(b.dataset.period)}));render('7days');</script><script src="meteorink-app.js"></script></body></html>
