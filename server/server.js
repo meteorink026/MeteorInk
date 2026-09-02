@@ -239,6 +239,7 @@ app.get("/auth/x/callback", async (req, res) => {
       body: new URLSearchParams({
         code: String(req.query.code),
         grant_type: "authorization_code",
+	client_id: process.env.X_CLIENT_ID,
         redirect_uri: redirectUri,
         code_verifier: codeVerifier
       })
