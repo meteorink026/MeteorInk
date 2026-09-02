@@ -69,7 +69,30 @@ async function findUserByGoogleOrEmail(googleId, email) {
   });
   return rows?.[0] || null;
 }
+async function findUserByXId(xId) {
+  const rows = await supabaseRequest("users", {
+    query: {
+      select: "*",
+      x_id: `eq.${encodeURIComponent(xId)}`,
+      limit: "1"
+    }
+  });
+  return rows?.[0] || null;
+}
 
+async function findUserByEmail(email) {
+  if (!email) return null;
+
+  const rows = await supabaseRequest("users", {
+    query: {
+      select: "*",
+      email: `eq.${encodeURIComponent(email.toLowerCase())}`,
+      limit: "1"
+    }
+  });
+
+  return rows?.[0] || null;
+}
 async function upsertGoogleUser(profile) {
   const existing = await findUserByGoogleOrEmail(profile.googleId, profile.email);
   if (!existing) {
@@ -144,7 +167,181 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 24 * 7
   }
 }));
+function generateXCodeVerifier() {
+  return crypto.randomBytes(32).toString("base64url");
+}
 
+function generateXCodeChallenge(verifier) {
+  return crypto.createHash("sha256").update(verifier).digest("base64url");
+}
+
+app.get("/auth/x", (req, res) => {
+  if (!process.env.X_CLIENT_ID || !process.env.X_CLIENT_SECRET) {
+    return res.status(500).send("X OAuth is not configured.");
+  }
+
+  const state = crypto.randomBytes(24).toString("hex");
+  const codeVerifier = generateXCodeVerifier();
+  const codeChallenge = generateXCodeChallenge(codeVerifier);
+
+  req.session.xOauthState = state;
+  req.session.xCodeVerifier = codeVerifier;
+  req.session.xOauthNext = safeNext(req.query.next);
+
+  const redirectUri =
+    process.env.X_REDIRECT_URI ||
+    `https://meteorink.com/auth/x/callback`;
+
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: process.env.X_CLIENT_ID,
+    redirect_uri: redirectUri,
+    scope: "users.read users.email",
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256"
+  });
+
+  res.redirect(`https://x.com/i/oauth2/authorize?${params.toString()}`);
+});
+
+app.get("/auth/x/callback", async (req, res) => {
+  try {
+    if (
+      !req.query.code ||
+      !req.query.state ||
+      req.query.state !== req.session.xOauthState
+    ) {
+      return res.status(400).send("Invalid X OAuth state. Please start X login again.");
+    }
+
+    const codeVerifier = req.session.xCodeVerifier;
+    const next = safeNext(req.session.xOauthNext);
+
+    delete req.session.xOauthState;
+    delete req.session.xCodeVerifier;
+    delete req.session.xOauthNext;
+
+    const redirectUri =
+      process.env.X_REDIRECT_URI ||
+      `https://meteorink.com/auth/x/callback`;
+
+    const credentials = Buffer
+      .from(`${process.env.X_CLIENT_ID}:${process.env.X_CLIENT_SECRET}`)
+      .toString("base64");
+
+    const tokenResponse = await fetch("https://api.x.com/2/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${credentials}`
+      },
+      body: new URLSearchParams({
+        code: String(req.query.code),
+        grant_type: "authorization_code",
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier
+      })
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      throw new Error(
+        `X token exchange failed: ${JSON.stringify(tokenData)}`
+      );
+    }
+
+    const userResponse = await fetch(
+      "https://api.x.com/2/users/me?user.fields=profile_image_url,confirmed_email",
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`
+        }
+      }
+    );
+
+    const userData = await userResponse.json();
+
+    if (!userResponse.ok || !userData.data?.id) {
+      throw new Error(
+        `X user lookup failed: ${JSON.stringify(userData)}`
+      );
+    }
+
+    const xUser = userData.data;
+
+    const email = xUser.confirmed_email || "";
+
+    let existing = await findUserByXId(xUser.id);
+
+    if (!existing && email) {
+      existing = await findUserByEmail(email);
+    }
+
+    let user;
+
+    if (!existing) {
+      const rows = await supabaseRequest("users", {
+        method: "POST",
+        body: {
+          x_id: xUser.id,
+          email: email.toLowerCase(),
+          name: xUser.name || "",
+          surname: "",
+          picture: xUser.profile_image_url || "",
+          verified: true,
+          auth_provider: "x",
+          role: "reader"
+        }
+      });
+
+      user = rows?.[0] || null;
+    } else {
+      const rows = await supabaseRequest("users", {
+        method: "PATCH",
+        query: { id: `eq.${existing.id}` },
+        body: {
+          x_id: xUser.id,
+          email: email ? email.toLowerCase() : existing.email,
+          name: existing.name || xUser.name || "",
+          picture: xUser.profile_image_url || existing.picture || "",
+          updated_at: new Date().toISOString()
+        }
+      });
+
+      user = rows?.[0] || existing;
+    }
+
+    if (!user) {
+      throw new Error("Unable to create or update the X user.");
+    }
+
+    req.session.userId = user.id;
+
+    req.session.save(() => {
+      const needsProfile = !user.dob;
+
+      if (needsProfile) {
+        const query = next
+          ? `?xComplete=1&next=${encodeURIComponent(next)}`
+          : "?xComplete=1";
+
+        return res.redirect(`/signup.html${query}`);
+      }
+
+      const query = next
+        ? `?oauth=success&next=${encodeURIComponent(next)}`
+        : "?oauth=success";
+
+      res.redirect(`/index.html${query}`);
+    });
+
+  } catch (err) {
+    console.error("X OAuth error:", err);
+    res.status(500).send("X sign-in failed. Check the server console for details.");
+  }
+});
 app.get("/auth/google", (req, res) => {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     return res.status(500).send("Google OAuth is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env.");
