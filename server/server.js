@@ -226,9 +226,9 @@ app.get("/auth/x/callback", async (req, res) => {
       process.env.X_REDIRECT_URI ||
       `https://meteorink.com/auth/x/callback`;
 
-    const credentials = Buffer
-      .from(`${process.env.X_CLIENT_ID}:${process.env.X_CLIENT_SECRET}`)
-      .toString("base64");
+    const credentials = Buffer.from(
+      `${process.env.X_CLIENT_ID}:${process.env.X_CLIENT_SECRET}`
+     ).toString("base64");
 
     const tokenResponse = await fetch("https://api.x.com/2/oauth2/token", {
       method: "POST",
