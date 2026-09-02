@@ -4,12 +4,18 @@ const path = require("path");
 const crypto = require("crypto");
 const express = require("express");
 const session = require("express-session");
+const { Pool } = require("pg");
+const PgSession = require("connect-pg-simple")(session);
 const { OAuth2Client } = require("google-auth-library");
 
 const app = express();
 if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3000);
 const ROOT = path.join(__dirname, "..");
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
   console.warn("Supabase is not configured yet. Add SUPABASE_URL and SUPABASE_SECRET_KEY to server/.env.");
@@ -123,6 +129,10 @@ function safeUser(user) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session({
+  store: new PgSession({
+  pool: pgPool,
+  tableName: "session"
+}),
   name: "meteorink.sid",
   secret: process.env.SESSION_SECRET || (process.env.NODE_ENV === "production" ? (() => { throw new Error("SESSION_SECRET is required in production."); })() : crypto.randomBytes(32).toString("hex")),
   resave: false,
