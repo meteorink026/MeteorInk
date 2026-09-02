@@ -16,15 +16,11 @@
     <div class="auth-scenery-copy"><p class="section-kicker">ENTER THE WORLD</p><h2>Every story<br>creates a universe.</h2><p>Return to MeteorInk and continue exploring worlds written by creators.</p></div>
   </section>
   <section class="auth-form-side"><section class="flow-card"><h1>Log In</h1><p>Log in to continue your MeteorInk journey.</p>
-    <div class="social-signup"><button type="button" class="social-btn" id="googleLogin">Continue with Google</button></div><div class="form-divider"><span>or</span></div>
-    <form id="loginForm"><label>Gmail ID</label><input id="loginEmail" type="email" placeholder="you@gmail.com" required><label>Password</label><div class="password-field"><input id="loginPassword" type="password" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">◉</button></div><p id="loginError" class="auth-error" hidden></p><button type="submit" class="gold-btn">Log In</button></form>
+    <div class="social-signup"><button type="button" class="social-btn" id="googleLogin">Continue with Google</button><button type="button" class="social-btn" id="xLogin">Continue with X</button></div>
     <p class="auth-switch"><a href="signup.html">Don't have an account yet?? Worry not just create one</a></p>
   </section></section>
 </main>
-<script src="meteorink-data.js"></script><script>
-async function hash(v){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-const form=document.getElementById('loginForm'),err=document.getElementById('loginError');
+<script>
 document.getElementById('googleLogin').onclick=()=>{const next=new URLSearchParams(location.search).get('next');location.href='/auth/google'+(next==='writer'?'?next=writer':'');};
-document.querySelector('.password-toggle').onclick=function(){const i=document.getElementById('loginPassword'),show=i.type==='password';i.type=show?'text':'password';this.setAttribute('aria-label',show?'Hide password':'Show password');this.setAttribute('aria-pressed',String(show));};
-form.addEventListener('submit',async e=>{e.preventDefault();err.hidden=true;const email=document.getElementById('loginEmail').value.trim().toLowerCase(),pass=await hash(document.getElementById('loginPassword').value),u=MeteorInkData.findUser(email);if(!u||u.passwordHash!==pass){err.textContent='Incorrect Gmail ID or password.';err.hidden=false;return;}MeteorInkData.setSession(u);localStorage.setItem('meteorink_logged_in','true');const next=new URLSearchParams(location.search).get('next');location.href=next==='writer'?(localStorage.getItem('meteorink_author_established')==='true'?'author-dashboard.html':'author-setup.html'):'index.html';});
+document.getElementById('xLogin').onclick=()=>{const next=new URLSearchParams(location.search).get('next');location.href='/auth/x'+(next==='writer'?'?next=writer':'');};
 </script><script src="meteorink-app.js"></script></body></html>
