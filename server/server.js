@@ -19,6 +19,8 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   console.warn("Google OAuth is not configured yet. Fill server/.env first.");
 }
 
+console.log("GOOGLE_REDIRECT_URI configured:", Boolean(process.env.GOOGLE_REDIRECT_URI));
+
 const oauth = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
