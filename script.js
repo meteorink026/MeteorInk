@@ -25,7 +25,7 @@
   function novelCard(n,metric){
     const genres=Array.isArray(n.genres)&&n.genres.length?n.genres:String(n.genre||'NOVEL').split(',').map(x=>x.trim()).filter(Boolean);
     const visibleTags=genres.slice(0,3),more=Math.max(0,genres.length-visibleTags.length);
-    return `<article class="novel-showcase-card${n.isDemo?' demo':''}" data-id="${esc(n.id)}">
+    return `<article class="novel-showcase-card" data-id="${esc(n.id)}">
       <div class="novel-showcase-cover">${n.cover?`<img src="${esc(n.cover)}" alt="${esc(n.title||'Novel cover')}">`:'✦'}
         <span class="novel-showcase-badge">${esc(n.genre||'NOVEL')}</span>
         <button class="novel-showcase-bookmark" type="button" aria-label="Bookmark ${esc(n.title||'novel')}" data-bookmark-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5V22L12 18.3 6.5 22V4.5Z"></path></svg></button>

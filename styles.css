@@ -1188,7 +1188,7 @@ body.novels-view-active .site-header .search-box{visibility:hidden!important;poi
 
 /* New homepage discovery panels */
 .new-panel-row{
-  max-width:calc(100% - 52px);
+  max-width:calc(100% - 40px);
   margin:26px auto 0;
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -1220,6 +1220,7 @@ body.novels-view-active .site-header .search-box{visibility:hidden!important;poi
 @media(max-width:620px){
   .fanfic-head-actions{width:100%;justify-content:space-between;gap:8px}
   .new-panel-row{max-width:calc(100% - 24px);grid-template-columns:1fr}
+  .random-novels-full{width:calc(100% - 24px);max-width:calc(100% - 24px)}
   .discovery-panel{padding:20px 16px}
   .new-panel-empty{min-height:330px;padding:20px}
 }
@@ -1254,7 +1255,8 @@ body.novels-view-active .site-header .search-box{visibility:hidden!important;poi
   align-items:flex-end;
 }
 /* Homepage Fan-Fic panel position correction only. */
-#fan-fic-novels{position:relative;top:-14px;margin-bottom:-14px;width:calc(50vw - 72px);border-width:2px;}
+#fan-fic-novels{width:100%;border-width:2px;}
+.random-novels-full{width:calc(100% - 52px);max-width:calc(100% - 52px);margin:26px auto 0;}
 .fanfic-head-actions{
   display:flex;
   align-items:center;
@@ -1517,7 +1519,6 @@ footer.site-footer[hidden]{display:none!important;}
 .novel-showcase-read{margin-top:auto;width:100%;min-height:28px;border:1px solid rgba(231,170,49,.65);border-radius:12px;background:linear-gradient(90deg,rgba(122,52,15,.35),rgba(40,19,8,.55));color:#f4bc43;font:600 10px/1 "DM Sans",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.18s ease}
 .novel-showcase-read:hover{background:linear-gradient(90deg,rgba(231,170,49,.18),rgba(122,52,15,.45));box-shadow:0 0 24px rgba(231,170,49,.1)}
 .novel-showcase-read svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7}
-.novel-showcase-card.demo::before{content:"DEMO";position:absolute;z-index:5;right:12px;bottom:12px;padding:4px 7px;border-radius:5px;background:rgba(0,0,0,.62);color:#8d98a9;font-size:8px;letter-spacing:.1em;font-weight:800}
 @media(max-width:1024px){.novel-showcase-title{font-size:17px}.novel-showcase-body{padding:9px 10px 10px}}
 
 /* Trending novel cards: wider and shorter, with genres represented in the detail tags below. */
@@ -1542,7 +1543,6 @@ footer.site-footer[hidden]{display:none!important;}
 .novel-showcase-stat strong{font-size:16.5px}
 .novel-showcase-stat span{font-size:10.5px}
 .novel-showcase-read{font-size:15px}
-.novel-showcase-demo::before{font-size:12px}
 
 /* Top Authors panel: exactly 16 visible authors (4 × 4). Additional authors are available via View All. */
 .content-grid > .top-authors{
@@ -2056,45 +2056,6 @@ footer.site-footer[hidden]{display:none!important;}
 .content-grid > .home-right-rail > .top-authors{
   width:100%;
   margin:0;
-}
-.content-grid > .home-right-rail > .home-top-authors-ads{
-  position:relative;
-  width:100%;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  gap:12px;
-  min-height:250px;
-  margin:0;
-  padding:0;
-  border:0;
-  background:transparent;
-}
-.home-top-authors-ads .ad-slot{
-  position:relative;
-  min-width:0;
-  border:1px solid rgba(231,170,49,.22);
-  border-radius:12px;
-  overflow:hidden;
-  background:linear-gradient(145deg,#0a1220,#111827);
-  box-shadow:0 8px 24px rgba(0,0,0,.18);
-}
-.home-top-authors-ads .ad-slot-tall{min-height:250px;}
-.home-top-authors-ads .ad-stack{display:grid;grid-template-rows:1fr 1fr;gap:12px;min-height:250px;}
-.home-top-authors-ads .ad-slot-half{min-height:119px;}
-.home-top-authors-ads .ad-label{
-  position:absolute;top:8px;left:10px;z-index:2;
-  font:700 7px/1 Arial,sans-serif;letter-spacing:.14em;color:#7e899c;
-}
-.home-top-authors-ads .dummy-ad-content{
-  height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;padding:24px 12px 12px;gap:7px;
-}
-.home-top-authors-ads .dummy-ad-kicker{font:800 9px/1 Arial,sans-serif;letter-spacing:.18em;color:#d8a942;}
-.home-top-authors-ads .dummy-ad-content strong{font:700 16px/1.15 Georgia,"Times New Roman",serif;color:#f1e6c8;max-width:180px;}
-.home-top-authors-ads .dummy-ad-content small{font:500 9px/1.2 Arial,sans-serif;color:#78859a;}
-@media (max-width:900px){
-  .content-grid > .home-right-rail{grid-column:1 / -1;}
-  .content-grid > .home-right-rail > .home-top-authors-ads{width:100%;}
 }
 /* FINAL HOME TOP AUTHORS CAPACITY: 9 visible, arranged 3 columns × 3 rows. No pagination on this panel. */
 .home-right-rail > .top-authors .dynamic-author-grid{

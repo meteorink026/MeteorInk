@@ -26,7 +26,7 @@ Included:
 - Provided MeteorInk imagery retained
 
 IMPORTANT PRODUCTION NOTE:
-This package is a browser-runnable development build. Google OAuth is now wired for local development through the included Node.js/Express server. Email OTP delivery, Instagram OAuth, persistent multi-user database storage, and production-grade session infrastructure still need a real backend/provider before production deployment.
+This package is a browser-runnable MeteorInk build. Google OAuth is now wired for local development through the included Node.js/Express server. Email OTP delivery, Instagram OAuth, persistent multi-user database storage, and production-grade session infrastructure still need a real backend/provider before production deployment.
 
 Run locally with the OAuth server:
 1. Install Node.js LTS.
