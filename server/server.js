@@ -19,8 +19,6 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   console.warn("Google OAuth is not configured yet. Fill server/.env first.");
 }
 
-console.log("GOOGLE_REDIRECT_URI configured:", Boolean(process.env.GOOGLE_REDIRECT_URI));
-
 const oauth = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -96,7 +94,9 @@ async function upsertGoogleUser(profile) {
       updated_at: new Date().toISOString()
     }
   });
-  return rows?.[0] || existing;
+  // Preserve all existing profile fields (especially DOB) even if the
+  // Supabase PATCH response does not return the complete row.
+  return rows?.[0] ? { ...existing, ...rows[0] } : existing;
 }
 
 function safeNext(value) {
