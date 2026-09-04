@@ -492,6 +492,8 @@ body.legal-open{overflow:hidden}
   .footer-quote{grid-column:1/-1;order:-1}.footer-links{justify-content:flex-start}
 }
 @media(max-width:620px){
+  /* Mobile-only hero artwork. Desktop keeps the original hero.png unchanged. */
+  .hero-image{background-image:url("assets/mobile-hero.png");background-position:center 48%}
   .site-header{height:70px;padding:8px 15px}.brand{width:auto}.brand img{width:155px;height:50px}.gold-btn.small{min-height:38px;padding:0 14px}.text-btn{display:none}
   .mobile-menu{top:70px}
   .hero{padding-top:70px;height:720px;min-height:650px}.hero-content{margin:0;padding:100px 22px 0}.hero h1{font-size:48px;line-height:.95}.hero-copy{font-size:15px}.hero-buttons{flex-direction:column;max-width:250px}.hero-buttons a{width:100%}
