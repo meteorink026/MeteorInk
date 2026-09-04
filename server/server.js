@@ -142,7 +142,6 @@ function safeUser(user) {
     email: user.email,
     picture: user.picture || "",
     role: user.role || "reader",
-    dob: user.dob || null,
     verified: true,
     authProvider: user.auth_provider || "google",
     createdAt: user.created_at || user.createdAt
@@ -456,6 +455,94 @@ app.get("/health", async (_req, res) => {
   } catch (err) {
     res.status(503).json({ ok: false, service: "meteorink", database: "error" });
   }
+});
+
+app.post("/api/author/setup", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+
+  const realName = String(req.body.realName || "").trim();
+  const dob = String(req.body.dob || "").trim();
+  const penName = String(req.body.penName || "").trim();
+  const bio = String(req.body.bio || "").trim();
+
+  if (!realName) return res.status(400).json({ error: "Please provide your real name." });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+    return res.status(400).json({ error: "Please provide a valid date of birth." });
+  }
+  if (!penName) return res.status(400).json({ error: "Please provide a pen name." });
+  if (penName.length > 80) return res.status(400).json({ error: "Pen name is too long." });
+  if (bio.length > 1200) return res.status(400).json({ error: "Bio is too long." });
+
+  const birth = new Date(dob + "T00:00:00");
+  if (Number.isNaN(birth.getTime())) return res.status(400).json({ error: "Please provide a valid date of birth." });
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  if (today.getMonth() < birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+  if (age < 18) return res.status(403).json({ error: "Standard MeteorInk author accounts currently require age 18+." });
+
+  const user = await findUserById(req.session.userId);
+  if (!user) return res.status(404).json({ error: "Account not found." });
+
+  // Private identity data is stored only server-side in Supabase.
+  // It is deliberately not returned by this endpoint or /api/me.
+  await supabaseRequest("users", {
+    method: "PATCH",
+    query: { id: `eq.${user.id}` },
+    body: {
+      author_real_name: realName,
+      dob,
+      role: "author",
+      updated_at: new Date().toISOString()
+    },
+    prefer: "return=minimal"
+  });
+
+  const existing = await supabaseRequest("authors", {
+    query: { select: "*", user_id: `eq.${user.id}`, limit: "1" }
+  });
+
+  let author;
+  if (existing?.[0]) {
+    const rows = await supabaseRequest("authors", {
+      method: "PATCH",
+      query: { id: `eq.${existing[0].id}` },
+      body: {
+        name: penName,
+        bio,
+        updated_at: new Date().toISOString()
+      }
+    });
+    author = rows?.[0] || { ...existing[0], name: penName, bio };
+  } else {
+    const rows = await supabaseRequest("authors", {
+      method: "POST",
+      body: {
+        user_id: user.id,
+        name: penName,
+        bio,
+        followers: 0,
+        verified: false
+      }
+    });
+    author = rows?.[0] || null;
+  }
+
+  if (!author) throw new Error("Unable to create the author profile.");
+
+  // Return public author fields only. Never return real_name or dob here.
+  res.json({
+    ok: true,
+    author: {
+      id: author.id,
+      userId: author.user_id,
+      name: author.name || "",
+      bio: author.bio || "",
+      followers: Number(author.followers || 0),
+      verified: !!author.verified,
+      profileCreatedAt: author.profile_created_at || author.created_at
+    }
+  });
 });
 
 app.post("/api/logout", (req, res) => {

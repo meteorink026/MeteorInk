@@ -12,6 +12,7 @@ create table if not exists public.users (
   surname text not null default '',
   picture text not null default '',
   dob date,
+  author_real_name text,
   verified boolean not null default true,
   auth_provider text not null default 'google',
   role text not null default 'reader' check (role in ('admin','team','author','reader')),
@@ -21,6 +22,9 @@ create table if not exists public.users (
 
 create index if not exists users_email_idx on public.users (lower(email));
 create index if not exists users_google_id_idx on public.users (google_id);
+
+-- Existing deployments: keep the author's real name private in the server-side users table.
+alter table public.users add column if not exists author_real_name text;
 
 create table if not exists public.authors (
   id uuid primary key default gen_random_uuid(),
