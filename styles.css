@@ -3137,3 +3137,87 @@ footer.site-footer[hidden]{display:none!important;}
     min-height:48px !important;
   }
 }
+/* =========================================================
+   MOBILE HOMEPAGE FLOW
+   Correct visual order without changing HTML, JS or backend.
+   ========================================================= */
+
+@media (max-width:620px){
+
+  /* Make the homepage's main content a single vertical flow */
+  #homeView > main{
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  /* Keep the top of the page in the natural order */
+  #homeView > main > .hero{
+    order:1 !important;
+  }
+
+  #homeView > main > .feature-strip{
+    order:2 !important;
+  }
+
+  /*
+     Flatten .content-grid so its two useful homepage children
+     participate in the same mobile flow as the sections below it.
+  */
+  #homeView > main > .content-grid{
+    display:contents !important;
+  }
+
+  #homeView > main > .content-grid > .trending{
+    order:3 !important;
+    width:calc(100% - 24px) !important;
+    max-width:none !important;
+    margin:12px auto 0 !important;
+  }
+
+  #homeView > main > .content-grid > .home-right-rail{
+    display:contents !important;
+  }
+
+  #homeView > main > .content-grid > .home-right-rail > .top-authors{
+    order:4 !important;
+    width:calc(100% - 24px) !important;
+    max-width:none !important;
+    margin:12px auto 0 !important;
+  }
+
+  #homeView > main > #latest-arrivals{
+    order:5 !important;
+    width:calc(100% - 24px) !important;
+    max-width:none !important;
+    margin:12px auto 0 !important;
+  }
+
+  #homeView > main > .new-panel-row{
+    order:6 !important;
+    width:calc(100% - 24px) !important;
+    max-width:none !important;
+    margin:12px auto 0 !important;
+  }
+
+  #homeView > main > #random-novels{
+    order:7 !important;
+    width:calc(100% - 24px) !important;
+    max-width:none !important;
+    margin:12px auto 0 !important;
+  }
+
+  #homeView > main > .writers{
+    order:8 !important;
+    width:calc(100% - 24px) !important;
+    max-width:none !important;
+    margin:12px auto 0 !important;
+  }
+
+  #homeView > main > .early-section{
+    order:9 !important;
+    width:calc(100% - 24px) !important;
+    max-width:none !important;
+    margin:18px auto 24px !important;
+  }
+
+}
