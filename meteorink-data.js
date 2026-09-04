@@ -118,5 +118,6 @@ window.MeteorInkData = (() => {
   const findUser=email=>getUsers().find(u=>u.email.toLowerCase()===String(email).toLowerCase());
   const saveAuthor=author=>{const a=getAuthors(),i=a.findIndex(x=>x.id===author.id);if(i>=0)a[i]={...a[i],...author};else a.push(author);write(KEYS.AUTHORS,a);return author;};
 
-  return {getNovels,getAuthors,getDemoNovels,getDemoAuthors,getCatalogNovels,getCatalogAuthors,authorViewTotal,authorHasVB2,authorVerificationLevel,verificationBadgeAsset,isAuthorVerified,catalogTopAuthors,removeDemoCatalog,getUsers,getSession,setSession,saveUser,findUser,saveAuthor,trending,topAuthors,latest,emerging,search,publishNovel,recordView,getBookmarks,addBookmark,removeBookmark,getReadingHistory,recordRead,personalizedRandom,KEYS,DEMO_KEYS};
+  return {getNovels,getAuthors,getDemoNovels,getDemoAuthors,getCatalogNovels,getCatalogAuthors,getUsers,getSession,setSession,saveUser,findUser,saveAuthor,trending,topAuthors,latest,emerging,search,publishNovel,recordView,getBookmarks,addBookmark,removeBookmark,getReadingHistory,recordRead,personalizedRandom,KEYS,DEMO_KEYS};
 })();
+
