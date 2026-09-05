@@ -143,19 +143,21 @@
 
   function installSingleWindowViews(){
     if(!(path==='index.html'||path==='')) return;
-    const home=document.getElementById('homeView'), authors=document.getElementById('authorsView'), novels=document.getElementById('novelsView'), bookmark=document.getElementById('bookmarkView'), about=document.getElementById('aboutView'), contact=document.getElementById('contactView'), footer=document.querySelector('.site-footer');
+    const home=document.getElementById('homeView'), authors=document.getElementById('authorsView'), novels=document.getElementById('novelsView'), bookmark=document.getElementById('bookmarkView'), adaptation=document.getElementById('adaptationView'), about=document.getElementById('aboutView'), contact=document.getElementById('contactView'), footer=document.querySelector('.site-footer');
     if(!home || !authors || !novels || !bookmark || !about || !contact) return;
 
     const setView=()=>{
       const isAuthors=location.hash==='#authors';
       const isNovels=location.hash==='#novels';
       const isBookmark=location.hash==='#bookmark';
+      const isAdaptation=location.hash==='#adaptation';
       const isAbout=location.hash==='#about';
       const isContact=location.hash==='#contact';
-      home.hidden=isAuthors||isNovels||isBookmark||isAbout||isContact;
+      home.hidden=isAuthors||isNovels||isBookmark||isAdaptation||isAbout||isContact;
       authors.hidden=!isAuthors;
       novels.hidden=!isNovels;
       bookmark.hidden=!isBookmark;
+      adaptation.hidden=!isAdaptation;
       about.hidden=!isAbout;
       contact.hidden=!isContact;
       document.body.classList.toggle('novels-view-active', isNovels);
@@ -165,6 +167,7 @@
         const active =
           (isAuthors && label==='Authors') ||
           (isNovels && label==='Novels') ||
+          (isAdaptation && label==='Adaptation Room') ||
           (isBookmark && label==='Bookmark') ||
           (isAbout && label==='About Us') ||
           (isContact && label==='Contact') ||
@@ -250,3 +253,8 @@
   handleOAuthDestination();
   });
 })();
+
+
+
+
+
