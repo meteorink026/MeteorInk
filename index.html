@@ -215,6 +215,15 @@
      crossorigin="anonymous"></script>
 
 <style id="latest-fanfic-layout-fix">
+  /* Keep Latest Arrivals + Fan-Fic in their own full-width row. */
+  .content-grid > .new-panel-row{
+    grid-column:1 / -1;
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+
   .new-panel-row > .latest-arrivals,
   .new-panel-row > .discovery-panel{
     width:100%;
@@ -222,6 +231,19 @@
     min-height:410px;
     margin:0;
     box-sizing:border-box;
+  }
+
+  /* Random Novels gets its own full-width row below them. */
+  .content-grid > .random-novels-full{
+    grid-column:1 / -1;
+    width:100%;
+    box-sizing:border-box;
+  }
+
+  @media(max-width:900px){
+    .content-grid > .new-panel-row{
+      grid-template-columns:1fr;
+    }
   }
 </style>
 
