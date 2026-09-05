@@ -2241,3 +2241,60 @@ footer.site-footer[hidden]{display:none!important;}
 /* 50 */ @media(max-width:700px){.site-header{padding-left:14px;padding-right:14px}.header-actions{gap:7px}.search-box{max-width:42vw}.section-head{align-items:start}}
 
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}a,button,.gold-btn,.outline-btn,.text-btn,.menu-btn,.social-btn,.random-refresh-btn,.period-btn,.author-period-btn,.modal-close,.brand img,.search-box,.novel-showcase-cover,.bookmark-cover,.author-card,.novel-showcase-card,.bookmark-card,.dynamic-author-card{transition:none!important}.gold-btn:hover,.outline-btn:hover,.menu-btn:hover,.social-btn:hover,.random-refresh-btn:hover,.modal-close:hover,.brand:hover img,.novel-showcase-card:hover .novel-showcase-cover,.bookmark-card:hover .bookmark-cover,.author-card:hover,.novel-showcase-card:hover,.bookmark-card:hover,.dynamic-author-card:hover{transform:none!important}}
+
+
+/* MeteorInk account profile dropdown */
+.profile-menu-wrap{position:relative;display:flex;align-items:center}
+.profile-trigger{display:inline-flex;align-items:center;gap:8px;height:40px;max-width:210px;padding:4px 9px 4px 5px;border:1px solid rgba(231,170,49,.28);border-radius:9px;background:rgba(4,10,20,.72);color:#f3f1ea;cursor:pointer}
+.profile-trigger:hover{border-color:rgba(231,170,49,.55);background:rgba(231,170,49,.05)}
+.profile-trigger-avatar,.profile-dropdown-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle,#244463,#07101b);color:#e7aa31;font-size:13px;font-weight:800}
+.profile-trigger-avatar img,.profile-dropdown-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-trigger-chevron{font-size:15px;color:#b7bdca;margin-left:1px}
+.profile-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:280px;border:1px solid rgba(231,170,49,.25);border-radius:12px;background:rgba(4,10,20,.98);box-shadow:0 22px 55px rgba(0,0,0,.5);backdrop-filter:blur(18px);overflow:hidden;z-index:200}
+.profile-dropdown[hidden]{display:none}
+.profile-dropdown-head{display:flex;align-items:center;gap:11px;padding:15px;border-bottom:1px solid rgba(255,255,255,.07)}
+.profile-dropdown-head strong{display:block;color:#f3f1ea;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-dropdown-head small{display:block;margin-top:3px;color:#8793a5;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:195px}
+.profile-dropdown-links{padding:6px}
+.profile-dropdown-links a{display:block;padding:11px 12px;border-radius:7px;color:#d9dfe8;font-size:12px;text-decoration:none}
+.profile-dropdown-links a:hover{background:rgba(231,170,49,.08);color:#f1d487}
+.profile-logout{width:100%;border:0;border-top:1px solid rgba(255,255,255,.08);background:transparent;color:#e9a5a5;text-align:left;padding:13px 18px;font:600 12px var(--sans);cursor:pointer}
+.profile-logout:hover{background:rgba(190,75,75,.08);color:#ffb3b3}
+.mobile-account{margin-top:5px;border-top:1px solid rgba(255,255,255,.07);padding-top:5px}
+.mobile-account>a{padding-left:26px}
+.mobile-account .mobile-user{padding:12px 16px 8px;color:#e7aa31}
+
+@media(max-width:760px){
+  .profile-menu-wrap{display:none!important}
+}
+
+/* My Library */
+.library-page{min-height:100vh;padding:130px 5vw 80px;background:#030711}
+.library-shell{max-width:1050px;margin:auto}
+.library-intro{text-align:center;margin-bottom:28px}
+.library-intro h1{font-family:var(--serif);font-size:48px;margin:0 0 8px}
+.library-intro h1 span{color:#e7aa31}
+.library-intro>p:last-child{max-width:700px;margin:0 auto;color:#9da8ba;font-size:13px}
+.library-section{background:rgba(7,14,25,.72);border:1px solid rgba(231,170,49,.18);border-radius:14px;padding:24px}
+.library-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
+.library-section-head h2{font-family:var(--serif);margin:3px 0 0;font-size:27px}
+.library-count{color:#8f9bad;font-size:11px}
+.library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.library-card{display:grid;grid-template-columns:92px 1fr;gap:14px;padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.018);cursor:pointer}
+.library-card:hover{border-color:rgba(231,170,49,.25);background:rgba(231,170,49,.035)}
+.library-cover{width:92px;height:126px;border-radius:7px;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle,#244463,#07101b);color:#e7aa31}
+.library-cover img{width:100%;height:100%;object-fit:cover}
+.library-body{min-width:0;display:flex;flex-direction:column}
+.library-meta{color:#d9b05a;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.library-body h3{margin:5px 0 3px;font-family:var(--serif);font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.library-author{margin:0;color:#9da8ba;font-size:11px}
+.library-stats{display:flex;justify-content:space-between;gap:8px;margin-top:auto;padding-top:12px;color:#788496;font-size:9px}
+.library-read-btn{margin-top:10px;border:1px solid rgba(231,170,49,.28);border-radius:7px;background:rgba(231,170,49,.06);color:#e7aa31;padding:8px 10px;font-size:10px;font-weight:700;cursor:pointer}
+.library-auth-gate,.library-empty{min-height:310px;border:1px dashed rgba(231,170,49,.22);border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center}
+.library-auth-actions{display:flex;gap:10px}
+.library-empty-inner{max-width:520px;padding:30px}
+.library-empty .star{font-size:30px;color:#e7aa31;margin-bottom:8px}
+.library-empty h3{font-family:var(--serif);font-size:24px;margin:0 0 8px}
+.library-empty p{color:#9da8ba;font-size:12px;line-height:1.6;margin:0}
+@media(max-width:800px){.library-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.library-page{padding:100px 12px 60px}.library-intro h1{font-size:40px}.library-section{padding:18px}.library-section-head{align-items:flex-start;flex-direction:column}.library-card{grid-template-columns:72px 1fr}.library-cover{width:72px;height:102px}.library-auth-actions{flex-direction:column}}

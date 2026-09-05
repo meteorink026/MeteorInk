@@ -4,7 +4,7 @@
   let currentUser=null;
   const nav=[
     ['Home','index.html#home'],['Authors','index.html#authors'],['Novels','index.html#novels'],
-    ['Bookmark','index.html#bookmark'],['Adaptation Room','adaptation.html'],
+    ['Adaptation Room','index.html#adaptation'],
     ['About Us','index.html#about'],['Contact','index.html#contact']
   ];
 
@@ -12,8 +12,8 @@
     if(path==='novels.html') return label==='Novels';
     if((path==='index.html'||path==='') && location.hash==='#novels') return label==='Novels';
     if((path==='index.html'||path==='') && location.hash==='#authors') return label==='Authors';
-    if((path==='index.html'||path==='') && location.hash==='#bookmark') return label==='Bookmark';
     if(path==='adaptation.html') return label==='Adaptation Room';
+    if((path==='index.html'||path==='') && location.hash==='#adaptation') return label==='Adaptation Room';
     if((path==='index.html'||path==='') && location.hash==='#contact') return label==='Contact';
     if(path==='index.html' || path==='') return label==='Home';
     return false;
@@ -29,7 +29,26 @@
       <div class="header-actions">
         <label class="search-box"><span aria-hidden="true">⌕</span><input id="siteSearch" type="search" placeholder="Search novels and authors." aria-label="Search novels and authors" autocomplete="off"></label>
         ${currentUser
-          ? `<span class="header-user" title="${esc(currentUser.email||'')}">${esc(currentUser.name||currentUser.email||'User')}</span><button type="button" class="text-btn" id="logoutBtn">Log Out</button>`
+          ? `<div class="profile-menu-wrap">
+              <button type="button" class="profile-trigger" id="profileTrigger" aria-expanded="false" aria-haspopup="true">
+                <span class="profile-trigger-avatar">${currentUser.picture ? `<img src="${esc(currentUser.picture)}" alt="">` : '◉'}</span>
+                <span class="header-user">${esc(currentUser.name||currentUser.email||'User')}</span>
+                <span class="profile-trigger-chevron" aria-hidden="true">⌄</span>
+              </button>
+              <div class="profile-dropdown" id="profileDropdown" hidden>
+                <div class="profile-dropdown-head">
+                  <span class="profile-dropdown-avatar">${currentUser.picture ? `<img src="${esc(currentUser.picture)}" alt="">` : '◉'}</span>
+                  <span><strong>${esc(currentUser.name||'User')}</strong><small>${esc(currentUser.email||'')}</small></span>
+                </div>
+                <div class="profile-dropdown-links">
+                  <a href="profile.html">My Profile</a>
+                  <a href="index.html#library">My Library</a>
+                  <a href="author-dashboard.html">Author Dashboard</a>
+                  <a href="settings.html">Settings</a>
+                </div>
+                <button type="button" class="profile-logout" id="logoutBtn">Log Out</button>
+              </div>
+            </div>`
           : `<a class="text-btn" href="auth.html">Log In</a><a class="gold-btn small" href="signup.html">Sign Up</a>`}
         <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
       </div>`;
@@ -74,6 +93,24 @@
     if(btn) btn.addEventListener('click',logout);
     const mobile=document.getElementById('mobileLogoutBtn');
     if(mobile) mobile.addEventListener('click',logout);
+
+    const trigger=document.getElementById('profileTrigger');
+    const dropdown=document.getElementById('profileDropdown');
+    if(trigger && dropdown){
+      const closeProfile=()=>{
+        dropdown.hidden=true;
+        trigger.setAttribute('aria-expanded','false');
+      };
+      trigger.addEventListener('click',e=>{
+        e.stopPropagation();
+        const open=dropdown.hidden;
+        dropdown.hidden=!open;
+        trigger.setAttribute('aria-expanded',String(open));
+      });
+      dropdown.addEventListener('click',e=>e.stopPropagation());
+      document.addEventListener('click',closeProfile);
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProfile();});
+    }
   }
 
   function installMobile(){
@@ -82,7 +119,9 @@
     if(!menu){
       menu=document.createElement('div'); menu.id='mobileMenu'; menu.className='mobile-menu';
       menu.innerHTML=nav.map(([label,href])=>`<a class="${activeFor(label)?'active':''}" href="${href}">${label}</a>`).join('')+
-        (currentUser ? '<span class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</span><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button>' : '<a href="auth.html">Log In</a><a href="signup.html">Sign Up</a>');
+        (currentUser
+          ? '<div class="mobile-account"><div class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</div><a href="profile.html">My Profile</a><a href="index.html#library">My Library</a><a href="author-dashboard.html">Author Dashboard</a><a href="settings.html">Settings</a><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button></div>'
+          : '<a href="auth.html">Log In</a><a href="signup.html">Sign Up</a>');
       header.after(menu);
     }
     const btn=document.getElementById('menuBtn');
@@ -143,20 +182,20 @@
 
   function installSingleWindowViews(){
     if(!(path==='index.html'||path==='')) return;
-    const home=document.getElementById('homeView'), authors=document.getElementById('authorsView'), novels=document.getElementById('novelsView'), bookmark=document.getElementById('bookmarkView'), adaptation=document.getElementById('adaptationView'), about=document.getElementById('aboutView'), contact=document.getElementById('contactView'), footer=document.querySelector('.site-footer');
-    if(!home || !authors || !novels || !bookmark || !about || !contact) return;
+    const home=document.getElementById('homeView'), authors=document.getElementById('authorsView'), novels=document.getElementById('novelsView'), library=document.getElementById('libraryView'), adaptation=document.getElementById('adaptationView'), about=document.getElementById('aboutView'), contact=document.getElementById('contactView'), footer=document.querySelector('.site-footer');
+    if(!home || !authors || !novels || !library || !about || !contact) return;
 
     const setView=()=>{
       const isAuthors=location.hash==='#authors';
       const isNovels=location.hash==='#novels';
-      const isBookmark=location.hash==='#bookmark';
+      const isLibrary=location.hash==='#library';
       const isAdaptation=location.hash==='#adaptation';
       const isAbout=location.hash==='#about';
       const isContact=location.hash==='#contact';
-      home.hidden=isAuthors||isNovels||isBookmark||isAdaptation||isAbout||isContact;
+      home.hidden=isAuthors||isNovels||isLibrary||isAdaptation||isAbout||isContact;
       authors.hidden=!isAuthors;
       novels.hidden=!isNovels;
-      bookmark.hidden=!isBookmark;
+      library.hidden=!isLibrary;
       adaptation.hidden=!isAdaptation;
       about.hidden=!isAbout;
       contact.hidden=!isContact;
@@ -168,10 +207,9 @@
           (isAuthors && label==='Authors') ||
           (isNovels && label==='Novels') ||
           (isAdaptation && label==='Adaptation Room') ||
-          (isBookmark && label==='Bookmark') ||
           (isAbout && label==='About Us') ||
           (isContact && label==='Contact') ||
-          (!isAuthors && !isNovels && !isBookmark && !isAbout && !isContact && label==='Home');
+          (!isAuthors && !isNovels && !isLibrary && !isAbout && !isContact && !isAdaptation && label==='Home');
         a.classList.toggle('active', active);
       });
       if(isAuthors){
@@ -191,9 +229,9 @@
         window.scrollTo({top:0,behavior:'smooth'});
         if(window.renderMeteorInkNovels) window.renderMeteorInkNovels();
       }
-      if(isBookmark){
+      if(isLibrary){
         window.scrollTo({top:0,behavior:'smooth'});
-        if(window.renderMeteorInkBookmarks) window.renderMeteorInkBookmarks();
+        if(window.renderMeteorInkLibrary) window.renderMeteorInkLibrary();
       }
       if(isAbout || isContact){
         window.scrollTo({top:0,behavior:'smooth'});
@@ -201,7 +239,7 @@
     };
 
     document.addEventListener('click',e=>{
-      const link=e.target.closest('a[href="#authors"],a[href="#home"],a[href="#novels"],a[href="#bookmark"],a[href="#about"],a[href="#contact"]');
+      const link=e.target.closest('a[href="#authors"],a[href="#home"],a[href="#novels"],a[href="#library"],a[href="#about"],a[href="#contact"]');
       if(!link) return;
       e.preventDefault();
       location.hash=link.getAttribute('href').slice(1);

@@ -28,7 +28,7 @@
     return `<article class="novel-showcase-card" data-id="${esc(n.id)}">
       <div class="novel-showcase-cover">${n.cover?`<img src="${esc(n.cover)}" alt="${esc(n.title||'Novel cover')}">`:'✦'}
         <span class="novel-showcase-badge">${esc(n.genre||'NOVEL')}</span>
-        <button class="novel-showcase-bookmark" type="button" aria-label="Bookmark ${esc(n.title||'novel')}" data-bookmark-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5V22L12 18.3 6.5 22V4.5Z"></path></svg></button>
+        
       </div>
       <div class="novel-showcase-body">
         <h3 class="novel-showcase-title">${esc(n.title||'Untitled Novel')}</h3>
@@ -128,25 +128,6 @@
     qsa('.fanfic-tab').forEach(b=>b.addEventListener('click',()=>{qsa('.fanfic-tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');pageState.fanfic=1;renderFanFic(b.dataset.fanficSort)}));
     const randomRefresh=qs('#randomNovelsRefresh');
     if(randomRefresh)randomRefresh.addEventListener('click',renderRandomNovels);
-    document.addEventListener('click',e=>{
-      const bookmark=e.target.closest('[data-bookmark-id]');
-      if(bookmark){
-        e.preventDefault();e.stopPropagation();
-        const id=bookmark.dataset.bookmarkId;
-        const session=MeteorInkData.getSession?.();
-        if(!session){location.href='auth.html';return;}
-        const current=MeteorInkData.getBookmarks?.()||[];
-        const exists=current.map(String).includes(String(id));
-        const result=exists?MeteorInkData.removeBookmark(id):MeteorInkData.addBookmark(id);
-        if(result?.reason==='limit'){alert('You can save up to 25 novels.');return;}
-        bookmark.classList.toggle('active',!exists);return;
-      }
-      const read=e.target.closest('[data-read-id]');
-      if(read){e.preventDefault();e.stopPropagation();const id=read.dataset.readId;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id);return;}
-      const story=e.target.closest('.novel-showcase-card');
-      if(story&&story.dataset.id){MeteorInkData.recordView(story.dataset.id);MeteorInkData.recordRead(story.dataset.id);location.href='novel.html?id='+encodeURIComponent(story.dataset.id)}
-      const author=e.target.closest('.dynamic-author-card');if(author?.dataset.authorId)location.href='author-profile.html?id='+encodeURIComponent(author.dataset.authorId)
-    });
     const earlyCard=document.querySelector('#community .early-card:not(#authors)'); if(earlyCard){const authors=MeteorInkData.getCatalogAuthors?MeteorInkData.getCatalogAuthors():MeteorInkData.getAuthors(); earlyCard.hidden=authors.length>0;}
     renderTrending();renderAuthors();renderLatest();renderFanFic();renderRandomNovels();
   }
@@ -222,32 +203,48 @@ window.renderMeteorInkAuthors=function(){
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeLegal()});
 })();
 
-/* Embedded Bookmark view behavior. */
-window.renderMeteorInkBookmarks=function(){
+/* Embedded My Library view behavior. */
+window.renderMeteorInkLibrary=function(){
   const data=window.MeteorInkData;
-  const grid=document.getElementById('bookmarkGrid');
-  const count=document.getElementById('bookmarkCount');
+  const grid=document.getElementById('libraryGrid');
+  const count=document.getElementById('libraryCount');
   if(!grid||!data)return;
   const session=data.getSession?data.getSession():null;
   if(!session){
     if(count) count.textContent='';
-    grid.innerHTML='<div class="bookmark-auth-gate"><div class="bookmark-auth-actions"><a class="text-btn" href="auth.html">Log In</a><a class="gold-btn small" href="signup.html">Sign Up</a></div></div>';
+    grid.innerHTML='<div class="library-auth-gate"><div class="library-auth-actions"><a class="text-btn" href="auth.html">Log In</a><a class="gold-btn small" href="signup.html">Sign Up</a></div></div>';
     return;
   }
-  let raw=[];
-  try{raw=data.getBookmarks?data.getBookmarks():JSON.parse(localStorage.getItem('meteorink_bookmarks')||'[]')}catch(_e){raw=[]}
-  raw=Array.isArray(raw)?raw.slice(0,25):[];
+  let history=[];
+  try{history=data.getReadingHistory?data.getReadingHistory():[]}catch(_e){history=[]}
+  history=Array.isArray(history)?history.slice().sort((a,b)=>new Date(b.lastReadAt||0)-new Date(a.lastReadAt||0)):[];
+
   const novels=data.getCatalogNovels?data.getCatalogNovels():data.getNovels();
-  const byId=new Map(novels.map(n=>[String(n.id),n]));
-  const items=raw.map(x=>typeof x==='string'||typeof x==='number'?byId.get(String(x)):x).filter(Boolean);
-  if(count) count.textContent=`${items.length} saved`;
+  const byId=new Map((novels||[]).map(n=>[String(n.id),n]));
+  const items=history.map(h=>({h,n:byId.get(String(h.novelId))})).filter(x=>x.n);
+
+  if(count) count.textContent=`${items.length} ${items.length===1?'story':'stories'}`;
   if(!items.length){
-    grid.innerHTML='<div class="bookmark-empty"><div class="bookmark-empty-inner"><div class="star">✦</div><h3>Your bookmarks are waiting.</h3><p>Save a novel while browsing and it will appear here, ready for you whenever you want to return.</p></div></div>';
+    grid.innerHTML='<div class="library-empty"><div class="library-empty-inner"><div class="star">✦</div><h3>Your library is waiting.</h3><p>Open a novel and it will appear here automatically, ready for you to continue reading.</p></div></div>';
     return;
   }
-  grid.innerHTML=items.map(n=>`<article class="bookmark-card" data-id="${String(n.id).replace(/[^a-zA-Z0-9_-]/g,'')}">
-    <div class="bookmark-cover">${n.cover?`<img src="${String(n.cover).replace(/"/g,'&quot;')}" alt="">`:'✦'}</div>
-    <div class="bookmark-body"><div class="bookmark-meta">${String(n.genre||'NOVEL').replace(/[&<>"']/g,'')}</div><h3>${String(n.title||'Untitled Novel').replace(/[&<>"']/g,'')}</h3><p class="bookmark-author">${String(n.authorName||'Unknown Author').replace(/[&<>"']/g,'')}${MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName)?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p><div class="bookmark-stats"><span>${Number(n.views||0).toLocaleString()} views</span><span>Bookmarked</span></div></div>
+
+  grid.innerHTML=items.map(({h:nr,n})=>`<article class="library-card" data-id="${String(n.id).replace(/[^a-zA-Z0-9_-]/g,'')}">
+    <div class="library-cover">${n.cover?`<img src="${String(n.cover).replace(/"/g,'&quot;')}" alt="">`:'✦'}</div>
+    <div class="library-body">
+      <div class="library-meta">${String(n.genre||'NOVEL').replace(/[&<>"']/g,'')}</div>
+      <h3>${String(n.title||'Untitled Novel').replace(/[&<>"']/g,'')}</h3>
+      <p class="library-author">${String(n.authorName||'Unknown Author').replace(/[&<>"']/g,'')}</p>
+      <div class="library-stats"><span>Read ${Number(nr.count||1)} ${Number(nr.count||1)===1?'time':'times'}</span><span>${nr.lastReadAt?new Date(nr.lastReadAt).toLocaleDateString():''}</span></div>
+      <button class="library-read-btn" type="button">Continue Reading</button>
+    </div>
   </article>`).join('');
-  grid.querySelectorAll('.bookmark-card').forEach(card=>card.addEventListener('click',()=>{const id=card.dataset.id;if(id){data.recordView(id);data.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}}));
+
+  grid.querySelectorAll('.library-card').forEach(card=>card.addEventListener('click',e=>{
+    const id=card.dataset.id;
+    if(!id)return;
+    data.recordView(id);
+    data.recordRead(id);
+    location.href='novel.html?id='+encodeURIComponent(id);
+  }));
 };

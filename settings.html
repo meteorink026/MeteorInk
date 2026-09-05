@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>MeteorInk — Settings</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .settings-page{min-height:100vh;padding:130px 5vw 80px;background:#030711}
+    .settings-shell{max-width:760px;margin:auto}
+    .settings-card{background:rgba(7,14,25,.88);border:1px solid rgba(231,170,49,.2);border-radius:14px;padding:28px}
+    .settings-card h1{font-family:var(--serif);font-size:40px;margin:0 0 5px}
+    .settings-card>p{color:#9da8ba;font-size:12px;margin:0 0 24px}
+    .settings-row{padding:17px 0;border-top:1px solid rgba(255,255,255,.07)}
+    .settings-row strong{display:block;font-size:13px;margin-bottom:4px}.settings-row span{color:#8f9bad;font-size:11px}
+    @media(max-width:600px){.settings-page{padding:100px 14px 60px}.settings-card{padding:20px}.settings-card h1{font-size:34px}}
+  </style>
+</head>
+<body>
+  <main class="settings-page"><div class="settings-shell"><section class="settings-card">
+    <p class="section-kicker">ACCOUNT</p>
+    <h1>Settings.</h1>
+    <p>Account preferences and controls will live here as MeteorInk expands.</p>
+    <div class="settings-row"><strong>Profile</strong><span>Manage your public account information from My Profile.</span></div>
+    <div class="settings-row"><strong>Reading</strong><span>Your reading activity is automatically stored in My Library.</span></div>
+    <div class="settings-row"><strong>Security</strong><span>Authentication is managed through your connected sign-in provider.</span></div>
+  </section></div></main>
+  <script src="meteorink-data.js"></script>
+  <script src="meteorink-app.js"></script>
+</body>
+</html>

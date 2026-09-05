@@ -258,7 +258,6 @@
       <a class="active" href="#home">Home</a>
       <a href="#authors">Authors</a>
       <a href="#novels">Novels</a>
-      <a href="#bookmark">Bookmark</a>
       <a href="#adaptation">Adaptation Room</a>
       <a href="#about">About Us</a>
       <a href="#contact">Contact</a>
@@ -279,7 +278,6 @@
     <a href="#home">Home</a>
     <a href="#authors">Authors</a>
     <a href="#novels">Novels</a>
-    <a href="#bookmark">Bookmark</a>
     <a href="#adaptation">Adaptation Room</a>
     <a href="#about">About Us</a>
     <a href="#contact">Contact</a>
@@ -543,23 +541,23 @@
 </div>
 
 
-<div id="bookmarkView" hidden>
-  <main class="bookmark-page">
-    <div class="bookmark-shell">
-      <header class="bookmark-intro">
-        <p class="section-kicker">YOUR READING LIST</p>
-        <h1>Your <span>Bookmarks.</span></h1>
-        <p>Keep the stories you want to return to in one place. Your saved novels will appear here automatically.</p>
+<div id="libraryView" hidden>
+  <main class="library-page">
+    <div class="library-shell">
+      <header class="library-intro">
+        <p class="section-kicker">YOUR READING SPACE</p>
+        <h1>My <span>Library.</span></h1>
+        <p>Your reading activity, progress, and recently opened stories in one place.</p>
       </header>
-      <section class="bookmark-section" aria-labelledby="bookmarkTitle">
-        <div class="bookmark-section-head">
+      <section class="library-section" aria-labelledby="libraryTitle">
+        <div class="library-section-head">
           <div>
-            <p class="section-kicker">SAVED STORIES</p>
-            <h2 id="bookmarkTitle">Bookmarked Novels</h2>
+            <p class="section-kicker">RECENTLY READ</p>
+            <h2 id="libraryTitle">Continue Reading</h2>
           </div>
-          <span id="bookmarkCount" class="bookmark-count">0 saved</span>
+          <span id="libraryCount" class="library-count">0 stories</span>
         </div>
-        <section id="bookmarkGrid" class="bookmark-grid" aria-live="polite"></section>
+        <section id="libraryGrid" class="library-grid" aria-live="polite"></section>
       </section>
     </div>
   </main>
@@ -859,10 +857,9 @@
     const novelCard=n=>{
       const genres=Array.isArray(n.genres)&&n.genres.length?n.genres:String(n.genre||'NOVEL').split(',').map(x=>x.trim()).filter(Boolean);
       const visible=genres.slice(0,3),more=Math.max(0,genres.length-visible.length);
-      return `<article class="novel-showcase-card" data-id="${esc(n.id)}"><div class="novel-showcase-cover">${n.cover?`<img src="${esc(n.cover)}" alt="${esc(n.title||'Novel cover')}">`:'✦'}<span class="novel-showcase-badge">${esc(n.genre||'NOVEL')}</span><button class="novel-showcase-bookmark" type="button" aria-label="Bookmark ${esc(n.title||'novel')}" data-bookmark-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5V22L12 18.3 6.5 22V4.5Z"></path></svg></button></div><div class="novel-showcase-body"><h3 class="novel-showcase-title">${esc(n.title||'Untitled Novel')}</h3><p class="novel-showcase-author">${esc(n.authorName||'Unknown Author')}${MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName)?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p><p class="novel-showcase-desc">${esc(n.description||'A new story awaits.')}</p><div class="novel-showcase-tags">${visible.map(g=>`<span class="novel-showcase-tag">${esc(g)}</span>`).join('')}${more?`<span class="novel-showcase-tag more">+${more}</span>`:''}</div><div class="novel-showcase-stats"><div class="novel-showcase-stat"><strong>${Number(n.chapters||0).toLocaleString()}</strong><span>Chapters</span></div><div class="novel-showcase-stat"><strong>${Number(n.views||0).toLocaleString()}</strong><span>Views</span></div><div class="novel-showcase-stat"><strong>${Number(n.rating||0).toFixed(1)}</strong><span>Rating</span></div></div><button class="novel-showcase-read" type="button" data-read-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H19v18H7.5A2.5 2.5 0 0 0 5 22V4.5Zm0 0V19a2.5 2.5 0 0 1 2.5-2.5H19"></path></svg>Read Now</button></div></article>`;
+      return `<article class="novel-showcase-card" data-id="${esc(n.id)}"><div class="novel-showcase-cover">${n.cover?`<img src="${esc(n.cover)}" alt="${esc(n.title||'Novel cover')}">`:'✦'}<span class="novel-showcase-badge">${esc(n.genre||'NOVEL')}</span></div><div class="novel-showcase-body"><h3 class="novel-showcase-title">${esc(n.title||'Untitled Novel')}</h3><p class="novel-showcase-author">${esc(n.authorName||'Unknown Author')}${MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName)?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p><p class="novel-showcase-desc">${esc(n.description||'A new story awaits.')}</p><div class="novel-showcase-tags">${visible.map(g=>`<span class="novel-showcase-tag">${esc(g)}</span>`).join('')}${more?`<span class="novel-showcase-tag more">+${more}</span>`:''}</div><div class="novel-showcase-stats"><div class="novel-showcase-stat"><strong>${Number(n.chapters||0).toLocaleString()}</strong><span>Chapters</span></div><div class="novel-showcase-stat"><strong>${Number(n.views||0).toLocaleString()}</strong><span>Views</span></div><div class="novel-showcase-stat"><strong>${Number(n.rating||0).toFixed(1)}</strong><span>Rating</span></div></div><button class="novel-showcase-read" type="button" data-read-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H19v18H7.5A2.5 2.5 0 0 0 5 22V4.5Zm0 0V19a2.5 2.5 0 0 1 2.5-2.5H19"></path></svg>Read Now</button></div></article>`;
     };
     grid.innerHTML=pageItems.map(novelCard).join('');
-    grid.querySelectorAll('[data-bookmark-id]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const session=MeteorInkData.getSession?.();if(!session){location.href='auth.html';return;}const id=btn.dataset.bookmarkId,items=(MeteorInkData.getBookmarks?.()||[]).map(String),exists=items.includes(String(id));const result=exists?MeteorInkData.removeBookmark(id):MeteorInkData.addBookmark(id);if(result?.reason==='limit'){alert('You can save up to 25 novels.');return;}btn.classList.toggle('active',!exists);}));
     grid.querySelectorAll('[data-read-id]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const id=btn.dataset.readId;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
     grid.querySelectorAll('.novel-showcase-card').forEach(card=>card.addEventListener('click',e=>{if(e.target.closest('button'))return;const id=card.dataset.id;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
     if(pagination){
@@ -905,7 +902,7 @@
         <p>MeteorInk exists to give readers a focused place to discover original novels and to give authors a space to develop their work, reach an audience, and build lasting communities around their stories.</p>
         <p>We believe a novel is more than a collection of chapters. It is a world that readers enter, authors shape, and communities can experience together. A strong storytelling platform should therefore support the complete journey of a story, from the first idea and first chapter to discovery, discussion, and long-term readership.</p>
         <p>MeteorInk is being designed around that idea. Readers should be able to find stories that genuinely interest them without having to navigate an environment built only around popularity. Authors should be able to present their work clearly, develop their audience over time, and remain connected to the communities that form around their novels.</p>
-        <p>The platform is also intended to make the relationship between a story and its readers more meaningful. Discovery, reading, bookmarking, author profiles, and novel-focused discussions are parts of one larger ecosystem rather than isolated features. Each part should make it easier for people to return to the stories and worlds that matter to them.</p>
+        <p>The platform is also intended to make the relationship between a story and its readers more meaningful. Discovery, reading, author profiles, and novel-focused discussions are parts of one larger ecosystem rather than isolated features. Each part should make it easier for people to return to the stories and worlds that matter to them.</p>
         <p>As MeteorInk grows, the goal is not simply to accumulate more titles or users. The goal is to build a durable home for original fiction where creative work can be discovered on its own merits, readers can participate thoughtfully, and authors can build something that lasts beyond a single publication.</p>
       </section>
 

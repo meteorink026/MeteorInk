@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>MeteorInk — My Profile</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .account-page{min-height:100vh;padding:130px 5vw 80px;background:#030711}
+    .account-shell{max-width:760px;margin:auto}
+    .account-card{background:rgba(7,14,25,.88);border:1px solid rgba(231,170,49,.2);border-radius:14px;padding:28px}
+    .account-head{display:flex;align-items:center;gap:18px;padding-bottom:22px;border-bottom:1px solid rgba(255,255,255,.07)}
+    .account-avatar{width:86px;height:86px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle,#244463,#07101b);color:#e7aa31;font-size:30px;font-weight:800}
+    .account-avatar img{width:100%;height:100%;object-fit:cover}
+    .account-head h1{font-family:var(--serif);margin:0 0 4px;font-size:34px}
+    .account-head p{margin:0;color:#9da8ba;font-size:12px}
+    .account-details{display:grid;gap:12px;margin-top:22px}
+    .account-row{display:flex;justify-content:space-between;gap:18px;padding:13px 14px;border:1px solid rgba(255,255,255,.06);border-radius:9px;background:rgba(255,255,255,.018)}
+    .account-row span{color:#8793a5;font-size:11px}.account-row strong{font-size:12px;color:#eef2f7;text-align:right}
+    .account-gate{text-align:center;color:#9da8ba;padding:35px}
+    @media(max-width:600px){.account-page{padding:100px 14px 60px}.account-card{padding:20px}.account-head{align-items:flex-start}.account-head h1{font-size:28px}.account-row{flex-direction:column;gap:5px}.account-row strong{text-align:left}}
+  </style>
+</head>
+<body>
+  <main class="account-page"><div class="account-shell"><section class="account-card" id="profileCard"><div class="account-gate">Loading profile…</div></section></div></main>
+  <script src="meteorink-data.js"></script>
+  <script src="meteorink-app.js"></script>
+  <script>
+    (async()=>{
+      const card=document.getElementById('profileCard');
+      try{
+        const r=await fetch('/api/me',{credentials:'same-origin'});
+        const data=await r.json();
+        if(!data.authenticated||!data.user){location.href='auth.html';return;}
+        const u=data.user;
+        card.innerHTML=`<div class="account-head"><div class="account-avatar">${u.picture?`<img src="${String(u.picture).replace(/"/g,'&quot;')}" alt="">`:'◉'}</div><div><p class="section-kicker">MY ACCOUNT</p><h1>${String(u.name||'User').replace(/[&<>"']/g,'')}</h1><p>${String(u.email||'').replace(/[&<>"']/g,'')}</p></div></div><div class="account-details"><div class="account-row"><span>Account ID</span><strong>${String(u.id||'').replace(/[&<>"']/g,'')}</strong></div><div class="account-row"><span>Account Type</span><strong>${String(u.role||'reader').replace(/[&<>"']/g,'')}</strong></div><div class="account-row"><span>Sign-in Method</span><strong>${String(u.authProvider||'Google').replace(/[&<>"']/g,'')}</strong></div></div>`;
+      }catch(e){card.innerHTML='<div class="account-gate">Unable to load your profile.</div>';}
+    })();
+  </script>
+</body>
+</html>
