@@ -12,20 +12,15 @@
 <body class="auth-no-global-nav">
 <main class="auth-split-page signup-split-page">
   <section class="auth-form-side"><section class="flow-card signup-card"><h1>Create Account</h1><p>Join MeteorInk and start your journey.</p>
-    <div class="social-signup"><button type="button" class="social-btn" id="googleSignup">Sign Up with Google</button><button type="button" class="social-btn" id="xSignup">Sign Up with X</button></div>
-<style>
-  #xSignup {
-    display: none;
-  }
-</style>
-    <div id="signupManualRemoved" class="auth-note">Account creation is available through Google or X.</div>
+    <div class="social-signup"><button type="button" class="social-btn" id="googleSignup">Sign Up with Google</button></div>
+
+    <div id="signupManualRemoved" class="auth-note">Account creation is available through Google.</div>
     <p class="auth-switch"><a href="auth.html">Already have an account? Log In</a></p>
   </section></section>
   <section class="auth-scenery" aria-label="MeteorInk signup scenery"><a class="auth-brand-mark" href="index.html"><img src="assets/logo.jpg" alt="MeteorInk logo"></a><div class="auth-scenery-copy"><p class="section-kicker">BEGIN YOUR JOURNEY</p><h2>Create worlds.<br>Share stories.</h2><p>Build your presence on MeteorInk and become part of a growing universe of stories.</p></div></section>
 </main>
 <script>
 document.getElementById('googleSignup').onclick=()=>{const next=new URLSearchParams(location.search).get('next');location.href='/auth/google'+(next==='writer'?'?next=writer':'');};
-document.getElementById('xSignup').onclick=()=>{const next=new URLSearchParams(location.search).get('next');location.href='/auth/x'+(next==='writer'?'?next=writer':'');};
 </script><script>
 (async function(){
   if(!new URLSearchParams(location.search).has('googleComplete')) return;
