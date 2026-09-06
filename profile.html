@@ -106,7 +106,6 @@
         const input=document.getElementById('profilePhotoInput');
         const openPicker=()=>input.click();
         document.getElementById('photoEditButton').onclick=openPicker;
-        document.getElementById('photoActionButton').onclick=openPicker;
         input.onchange=handlePhotoChange;
       }catch(e){
         card.innerHTML='<div class="account-gate">Unable to load your profile.</div>';
