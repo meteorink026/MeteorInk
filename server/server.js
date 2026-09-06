@@ -510,68 +510,76 @@ app.post("/api/author/setup", async (req, res) => {
       (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
   if (age < 18) return res.status(403).json({ error: "Standard MeteorInk author accounts currently require age 18+." });
 
-  const user = await findUserById(req.session.userId);
-  if (!user) return res.status(404).json({ error: "Account not found." });
+  try {
+    const user = await findUserById(req.session.userId);
+    if (!user) return res.status(404).json({ error: "Account not found." });
 
-  // Private identity data is stored only server-side in Supabase.
-  // It is deliberately not returned by this endpoint or /api/me.
-  await supabaseRequest("users", {
-    method: "PATCH",
-    query: { id: `eq.${user.id}` },
-    body: {
-      author_real_name: realName,
-      dob,
-      role: "author",
-      updated_at: new Date().toISOString()
-    },
-    prefer: "return=minimal"
-  });
-
-  const existing = await supabaseRequest("authors", {
-    query: { select: "*", user_id: `eq.${user.id}`, limit: "1" }
-  });
-
-  let author;
-  if (existing?.[0]) {
-    const rows = await supabaseRequest("authors", {
-      method: "PATCH",
-      query: { id: `eq.${existing[0].id}` },
-      body: {
-        name: penName,
-        bio,
-        updated_at: new Date().toISOString()
-      }
+    // Check/create the public author profile first. The account is promoted to
+    // author only after this succeeds, avoiding a half-created author account.
+    const existing = await supabaseRequest("authors", {
+      query: { select: "*", user_id: `eq.${user.id}`, limit: "1" }
     });
-    author = rows?.[0] || { ...existing[0], name: penName, bio };
-  } else {
-    const rows = await supabaseRequest("authors", {
-      method: "POST",
-      body: {
-        user_id: user.id,
-        name: penName,
-        bio,
-        followers: 0,
-        verified: false
-      }
-    });
-    author = rows?.[0] || null;
-  }
 
-  if (!author) throw new Error("Unable to create the author profile.");
-
-  // Return public author fields only. Never return real_name or dob here.
-  res.json({
-    ok: true,
-    author: {
-      id: author.id,
-      userId: author.user_id,
-      name: author.name || "",
-      bio: author.bio || "",
-      followers: Number(author.followers || 0),
-      verified: !!author.verified,
-      profileCreatedAt: author.profile_created_at || author.created_at
+    let author;
+    if (existing?.[0]) {
+      const rows = await supabaseRequest("authors", {
+        method: "PATCH",
+        query: { id: `eq.${existing[0].id}` },
+        body: {
+          name: penName,
+          bio,
+          updated_at: new Date().toISOString()
+        }
+      });
+      author = rows?.[0] || { ...existing[0], name: penName, bio };
+    } else {
+      const rows = await supabaseRequest("authors", {
+        method: "POST",
+        body: {
+          user_id: user.id,
+          name: penName,
+          bio,
+          followers: 0,
+          verified: false
+        }
+      });
+      author = rows?.[0] || null;
     }
-  });
+
+    if (!author) throw new Error("Supabase did not return the created author profile.");
+
+    // Private identity data is stored only server-side in Supabase.
+    // It is deliberately not returned by this endpoint or /api/me.
+    await supabaseRequest("users", {
+      method: "PATCH",
+      query: { id: `eq.${user.id}` },
+      body: {
+        author_real_name: realName,
+        dob,
+        role: "author",
+        updated_at: new Date().toISOString()
+      },
+      prefer: "return=minimal"
+    });
+
+    // Return public author fields only. Never return real_name or dob here.
+    res.json({
+      ok: true,
+      author: {
+        id: author.id,
+        userId: author.user_id,
+        name: author.name || "",
+        bio: author.bio || "",
+        followers: Number(author.followers || 0),
+        verified: !!author.verified,
+        profileCreatedAt: author.profile_created_at || author.created_at
+      }
+    });
+  } catch (err) {
+    console.error("/api/author/setup error:", err);
+    const message = err?.message || "Unable to create the author profile.";
+    res.status(500).json({ error: message });
+  }
 });
 
 app.post("/api/logout", (req, res) => {
