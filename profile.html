@@ -6,36 +6,164 @@
   <title>MeteorInk — My Profile</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    .account-page{min-height:100vh;padding:130px 5vw 80px;background:#030711}
-    .account-shell{max-width:760px;margin:auto}
-    .account-card{background:rgba(7,14,25,.88);border:1px solid rgba(231,170,49,.2);border-radius:14px;padding:28px}
-    .account-head{display:flex;align-items:center;gap:18px;padding-bottom:22px;border-bottom:1px solid rgba(255,255,255,.07)}
-    .account-avatar{width:86px;height:86px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle,#244463,#07101b);color:#e7aa31;font-size:30px;font-weight:800}
+    .account-page{
+      min-height:100vh;padding:130px 5vw 80px;
+      background:linear-gradient(rgba(3,8,18,.72),rgba(3,8,18,.82)),
+        url("assets/profile-background.png") center center/cover fixed no-repeat;
+      position:relative;isolation:isolate;
+    }
+    .account-page::before{content:"";position:fixed;inset:0;background:rgba(2,7,15,.18);z-index:-1;pointer-events:none}
+    .account-shell{max-width:820px;margin:auto}
+    .account-card{
+      background:rgba(7,14,25,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border:1px solid rgba(231,170,49,.22);border-radius:16px;padding:30px;
+      box-shadow:0 24px 70px rgba(0,0,0,.4)
+    }
+    .account-title{font-family:var(--serif);font-size:38px;margin:0 0 5px;color:#f4f0e8}
+    .account-subtitle{margin:0;color:#9da8ba;font-size:13px}
+    .account-head{display:flex;align-items:center;gap:20px;padding:4px 0 26px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .account-avatar-wrap{position:relative;flex:0 0 auto}
+    .account-avatar{
+      width:104px;height:104px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+      background:radial-gradient(circle,#244463,#07101b);color:#e7aa31;font-size:32px;font-weight:800;
+      border:1px solid rgba(231,170,49,.55);box-shadow:0 8px 28px rgba(0,0,0,.35)
+    }
     .account-avatar img{width:100%;height:100%;object-fit:cover}
-    .account-head h1{font-family:var(--serif);margin:0 0 4px;font-size:34px}
+    .photo-edit{
+      position:absolute;right:-3px;bottom:1px;width:34px;height:34px;border-radius:50%;
+      border:1px solid rgba(231,170,49,.65);background:#111a27;color:#f4d38b;
+      display:grid;place-items:center;cursor:pointer;font-size:16px
+    }
+    .photo-edit:hover{background:#1a2638}
+    .account-head h1{font-family:var(--serif);margin:2px 0 5px;font-size:30px}
     .account-head p{margin:0;color:#9da8ba;font-size:12px}
-    .account-details{display:grid;gap:12px;margin-top:22px}
-    .account-row{display:flex;justify-content:space-between;gap:18px;padding:13px 14px;border:1px solid rgba(255,255,255,.06);border-radius:9px;background:rgba(255,255,255,.018)}
-    .account-row span{color:#8793a5;font-size:11px}.account-row strong{font-size:12px;color:#eef2f7;text-align:right}
+    .account-photo-action{margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);color:#eef2f7;cursor:pointer;font-size:12px}
+    .account-photo-action:hover{border-color:rgba(231,170,49,.4)}
+    .account-photo-note{margin-left:9px;color:#7f8a9b;font-size:11px}
+    .account-details{display:grid;gap:12px;margin-top:24px}
+    .account-row{display:flex;justify-content:space-between;gap:18px;padding:14px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:rgba(255,255,255,.018)}
+    .account-row span{color:#8793a5;font-size:11px}.account-row strong{font-size:12px;color:#eef2f7;text-align:right;overflow-wrap:anywhere}
+    .account-status{min-height:18px;margin-top:13px;color:#9da8ba;font-size:11px}
+    .account-status.success{color:#d8bb7b}.account-status.error{color:#ef9a9a}
     .account-gate{text-align:center;color:#9da8ba;padding:35px}
-    @media(max-width:600px){.account-page{padding:100px 14px 60px}.account-card{padding:20px}.account-head{align-items:flex-start}.account-head h1{font-size:28px}.account-row{flex-direction:column;gap:5px}.account-row strong{text-align:left}}
+    #profilePhotoInput{display:none}
+    @media(max-width:600px){
+      .account-page{padding:100px 14px 60px;background-attachment:scroll}
+      .account-card{padding:20px}.account-title{font-size:31px}
+      .account-head{align-items:flex-start}.account-avatar{width:86px;height:86px}
+      .account-head h1{font-size:26px}.account-photo-note{display:block;margin:7px 0 0}
+      .account-row{flex-direction:column;gap:5px}.account-row strong{text-align:left}
+    }
   </style>
 </head>
 <body>
-  <main class="account-page"><div class="account-shell"><section class="account-card" id="profileCard"><div class="account-gate">Loading profile…</div></section></div></main>
-  <script src="meteorink-data.js"></script>
-  <script src="meteorink-app.js"></script>
+  <main class="account-page">
+    <div class="account-shell">
+      <section class="account-card" id="profileCard">
+        <div class="account-gate">Loading profile…</div>
+      </section>
+    </div>
+  </main>
+
   <script>
-    (async()=>{
+    const escapeHtml=(value)=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const escapeAttr=(value)=>escapeHtml(value);
+    let currentPicture='';
+
+    async function loadProfile(){
       const card=document.getElementById('profileCard');
       try{
         const r=await fetch('/api/me',{credentials:'same-origin'});
         const data=await r.json();
         if(!data.authenticated||!data.user){location.href='auth.html';return;}
         const u=data.user;
-        card.innerHTML=`<div class="account-head"><div class="account-avatar">${u.picture?`<img src="${String(u.picture).replace(/"/g,'&quot;')}" alt="">`:'◉'}</div><div><p class="section-kicker">MY ACCOUNT</p><h1>${String(u.name||'User').replace(/[&<>"']/g,'')}</h1><p>${String(u.email||'').replace(/[&<>"']/g,'')}</p></div></div><div class="account-details"><div class="account-row"><span>Account ID</span><strong>${String(u.id||'').replace(/[&<>"']/g,'')}</strong></div><div class="account-row"><span>Account Type</span><strong>${String(u.role||'reader').replace(/[&<>"']/g,'')}</strong></div><div class="account-row"><span>Sign-in Method</span><strong>${String(u.authProvider||'Google').replace(/[&<>"']/g,'')}</strong></div></div>`;
-      }catch(e){card.innerHTML='<div class="account-gate">Unable to load your profile.</div>';}
-    })();
+        currentPicture=u.picture||'';
+        const avatar=u.picture
+          ? `<img id="profileAvatarImage" src="${escapeAttr(u.picture)}" alt="Profile picture">`
+          : `<span id="profileAvatarFallback">◉</span>`;
+        card.innerHTML=`
+          <div class="account-head">
+            <div class="account-avatar-wrap">
+              <div class="account-avatar" id="accountAvatar">${avatar}</div>
+              <button class="photo-edit" id="photoEditButton" type="button" aria-label="Change profile photo">✎</button>
+            </div>
+            <div>
+              <p class="section-kicker">MY ACCOUNT</p>
+              <h1>${escapeHtml(u.name||'User')} ${escapeHtml(u.surname||'')}</h1>
+              <p>${escapeHtml(u.email||'')}</p>
+              <button class="account-photo-action" id="photoActionButton" type="button">Change Photo</button>
+              <span class="account-photo-note">JPG, PNG or WebP · max 2 MB</span>
+            </div>
+          </div>
+          <input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp">
+          <div class="account-status" id="photoStatus"></div>
+          <div class="account-details">
+            <div class="account-row"><span>Account ID</span><strong>${escapeHtml(u.id||'')}</strong></div>
+            <div class="account-row"><span>Account Type</span><strong>${escapeHtml(u.role||'reader')}</strong></div>
+            <div class="account-row"><span>Sign-in Method</span><strong>${escapeHtml(u.authProvider||'Google')}</strong></div>
+          </div>`;
+
+        const input=document.getElementById('profilePhotoInput');
+        const openPicker=()=>input.click();
+        document.getElementById('photoEditButton').onclick=openPicker;
+        document.getElementById('photoActionButton').onclick=openPicker;
+        input.onchange=handlePhotoChange;
+      }catch(e){
+        card.innerHTML='<div class="account-gate">Unable to load your profile.</div>';
+      }
+    }
+
+    async function handlePhotoChange(event){
+      const file=event.target.files?.[0];
+      if(!file) return;
+      const status=document.getElementById('photoStatus');
+      if(!/^image\/(jpeg|png|webp)$/.test(file.type)){status.className='account-status error';status.textContent='Please choose a JPG, PNG or WebP image.';return;}
+      if(file.size>2*1024*1024){status.className='account-status error';status.textContent='Image must be 2 MB or smaller.';return;}
+      status.className='account-status';status.textContent='Preparing photo…';
+      try{
+        const dataUrl=await resizeImage(file);
+        const response=await fetch('/api/profile/photo',{
+          method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({picture:dataUrl})
+        });
+        const data=await response.json();
+        if(!response.ok) throw new Error(data.error||'Unable to save photo.');
+        currentPicture=data.user?.picture||dataUrl;
+        const avatar=document.getElementById('accountAvatar');
+        avatar.innerHTML=`<img id="profileAvatarImage" src="${escapeAttr(currentPicture)}" alt="Profile picture">`;
+        status.className='account-status success';
+        status.textContent='Profile photo updated.';
+      }catch(error){
+        status.className='account-status error';
+        status.textContent=error.message||'Unable to save photo.';
+      }finally{
+        event.target.value='';
+      }
+    }
+
+    function resizeImage(file){
+      return new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onerror=()=>reject(new Error('Unable to read the image.'));
+        reader.onload=()=>{
+          const img=new Image();
+          img.onerror=()=>reject(new Error('Invalid image file.'));
+          img.onload=()=>{
+            const max=512, scale=Math.min(1,max/Math.max(img.width,img.height));
+            const canvas=document.createElement('canvas');
+            canvas.width=Math.max(1,Math.round(img.width*scale));
+            canvas.height=Math.max(1,Math.round(img.height*scale));
+            canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+            resolve(canvas.toDataURL('image/webp',.82));
+          };
+          img.src=reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    loadProfile();
   </script>
 </body>
 </html>

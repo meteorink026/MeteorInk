@@ -119,7 +119,7 @@ async function upsertGoogleUser(profile) {
       email: profile.email.toLowerCase(),
       name: existing.name || profile.name || "",
       surname: existing.surname || profile.surname || "",
-      picture: profile.picture || existing.picture || "",
+      picture: existing.picture || profile.picture || "",
       updated_at: new Date().toISOString()
     }
   });
@@ -148,7 +148,7 @@ function safeUser(user) {
   };
 }
 
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(session({
   store: new PgSession({
@@ -410,6 +410,35 @@ app.get("/api/me", async (req, res) => {
   } catch (err) {
     console.error("/api/me error:", err);
     res.status(500).json({ authenticated: false, user: null, error: "Unable to load account." });
+  }
+});
+
+
+app.post("/api/profile/photo", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+
+  const picture = String(req.body.picture || "").trim();
+  if (!/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/=\r\n]+$/.test(picture)) {
+    return res.status(400).json({ error: "Please provide a valid JPG, PNG or WebP image." });
+  }
+  if (picture.length > 1600000) {
+    return res.status(413).json({ error: "Profile photo is too large. Please choose a smaller image." });
+  }
+
+  try {
+    const user = await findUserById(req.session.userId);
+    if (!user) return res.status(404).json({ error: "Account not found." });
+
+    const rows = await supabaseRequest("users", {
+      method: "PATCH",
+      query: { id: `eq.${user.id}` },
+      body: { picture, updated_at: new Date().toISOString() }
+    });
+    const updatedUser = rows?.[0] || { ...user, picture };
+    res.json({ ok: true, user: safeUser(updatedUser) });
+  } catch (err) {
+    console.error("/api/profile/photo error:", err);
+    res.status(500).json({ error: "Unable to save profile photo." });
   }
 });
 
