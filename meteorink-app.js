@@ -159,6 +159,12 @@
     document.addEventListener('click',e=>{if(!box.contains(e.target))panel.hidden=true});
   }
 
+  function updateAuthorLinks(){
+    const isAuthor=currentUser?.role==='author';
+    document.querySelectorAll('a[href="author-dashboard.html"]').forEach(link=>{
+      link.style.display=isAuthor?'':'none';
+    });
+  }
   function writerLinks(){
     document.querySelectorAll('a[href="auth.html?next=writer"]').forEach(link=>link.addEventListener('click',e=>{
       e.preventDefault();
@@ -286,7 +292,7 @@
       document.documentElement.scrollTop=0;
       document.body.scrollTop=0;
     }
-    installHeader();installMobile();bindAuthActions();installSearch();writerLinks();logoBehavior();installSingleWindowViews();
+    installHeader();installMobile();updateAuthorLinks();bindAuthActions();installSearch();writerLinks();logoBehavior();installSingleWindowViews();
   handleOAuthDestination();
   });
 })();
