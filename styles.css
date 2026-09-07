@@ -2298,3 +2298,29 @@ footer.site-footer[hidden]{display:none!important;}
 .library-empty p{color:#9da8ba;font-size:12px;line-height:1.6;margin:0}
 @media(max-width:800px){.library-grid{grid-template-columns:1fr}}
 @media(max-width:620px){.library-page{padding:100px 12px 60px}.library-intro h1{font-size:40px}.library-section{padding:18px}.library-section-head{align-items:flex-start;flex-direction:column}.library-card{grid-template-columns:72px 1fr}.library-cover{width:72px;height:102px}.library-auth-actions{flex-direction:column}}
+
+/* My Library icon */
+.library-menu-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:24px;
+  height:24px;
+  margin-right:8px;
+  vertical-align:middle;
+  flex:none;
+}
+.library-menu-icon img{
+  display:block;
+  width:24px;
+  height:24px;
+  object-fit:contain;
+}
+.mobile-account .library-menu-icon{
+  width:26px;
+  height:26px;
+}
+.mobile-account .library-menu-icon img{
+  width:26px;
+  height:26px;
+}
