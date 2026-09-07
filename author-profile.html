@@ -1,11 +1,165 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>MeteorInk — Author</title><link rel="stylesheet" href="styles.css"><style>.profile-page{min-height:100vh;padding:130px 5vw 80px;background:#030711}.profile-shell{max-width:1050px;margin:auto}.profile-head{display:flex;gap:18px;align-items:center;background:rgba(7,14,25,.88);padding:25px;border:1px solid rgba(231,170,49,.2);border-radius:14px}.profile-avatar{width:90px;height:90px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#244463,#07101b);color:#e7aa31;font-size:32px;font-weight:900}.profile-head h1{font-family:var(--serif);margin:0 0 5px;font-size:42px}.profile-head p{margin:0;color:#9faabd}.profile-books{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}@media(max-width:800px){.profile-books{grid-template-columns:1fr 1fr}}@media(max-width:550px){.profile-books{grid-template-columns:1fr}.profile-head{align-items:flex-start;flex-direction:column}}</style>
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MWX483HZEH"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-MWX483HZEH');
-  </script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>MeteorInk — Author Profile</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .author-page{min-height:100vh;padding:118px 5vw 80px;background:#030711}
+    .author-shell{max-width:1180px;margin:auto}
+    .author-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+    .author-topbar h1{font-family:var(--serif);font-size:30px;margin:0}.author-topbar p{margin:4px 0 0;color:#8f9bad;font-size:12px}
+    .author-actions{display:flex;gap:9px;flex-wrap:wrap}.author-actions a,.author-actions button{text-decoration:none}
+    .author-workspace{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+    .profile-preview{overflow:hidden;background:#07101b;border:1px solid rgba(231,170,49,.2);border-radius:18px;box-shadow:0 22px 70px rgba(0,0,0,.3)}
+    .profile-cover{height:250px;background:linear-gradient(135deg,#0d1c31,#07101b 55%,#172d42);background-size:cover;background-position:center;position:relative}
+    .profile-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(3,7,17,.02),rgba(3,7,17,.55))}
+    .profile-content{padding:0 34px 34px}.profile-head{display:flex;gap:20px;align-items:flex-end;margin-top:-58px;position:relative;z-index:2}
+    .profile-avatar-wrap{position:relative;flex:0 0 auto}.profile-avatar{width:116px;height:116px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#0d1c31;border:4px solid #07101b;box-shadow:0 8px 28px rgba(0,0,0,.4);color:#e7aa31;font-size:34px;font-weight:800}.profile-avatar img{width:100%;height:100%;object-fit:cover}
+    .profile-identity{padding-bottom:9px}.profile-identity h2{font-family:var(--serif);font-size:31px;margin:0 0 4px}.profile-handle{color:#7f8a9b;font-size:11px}.profile-tagline{color:#d8bb7b;font-size:12px;margin-top:8px}
+    .profile-bio{margin:24px 0 20px;color:#aab4c3;font-size:13px;line-height:1.75;white-space:pre-wrap}
+    .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);padding:17px 0;margin-bottom:24px}.profile-stat{text-align:center}.profile-stat strong{display:block;color:#eef2f7;font-size:18px}.profile-stat span{color:#7f8a9b;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+    .profile-section-title{font-family:var(--serif);font-size:22px;margin:0 0 13px}.profile-links{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px}.profile-link{padding:7px 10px;border:1px solid rgba(255,255,255,.08);border-radius:999px;color:#b8c1ce;text-decoration:none;font-size:10px}.profile-link:hover{border-color:rgba(231,170,49,.35);color:#f4d38b}
+    .works-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.work-card{display:grid;grid-template-columns:72px 1fr;gap:12px;padding:11px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.02)}.work-cover{width:72px;height:94px;border-radius:7px;overflow:hidden;background:#101c2b;display:grid;place-items:center;color:#687587;font-size:9px;text-align:center}.work-cover img{width:100%;height:100%;object-fit:cover}.work-card h4{margin:3px 0 5px;font-size:13px}.work-card p{margin:0;color:#7f8a9b;font-size:10px;line-height:1.45}.empty-works{padding:24px;border:1px dashed rgba(255,255,255,.09);border-radius:11px;color:#7f8a9b;font-size:11px;text-align:center}
+    .editor-panel{position:sticky;top:105px;background:rgba(7,14,25,.94);border:1px solid rgba(231,170,49,.2);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.editor-panel h2{font-family:var(--serif);margin:0 0 5px;font-size:23px}.editor-panel>p{margin:0 0 18px;color:#7f8a9b;font-size:11px;line-height:1.5}
+    .editor-field{margin-bottom:15px}.editor-field label{display:block;color:#dfe5ee;font-size:11px;font-weight:600;margin-bottom:7px}.editor-field input,.editor-field textarea{width:100%;box-sizing:border-box;background:#07101c;color:#eef2f7;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 11px;font:inherit;font-size:12px;outline:none}.editor-field textarea{min-height:105px;resize:vertical;line-height:1.5}.editor-field input:focus,.editor-field textarea:focus{border-color:rgba(231,170,49,.5);box-shadow:0 0 0 3px rgba(231,170,49,.07)}
+    .editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.editor-checks{display:grid;gap:8px;margin:4px 0 16px}.editor-check{display:flex;gap:8px;align-items:center;color:#9da8ba;font-size:11px}.editor-check input{accent-color:#e7aa31}.editor-note{font-size:10px;color:#667386;line-height:1.45}.editor-status{min-height:16px;margin:9px 0 0;color:#d8bb7b;font-size:10px}.editor-status.error{color:#ef9a9a}.cover-upload{display:flex;align-items:center;gap:9px}.cover-upload input{flex:1}.cover-upload button{flex:0 0 auto}.hidden-file{display:none}
+    .photo-pencil{position:absolute;right:-2px;bottom:2px;width:31px;height:31px;border-radius:50%;border:1px solid rgba(231,170,49,.6);background:#101a28;color:#f4d38b;cursor:pointer;display:grid;place-items:center}
+    .author-readonly .editor-panel{display:none}.author-readonly .author-workspace{display:block}.author-readonly .profile-preview{max-width:900px;margin:auto}
+    @media(max-width:900px){.author-workspace{grid-template-columns:1fr}.editor-panel{position:static}.works-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:620px){.author-page{padding:95px 14px 55px}.author-topbar{align-items:flex-start;flex-direction:column}.profile-cover{height:190px}.profile-content{padding:0 18px 25px}.profile-head{align-items:flex-start;flex-direction:column;margin-top:-48px;gap:10px}.profile-avatar{width:96px;height:96px}.profile-identity h2{font-size:27px}.profile-stats{grid-template-columns:1fr 1fr 1fr}.works-grid{grid-template-columns:1fr}.editor-grid{grid-template-columns:1fr}.author-actions{width:100%}.author-actions>*{flex:1;text-align:center}}
+  </style>
+</head>
+<body>
+  <main class="author-page" id="authorPage">
+    <div class="author-shell">
+      <div class="author-topbar">
+        <div><div class="section-kicker">AUTHOR PROFILE</div><h1 id="pageHeading">Your Public Profile</h1><p id="pageSubheading">This is how readers will see you on MeteorInk.</p></div>
+        <div class="author-actions">
+          <a class="text-btn" href="author-dashboard.html">Back to Dashboard</a>
+          <button class="gold-btn" id="viewReaderBtn" type="button">View as Reader</button>
+        </div>
+      </div>
 
-</head><body><main class="profile-page"><div class="profile-shell" id="profileRoot"></div></main><script src="meteorink-data.js"></script><script>const id=new URLSearchParams(location.search).get('id'),a=(MeteorInkData.getCatalogAuthors?MeteorInkData.getCatalogAuthors():MeteorInkData.getAuthors()).find(x=>x.id===id),root=document.getElementById('profileRoot');if(!a){root.innerHTML='<section class="flow-card"><h1>Author not found</h1><a class="gold-btn" href="authors.html">Back to Authors</a></section>';}else{const ns=(MeteorInkData.getCatalogNovels?MeteorInkData.getCatalogNovels():MeteorInkData.getNovels()).filter(n=>n.authorId===a.id);root.innerHTML=`<section class="profile-head"><div class="profile-avatar">${(a.name||'?').charAt(0).toUpperCase()}</div><div><h1>${a.name}${MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(a.id,a.name)?`<img class="author-verified-badge" src="${MeteorInkData.verificationBadgeAsset(a.id,a.name)}" alt="Verified Author" title="Verified Author">`:''}</h1><p>${Number(a.followers||0).toLocaleString()} followers</p><p>${a.bio||'MeteorInk author.'}</p></div></section><section class="profile-books">${ns.length?ns.map(n=>`<a class="dynamic-story-card" href="novel.html?id=${encodeURIComponent(n.id)}"><div class="dynamic-cover">${n.cover?`<img src="${n.cover}" alt="">`:'✦'}</div><div class="dynamic-card-body"><h3>${n.title}</h3><p>${Number(n.views||0).toLocaleString()} views</p></div></a>`).join(''):'<section class="flow-card"><h2>No novels yet.</h2></section>'}</section>`;}</script><script src="meteorink-app.js"></script></body></html>
+      <div class="author-workspace">
+        <section class="profile-preview" aria-label="Public author profile">
+          <div class="profile-cover" id="profileCover"></div>
+          <div class="profile-content">
+            <div class="profile-head">
+              <div class="profile-avatar-wrap">
+                <div class="profile-avatar" id="profileAvatar">◉</div>
+                <button class="photo-pencil" id="profilePhotoButton" type="button" aria-label="Change profile photo">✎</button>
+              </div>
+              <div class="profile-identity">
+                <h2 id="profileName">Author</h2>
+                <div class="profile-handle" id="profileHandle">@author</div>
+                <div class="profile-tagline" id="profileTagline"></div>
+              </div>
+            </div>
+            <div class="profile-bio" id="profileBio"></div>
+            <div class="profile-stats">
+              <div class="profile-stat"><strong id="profileFollowers">0</strong><span>Followers</span></div>
+              <div class="profile-stat"><strong id="profileWorks">0</strong><span>Works</span></div>
+              <div class="profile-stat"><strong id="profileViews">0</strong><span>Views</span></div>
+            </div>
+            <div id="linksSection"><h3 class="profile-section-title">Find Me</h3><div class="profile-links" id="profileLinks"></div></div>
+            <div><h3 class="profile-section-title">Original Works</h3><div class="works-grid" id="worksGrid"></div></div>
+          </div>
+        </section>
+
+        <aside class="editor-panel" id="editorPanel">
+          <h2>Edit Profile</h2>
+          <p>Everything here is public. Your real name and date of birth remain private.</p>
+          <div class="editor-field"><label for="penName">Pen Name</label><input id="penName" maxlength="80"></div>
+          <div class="editor-field"><label for="tagline">Tagline</label><input id="tagline" maxlength="120" placeholder="A short line readers will remember"></div>
+          <div class="editor-field"><label for="bio">About You</label><textarea id="bio" maxlength="1200" placeholder="Tell readers about yourself and the stories you write."></textarea></div>
+          <div class="editor-field"><label>Social Links</label><div class="editor-grid"><input id="website" placeholder="Website"><input id="x" placeholder="X profile"><input id="instagram" placeholder="Instagram"><input id="telegram" placeholder="Telegram"></div></div>
+          <div class="editor-field"><label for="coverInput">Profile Banner</label><div class="cover-upload"><input id="coverUrl" placeholder="Image URL (optional)"><button class="text-btn" type="button" id="bannerUploadButton">Upload</button><input class="hidden-file" id="bannerInput" type="file" accept="image/jpeg,image/png,image/webp"></div><div class="editor-note">A wide image works best. It is compressed before being stored.</div></div>
+          <div class="editor-checks">
+            <label class="editor-check"><input id="showBio" type="checkbox"> Show bio on public profile</label>
+            <label class="editor-check"><input id="showLinks" type="checkbox"> Show social links</label>
+            <label class="editor-check"><input id="showStats" type="checkbox"> Show profile stats</label>
+          </div>
+          <button class="gold-btn" id="saveProfile" type="button" style="width:100%">Save Profile</button>
+          <div class="editor-status" id="editorStatus"></div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <input class="hidden-file" id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp">
+  <script src="meteorink-data.js"></script>
+  <script>
+    const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const session=MeteorInkData.getSession();
+    const params=new URLSearchParams(location.search);
+    const editMode=params.get('edit')==='1';
+    const requestedId=params.get('id')||localStorage.getItem('meteorink_author_id');
+    const allAuthors=MeteorInkData.getAuthors();
+    let author=allAuthors.find(a=>a.id===requestedId) || allAuthors.find(a=>a.userId===session?.id);
+    if(!author){location.href=editMode?'author-setup.html':'index.html';throw new Error('Author not found');}
+
+    const publicConfig=()=>({
+      tagline:author.tagline||'',banner:author.banner||'',website:author.website||'',x:author.x||'',instagram:author.instagram||'',telegram:author.telegram||'',
+      showBio:author.showBio!==false,showLinks:author.showLinks!==false,showStats:author.showStats!==false
+    });
+
+    function render(){
+      const cfg=publicConfig();
+      document.getElementById('profileName').textContent=author.name||'Author';
+      document.getElementById('profileHandle').textContent='@'+String(author.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+      document.getElementById('profileTagline').textContent=cfg.tagline;
+      document.getElementById('profileBio').textContent=author.bio||'This author has not added a biography yet.';
+      document.getElementById('profileBio').style.display=cfg.showBio?'block':'none';
+      document.getElementById('linksSection').style.display=cfg.showLinks?'block':'none';
+      document.querySelector('.profile-stats').style.display=cfg.showStats?'grid':'none';
+      document.getElementById('profileFollowers').textContent=Number(author.followers||0).toLocaleString();
+      const works=MeteorInkData.getNovels().filter(n=>n.authorId===author.id);
+      document.getElementById('profileWorks').textContent=works.length;
+      document.getElementById('profileViews').textContent=works.reduce((s,n)=>s+Number(n.views||0),0).toLocaleString();
+      document.getElementById('profileCover').style.backgroundImage=cfg.banner?`linear-gradient(180deg,rgba(3,7,17,.08),rgba(3,7,17,.6)),url("${cfg.banner.replace(/"/g,'')}" )`:'linear-gradient(135deg,#0d1c31,#07101b 55%,#172d42)';
+      const avatar=author.picture||window.__authorPicture||'';
+      document.getElementById('profileAvatar').innerHTML=avatar?`<img src="${esc(avatar)}" alt="${esc(author.name||'Author')}">`:'◉';
+      const links=[];[['Website',cfg.website],['X',cfg.x],['Instagram',cfg.instagram],['Telegram',cfg.telegram]].forEach(([label,url])=>{if(url)links.push(`<a class="profile-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`)});
+      document.getElementById('profileLinks').innerHTML=links.join('')||'<span style="color:#687587;font-size:11px">No public links added.</span>';
+      document.getElementById('worksGrid').innerHTML=works.length?works.map(n=>`<article class="work-card"><div class="work-cover">${n.cover?`<img src="${esc(n.cover)}" alt="">`:'No Cover'}</div><div><h4>${esc(n.title)}</h4><p>${esc(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views</p><p style="margin-top:7px">${esc(n.description||'')}</p></div></article>`).join(''):'<div class="empty-works" style="grid-column:1/-1">No published works yet.</div>';
+    }
+
+    async function syncPicture(){
+      try{const r=await fetch('/api/me',{credentials:'same-origin'});const d=await r.json();if(d.authenticated&&d.user?.picture){window.__authorPicture=d.user.picture;author.picture=d.user.picture;MeteorInkData.saveAuthor(author);render();}}catch{}
+    }
+
+    function populateEditor(){
+      document.getElementById('penName').value=author.name||'';document.getElementById('tagline').value=author.tagline||'';document.getElementById('bio').value=author.bio||'';
+      document.getElementById('website').value=author.website||'';document.getElementById('x').value=author.x||'';document.getElementById('instagram').value=author.instagram||'';document.getElementById('telegram').value=author.telegram||'';document.getElementById('coverUrl').value=author.banner&&/^https?:/i.test(author.banner)?author.banner:'';
+      document.getElementById('showBio').checked=author.showBio!==false;document.getElementById('showLinks').checked=author.showLinks!==false;document.getElementById('showStats').checked=author.showStats!==false;
+    }
+
+    function save(){
+      author={...author,name:document.getElementById('penName').value.trim(),tagline:document.getElementById('tagline').value.trim(),bio:document.getElementById('bio').value.trim(),website:document.getElementById('website').value.trim(),x:document.getElementById('x').value.trim(),instagram:document.getElementById('instagram').value.trim(),telegram:document.getElementById('telegram').value.trim(),banner:document.getElementById('coverUrl').value.trim()||author.banner||'',showBio:document.getElementById('showBio').checked,showLinks:document.getElementById('showLinks').checked,showStats:document.getElementById('showStats').checked};
+      MeteorInkData.saveAuthor(author);localStorage.setItem('meteorink_author_id',author.id||'');render();document.getElementById('editorStatus').textContent='Profile saved.';setTimeout(()=>document.getElementById('editorStatus').textContent='',1800);
+    }
+
+    document.getElementById('saveProfile').onclick=save;
+    document.getElementById('viewReaderBtn').onclick=()=>{location.href=`author-profile.html?id=${encodeURIComponent(author.id)}`};
+    document.getElementById('bannerUploadButton').onclick=()=>document.getElementById('bannerInput').click();
+    document.getElementById('bannerInput').onchange=e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{document.getElementById('coverUrl').value=reader.result;};reader.readAsDataURL(file);};
+
+    document.getElementById('profilePhotoButton').onclick=()=>document.getElementById('profilePhotoInput').click();
+    document.getElementById('profilePhotoInput').onchange=async e=>{
+      const file=e.target.files?.[0];if(!file)return;
+      if(file.size>2*1024*1024){document.getElementById('editorStatus').textContent='Profile photo must be under 2 MB.';return;}
+      const reader=new FileReader();reader.onload=async()=>{
+        try{const r=await fetch('/api/profile/photo',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({picture:reader.result})});const out=await r.json();if(!r.ok)throw new Error(out.error||'Unable to update photo.');author.picture=out.user?.picture||reader.result;MeteorInkData.saveAuthor(author);render();document.getElementById('editorStatus').textContent='Profile photo updated.';}catch(err){document.getElementById('editorStatus').textContent=err.message;document.getElementById('editorStatus').classList.add('error');}}
+      reader.readAsDataURL(file);
+    };
+
+    if(!editMode){document.body.classList.add('author-readonly');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
+    else {if(!session||session.id!==author.userId){location.href=`author-profile.html?id=${encodeURIComponent(author.id)}`;}populateEditor();}
+    render();
+    syncPicture();
+  </script>
+  <script src="meteorink-app.js"></script>
+</body>
+</html>
