@@ -388,69 +388,75 @@
 
   <script src="meteorink-data.js"></script>
   <script>
-    const session=MeteorInkData.getSession();
+    (async function(){
+      const session=MeteorInkData.getSession();
+      if(!session){ location.href='auth.html?next=writer'; return; }
 
-    if(!session){
-      location.href='auth.html?next=writer';
-    }
+      let author=null;
+      try{
+        const r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+        if(r.ok){ const d=await r.json(); author=d.author||null; }
+      }catch(err){ console.warn('[MeteorInk] Author API unavailable:',err); }
 
-    const author=MeteorInkData.getAuthors().find(
-      a=>a.userId===session?.id||a.id===localStorage.getItem('meteorink_author_id')
-    );
+      if(!author){
+        author=MeteorInkData.getAuthors().find(a=>a.userId===session?.id||a.id===localStorage.getItem('meteorink_author_id'))||null;
+      }
+      if(!author){ location.href='author-setup.html'; return; }
 
-    if(!author){
-      location.href='author-setup.html';
-    }
+      let serverNovels=[];
+      try{
+        const r=await fetch('/api/author/me/novels',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+        if(r.ok){ const d=await r.json(); serverNovels=Array.isArray(d.novels)?d.novels:[]; }
+      }catch(err){ console.warn('[MeteorInk] Novel API unavailable:',err); }
 
-    const novels=()=>MeteorInkData.getNovels().filter(n=>n.authorId===author.id);
+      // One-time bridge for novels created by older frontend-only versions.
+      // Their UUIDs are reused, so the same novel is not duplicated on the server.
+      const localNovels=MeteorInkData.getNovels().filter(n=>n.authorId===author.id || n.authorId===localStorage.getItem('meteorink_author_id'));
+      if(serverNovels.length===0 && localNovels.length){
+        for(const n of localNovels){
+          try{
+            const r=await fetch('/api/novels',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({id:n.id,title:n.title,genre:n.genre,description:n.description,cover:n.cover})});
+            if(r.ok){ const d=await r.json(); if(d.novel) serverNovels.push(d.novel); }
+          }catch(err){ console.warn('[MeteorInk] Could not sync legacy novel:',err); }
+        }
+      }
 
-    document.getElementById('welcome').textContent=`Welcome, ${author.name}`;
+      document.getElementById('welcome').textContent=`Welcome, ${author.name}`;
 
-    function render(){
-      const ns=novels();
+      function render(){
+        const ns=serverNovels;
+        document.getElementById('followerCount').textContent=Number(author.followers||0).toLocaleString();
+        document.getElementById('novelCount').textContent=ns.filter(n=>n.status==='published').length;
+        document.getElementById('viewCount').textContent=ns.reduce((s,n)=>s+Number(n.views||0),0).toLocaleString();
+        document.getElementById('publishedList').innerHTML=ns.length
+          ? ns.map(n=>`<article class="published-item"><div><h3>${String(n.title||'Untitled Novel').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</h3><p>${String(n.genre||'Uncategorized').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))} · ${Number(n.views||0).toLocaleString()} views · ${n.publishedAt?new Date(n.publishedAt).toLocaleDateString():''}</p></div></article>`).join('')
+          : '<div class="empty-state">No novels published yet.</div>';
+      }
 
-      document.getElementById('followerCount').textContent=
-        Number(author.followers||0).toLocaleString();
-
-      document.getElementById('novelCount').textContent=ns.length;
-
-      document.getElementById('viewCount').textContent=
-        ns.reduce((s,n)=>s+Number(n.views||0),0).toLocaleString();
-
-      document.getElementById('publishedList').innerHTML=ns.length
-        ? ns.slice().reverse().map(n=>`
-            <article class="published-item">
-              <div>
-                <h3>${n.title}</h3>
-                <p>${n.genre} · ${Number(n.views||0).toLocaleString()} views · ${new Date(n.publishedAt).toLocaleDateString()}</p>
-              </div>
-            </article>
-          `).join('')
-        : '<div class="empty-state">No novels published yet.</div>';
-    }
-
-    render();
-
-    document.getElementById('publishNovelForm').addEventListener('submit',e=>{
-      e.preventDefault();
-
-      MeteorInkData.publishNovel({
-        title:document.getElementById('novelTitle').value.trim(),
-        genre:document.getElementById('novelGenre').value.trim(),
-        description:document.getElementById('novelDescription').value.trim(),
-        cover:document.getElementById('novelCover').value.trim(),
-        authorId:author.id,
-        authorName:author.name
-      });
-
-      document.getElementById('publishStatus').textContent=
-        'Published. Homepage sections will update automatically.';
-
-      e.target.reset();
       render();
-    });
-  </script>
 
+      document.getElementById('publishNovelForm').addEventListener('submit',async e=>{
+        e.preventDefault();
+        const status=document.getElementById('publishStatus');
+        status.textContent='Publishing…';
+        const payload={
+          title:document.getElementById('novelTitle').value.trim(),
+          genre:document.getElementById('novelGenre').value.trim(),
+          description:document.getElementById('novelDescription').value.trim(),
+          cover:document.getElementById('novelCover').value.trim()
+        };
+        try{
+          const r=await fetch('/api/novels',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+          const d=await r.json();
+          if(!r.ok) throw new Error(d.error||'Unable to publish novel.');
+          if(d.novel){ serverNovels=[d.novel,...serverNovels.filter(n=>n.id!==d.novel.id)]; }
+          status.textContent='Published. The library will update automatically.';
+          e.target.reset();
+          render();
+        }catch(err){ status.textContent=err.message||'Unable to publish novel.'; }
+      });
+    })();
+  </script>
   <script src="meteorink-app.js"></script>
 </body>
 </html>

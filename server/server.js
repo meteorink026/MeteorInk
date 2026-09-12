@@ -616,6 +616,157 @@ app.patch("/api/author/me", async (req, res) => {
   }
 });
 
+
+function publicNovel(row, author) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    authorId: row.author_id,
+    authorName: author?.name || "Unknown Author",
+    authorUsername: author?.username || "",
+    authorPicture: author?.picture || "",
+    authorVerified: !!author?.verified,
+    title: row.title || "Untitled Novel",
+    description: row.description || "",
+    genre: row.genre || "Uncategorized",
+    genres: String(row.genre || "Uncategorized").split(",").map(x => x.trim()).filter(Boolean),
+    cover: row.cover || "",
+    status: row.status || "published",
+    views: Number(row.views || 0),
+    chapters: Number(row.chapter_count || 0),
+    publishedAt: row.published_at || row.created_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function loadNovelAuthors(rows) {
+  const ids = [...new Set((rows || []).map(r => r.author_id).filter(Boolean))];
+  if (!ids.length) return new Map();
+  const authors = await supabaseRequest("authors", {
+    query: {
+      select: "id,username,name,picture,verified",
+      id: `in.(${ids.join(",")})`,
+      limit: "1000"
+    }
+  });
+  return new Map((authors || []).map(a => [String(a.id), a]));
+}
+
+app.get("/api/novels", async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim().toLowerCase().slice(0, 100);
+    const authorId = String(req.query.authorId || "").trim();
+    const status = String(req.query.status || "published").trim().toLowerCase();
+    const allowedStatus = ["published", "draft", "archived"];
+    const rows = await supabaseRequest("novels", {
+      query: {
+        select: "id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at",
+        ...(authorId ? { author_id: `eq.${authorId}` } : {}),
+        ...(allowedStatus.includes(status) ? { status: `eq.${status}` } : { status: "eq.published" }),
+        order: "published_at.desc,created_at.desc",
+        limit: "1000"
+      }
+    });
+    const authors = await loadNovelAuthors(rows || []);
+    let novels = (rows || []).map(row => publicNovel(row, authors.get(String(row.author_id))));
+    if (q) novels = novels.filter(n => [n.title, n.description, n.genre, n.authorName, n.authorUsername].some(v => String(v || "").toLowerCase().includes(q)));
+    res.json({ novels });
+  } catch (err) {
+    console.error("/api/novels error:", err);
+    res.status(500).json({ novels: [], error: "Unable to load novels." });
+  }
+});
+
+app.get("/api/novels/:id", async (req, res) => {
+  try {
+    const id = String(req.params.id || "").trim();
+    const rows = await supabaseRequest("novels", {
+      query: {
+        select: "id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at",
+        id: `eq.${id}`,
+        status: "eq.published",
+        limit: "1"
+      }
+    });
+    const row = rows?.[0];
+    if (!row) return res.status(404).json({ error: "Novel not found." });
+    const authors = await loadNovelAuthors([row]);
+    res.json({ novel: publicNovel(row, authors.get(String(row.author_id))) });
+  } catch (err) {
+    console.error("/api/novels/:id error:", err);
+    res.status(404).json({ error: "Novel not found." });
+  }
+});
+
+app.post("/api/novels", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  try {
+    const authors = await supabaseRequest("authors", {
+      query: { select: "id,username,name,picture,verified", user_id: `eq.${req.session.userId}`, limit: "1" }
+    });
+    const author = authors?.[0];
+    if (!author) return res.status(403).json({ error: "Create your author profile first." });
+
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const genre = String(req.body.genre || "Uncategorized").trim() || "Uncategorized";
+    const cover = String(req.body.cover || "").trim();
+    const clientId = String(req.body.id || "").trim();
+    if (!title || title.length > 160) return res.status(400).json({ error: "Please provide a valid novel title." });
+    if (description.length > 5000) return res.status(400).json({ error: "Novel description is too long." });
+    if (genre.length > 500) return res.status(400).json({ error: "Genre selection is too long." });
+    if (cover.length > 7000000) return res.status(413).json({ error: "Novel cover is too large." });
+
+    if (clientId) {
+      const existing = await supabaseRequest("novels", { query: { select: "*", id: `eq.${clientId}`, limit: "1" } });
+      if (existing?.[0]) {
+        if (existing[0].author_id !== author.id) return res.status(409).json({ error: "Novel ID already belongs to another author." });
+        const updated = await supabaseRequest("novels", {
+          method: "PATCH",
+          query: { id: `eq.${clientId}`, author_id: `eq.${author.id}` },
+          body: { title, description, genre, cover, status: "published", published_at: existing[0].published_at || new Date().toISOString(), updated_at: new Date().toISOString() }
+        });
+        return res.json({ ok: true, novel: publicNovel(updated?.[0] || { ...existing[0], title, description, genre, cover, status: "published" }, author) });
+      }
+    }
+
+    const rows = await supabaseRequest("novels", {
+      method: "POST",
+      body: {
+        ...(clientId ? { id: clientId } : {}),
+        author_id: author.id,
+        title,
+        description,
+        genre,
+        cover,
+        status: "published",
+        published_at: new Date().toISOString()
+      }
+    });
+    res.status(201).json({ ok: true, novel: publicNovel(rows?.[0], author) });
+  } catch (err) {
+    console.error("/api/novels POST error:", err);
+    res.status(500).json({ error: "Unable to publish novel." });
+  }
+});
+
+app.get("/api/author/me/novels", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  try {
+    const authors = await supabaseRequest("authors", { query: { select: "id,username,name,picture,verified", user_id: `eq.${req.session.userId}`, limit: "1" } });
+    const author = authors?.[0];
+    if (!author) return res.status(404).json({ novels: [], error: "Author profile not found." });
+    const rows = await supabaseRequest("novels", {
+      query: { select: "id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at", author_id: `eq.${author.id}`, order: "created_at.desc", limit: "1000" }
+    });
+    res.json({ novels: (rows || []).map(row => publicNovel(row, author)) });
+  } catch (err) {
+    console.error("/api/author/me/novels error:", err);
+    res.status(500).json({ novels: [], error: "Unable to load your novels." });
+  }
+});
+
 app.get("/health", async (_req, res) => {
   try {
     await supabaseRequest("users", { query: { select: "id", limit: "1" } });

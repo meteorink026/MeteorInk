@@ -32,7 +32,7 @@
       </div>
       <div class="novel-showcase-body">
         <h3 class="novel-showcase-title">${esc(n.title||'Untitled Novel')}</h3>
-        <p class="novel-showcase-author">${esc(n.authorName||'Unknown Author')}${MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName)?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p>
+        <p class="novel-showcase-author">${esc(n.authorName||'Unknown Author')}${n.authorVerified|| (MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName))?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p>
         <p class="novel-showcase-desc">${esc(n.description||'A new story awaits.')}</p>
         <div class="novel-showcase-tags">${visibleTags.map(g=>`<span class="novel-showcase-tag">${esc(g)}</span>`).join('')}${more?`<span class="novel-showcase-tag more">+${more}</span>`:''}</div>
         <div class="novel-showcase-stats"><div class="novel-showcase-stat"><strong>${Number(n.chapters||0).toLocaleString()}</strong><span>Chapters</span></div><div class="novel-showcase-stat"><strong>${Number(metric??n.views??0).toLocaleString()}</strong><span>Views</span></div><div class="novel-showcase-stat"><strong>${Number(n.rating||0).toFixed(1)}</strong><span>Rating</span></div></div>
@@ -55,6 +55,26 @@
       ${rank?`<div class="author-rank-mini"><strong>#${rank}</strong></div>`:''}
     </article>`;
   }
+  let serverNovelsCache=null;
+  let serverNovelsPromise=null;
+  async function getServerNovels(){
+    if(Array.isArray(serverNovelsCache))return serverNovelsCache;
+    if(serverNovelsPromise)return serverNovelsPromise;
+    serverNovelsPromise=fetch('/api/novels?limit=1000',{headers:{Accept:'application/json'},cache:'no-store'})
+      .then(r=>r.ok?r.json():Promise.reject(new Error(`Novel API returned ${r.status}`)))
+      .then(payload=>{
+        if(!Array.isArray(payload?.novels))throw new Error(payload?.error||'Invalid novel API response');
+        serverNovelsCache=payload.novels;
+        return serverNovelsCache;
+      })
+      .catch(err=>{
+        console.error('[MeteorInk] Failed to load server novels:',err);
+        serverNovelsCache=[];
+        return serverNovelsCache;
+      });
+    return serverNovelsPromise;
+  }
+
   let serverAuthorsCache=null;
   let serverAuthorsPromise=null;
   async function getServerAuthors(){
@@ -82,14 +102,17 @@
       card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
     });
   }
-  function renderTrending(period='today'){
+  async function renderTrending(period='today'){
     const host=qs('#emptyLibrary');if(!host||!window.MeteorInkData)return;
-    const baseNovels=MeteorInkData.getCatalogNovels?MeteorInkData.getCatalogNovels():MeteorInkData.getNovels(); const windows={today:86400000,'7days':7*86400000,month:30*86400000}; const ms=windows[period]||windows.today; const all=baseNovels.map(n=>({...n,rankingViews:Array.isArray(n.viewEvents)?n.viewEvents.filter(t=>Date.now()-new Date(t).getTime()<=ms).length:Number(n.views||0)})).sort((a,b)=>b.rankingViews-a.rankingViews);const per=6;const total=Math.max(1,Math.ceil(all.length/per));pageState.trending=Math.min(pageState.trending,total);
-    const items=all.slice((pageState.trending-1)*per,pageState.trending*per);let grid=document.getElementById('dynamicTrendingGrid');
+    let grid=document.getElementById('dynamicTrendingGrid');
     if(!grid){grid=document.createElement('div');grid.id='dynamicTrendingGrid';grid.className='dynamic-content-grid';host.parentNode.insertBefore(grid,host);}
+    host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';grid.innerHTML='<div class="author-loading-state">Loading novels…</div>';
+    const all=(await getServerNovels()).slice().sort((a,b)=>Number(b.views||0)-Number(a.views||0)||new Date(b.publishedAt||0)-new Date(a.publishedAt||0));
+    const per=6,total=Math.max(1,Math.ceil(all.length/per));pageState.trending=Math.min(pageState.trending,total);
+    const items=all.slice((pageState.trending-1)*per,pageState.trending*per);
     if(!all.length){grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';document.getElementById('dynamicTrendingGridPagination')?.remove();return;}
-    host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';
-    host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';grid.innerHTML=items.map(n=>novelCard(n,n.rankingViews)).join('');mountPager('dynamicTrendingGrid',total,pageState.trending,'trending',()=>renderTrending(period));
+    grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
+    mountPager('dynamicTrendingGrid',total,pageState.trending,'trending',()=>renderTrending(period));
   }
   async function renderAuthors(period='7days'){
     const host=qs('.top-authors-empty');if(!host||!window.MeteorInkData)return;
@@ -113,12 +136,17 @@
     grid.innerHTML=items.map((a,i)=>authorCard(a,i+1)).join('');
     bindAuthorCards(grid);
   }
-  function renderLatest(){
+  async function renderLatest(){
     const host=qs('.latest-arrivals-empty');if(!host||!window.MeteorInkData)return;
-    const all=(MeteorInkData.getCatalogNovels?MeteorInkData.getCatalogNovels():MeteorInkData.latest()).slice().sort((a,b)=>new Date(b.publishedAt||0)-new Date(a.publishedAt||0));const per=4;const total=Math.max(1,Math.ceil(all.length/per));pageState.latest=Math.min(pageState.latest,total);
-    const items=all.slice((pageState.latest-1)*per,pageState.latest*per);let grid=document.getElementById('dynamicLatestGrid');
+    let grid=document.getElementById('dynamicLatestGrid');
     if(!grid){grid=document.createElement('div');grid.id='dynamicLatestGrid';grid.className='dynamic-content-grid latest-grid';host.parentNode.insertBefore(grid,host);}
-    if(!all.length){grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';document.getElementById('dynamicLatestGridPagination')?.remove();return;}host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');mountPager('dynamicLatestGrid',total,pageState.latest,'latest',renderLatest);
+    host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';grid.innerHTML='<div class="author-loading-state">Loading novels…</div>';
+    const all=(await getServerNovels()).slice().sort((a,b)=>new Date(b.publishedAt||0)-new Date(a.publishedAt||0));
+    const per=4,total=Math.max(1,Math.ceil(all.length/per));pageState.latest=Math.min(pageState.latest,total);
+    const items=all.slice((pageState.latest-1)*per,pageState.latest*per);
+    if(!all.length){grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';document.getElementById('dynamicLatestGridPagination')?.remove();return;}
+    grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
+    mountPager('dynamicLatestGrid',total,pageState.latest,'latest',renderLatest);
   }
 
 
@@ -127,7 +155,7 @@
     return n.isFanFic===true || String(n.type||'').toLowerCase()==='fanfic' || /fan[- ]?fic|fan fiction/.test(genre);
   }
 
-  function renderRandomNovels(){
+  async function renderRandomNovels(){
     const panel=qs('#random-novels'),empty=qs('#randomNovelsEmpty'),grid=qs('#randomNovelsGrid');
     if(!panel||!empty||!grid||!window.MeteorInkData)return;
     const session=MeteorInkData.getSession?.();
@@ -139,7 +167,7 @@
     }
     panel.hidden=false;
     panel.style.display='';
-    const catalog=MeteorInkData.getCatalogNovels?MeteorInkData.getCatalogNovels():[];
+    const catalog=await getServerNovels();
     const items=catalog.slice().sort(()=>Math.random()-0.5).slice(0,4);
     if(!items.length){
       empty.hidden=false;
@@ -156,12 +184,12 @@
     grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
   }
 
-  function renderFanFic(sort='popular'){
+  async function renderFanFic(sort='popular'){
     const box=qs('#fan-fic-novels .fanfic-definition');
     const empty=qs('#fanficEmptyState');
     const grid=qs('#fanficGrid');
     if(!box||!empty||!grid||!window.MeteorInkData)return;
-    let items=MeteorInkData.getNovels().filter(isFanFic);
+    let items=(await getServerNovels()).filter(isFanFic);
     if(sort==='latest'){
       items.sort((a,b)=>new Date(b.publishedAt||0)-new Date(a.publishedAt||0));
     }else{
