@@ -29,8 +29,16 @@ alter table public.users add column if not exists author_real_name text;
 create table if not exists public.authors (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null unique references public.users(id) on delete cascade,
+  username text unique,
   name text not null,
+  tagline text not null default '',
   bio text not null default '',
+  picture text not null default '',
+  banner text not null default '',
+  external_links jsonb not null default '[]'::jsonb,
+  show_bio boolean not null default true,
+  show_links boolean not null default true,
+  show_stats boolean not null default true,
   followers bigint not null default 0 check (followers >= 0),
   verified boolean not null default false,
   profile_created_at timestamptz not null default now(),
@@ -39,6 +47,7 @@ create table if not exists public.authors (
 );
 
 create index if not exists authors_name_idx on public.authors (lower(name));
+create index if not exists authors_username_idx on public.authors (lower(username));
 
 create table if not exists public.novels (
   id uuid primary key default gen_random_uuid(),

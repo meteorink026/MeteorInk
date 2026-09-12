@@ -98,6 +98,10 @@
           <label for="authorPenName">Pen Name</label>
           <input id="authorPenName" type="text" autocomplete="nickname" maxlength="80" required>
 
+          <label for="authorUsername">User ID</label>
+          <input id="authorUsername" type="text" autocomplete="username" maxlength="30" placeholder="unique_username" required>
+          <p class="private-note">Public @UserID. Use 3–30 lowercase letters, numbers, or underscores. It must be unique.</p>
+
           <label for="authorBio">Author's Bio</label>
           <textarea id="authorBio" rows="5" maxlength="1200" placeholder="Tell readers about yourself as a writer..."></textarea>
 
@@ -117,6 +121,9 @@
     const dob=document.getElementById('authorDob');
     const penName=document.getElementById('authorPenName');
     const bio=document.getElementById('authorBio');
+    const username=document.getElementById('authorUsername');
+    penName.addEventListener('input',()=>{ if(!username.dataset.edited) username.value=penName.value.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,30); });
+    username.addEventListener('input',()=>{ username.dataset.edited='1'; username.value=username.value.replace(/^@+/,'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,30); });
 
     const today=new Date();
     dob.max=new Date(today.getFullYear(),today.getMonth(),today.getDate()).toISOString().slice(0,10);
@@ -145,6 +152,7 @@
             realName:realName.value.trim(),
             dob:dob.value,
             penName:penName.value.trim(),
+            username:username.value.trim(),
             bio:bio.value.trim()
           })
         });

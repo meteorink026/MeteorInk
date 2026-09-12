@@ -108,20 +108,38 @@
     const session=MeteorInkData.getSession();
     const params=new URLSearchParams(location.search);
     const editMode=params.get('edit')==='1';
-    const requestedId=params.get('id')||localStorage.getItem('meteorink_author_id');
-    const allAuthors=MeteorInkData.getAuthors();
-    let author=allAuthors.find(a=>a.id===requestedId) || allAuthors.find(a=>a.userId===session?.id);
-    if(!author){location.href=editMode?'author-setup.html':'index.html';throw new Error('Author not found');}
+    const requestedId=params.get('id')||'';
+    let author=null;
+
+    const localFallback=()=>{
+      const all=MeteorInkData.getAuthors();
+      return all.find(a=>a.id===requestedId)||all.find(a=>a.userId===session?.id)||null;
+    };
+
+    async function loadAuthor(){
+      try{
+        const url=editMode?'/api/author/me':(requestedId?'/api/authors/'+encodeURIComponent(requestedId):'');
+        if(!url) throw new Error('Author profile not found.');
+        const r=await fetch(url,{credentials:'same-origin'});
+        const out=await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(out.error||'Unable to load author profile.');
+        author=out.author;
+      }catch(err){
+        author=localFallback();
+        if(!author) throw err;
+      }
+      if(author) MeteorInkData.saveAuthor(author);
+    }
 
     const publicConfig=()=>({
-      tagline:author.tagline||'',banner:author.banner||'',links:Array.isArray(author.links)?author.links:[],x:author.x||'',instagram:author.instagram||'',
+      tagline:author.tagline||'',banner:author.banner||'',links:Array.isArray(author.links)?author.links:[],
       showBio:author.showBio!==false,showLinks:author.showLinks!==false,showStats:author.showStats!==false
     });
 
     function render(){
       const cfg=publicConfig();
       document.getElementById('profileName').textContent=author.name||'Author';
-      document.getElementById('profileHandle').textContent='@'+(author.username||String(author.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));
+      document.getElementById('profileHandle').textContent='@'+(author.username||'author');
       document.getElementById('profileTagline').textContent=cfg.tagline;
       document.getElementById('profileBio').textContent=author.bio||'This author has not added a biography yet.';
       document.getElementById('profileBio').style.display=cfg.showBio?'block':'none';
@@ -130,125 +148,83 @@
       document.getElementById('profileFollowers').textContent=Number(author.followers||0).toLocaleString();
       const works=MeteorInkData.getNovels().filter(n=>n.authorId===author.id);
       document.getElementById('profileWorks').textContent=works.length;
-      document.getElementById('profileViews').textContent=works.reduce((s,n)=>s+Number(n.views||0),0).toLocaleString();
-      document.getElementById('profileCover').style.backgroundImage=cfg.banner?`linear-gradient(180deg,rgba(3,7,17,.08),rgba(3,7,17,.6)),url("${cfg.banner.replace(/"/g,'')}" )`:'linear-gradient(135deg,#0d1c31,#07101b 55%,#172d42)';
-      const avatar=author.picture||window.__authorPicture||'';
+      document.getElementById('profileViews').textContent=works.reduce((sum,n)=>sum+Number(n.views||0),0).toLocaleString();
+      const banner=cfg.banner;
+      document.getElementById('profileCover').style.backgroundImage=banner?`linear-gradient(180deg,rgba(3,7,17,.08),rgba(3,7,17,.6)),url("${banner.replace(/"/g,'')}" )`:'linear-gradient(135deg,#0d1c31,#07101b 55%,#172d42)';
+      const avatar=author.picture||'';
       document.getElementById('profileAvatar').innerHTML=avatar?`<img src="${esc(avatar)}" alt="${esc(author.name||'Author')}">`:'◉';
-      const links=[];cfg.links.forEach(item=>{if(item&&item.url)links.push(`<a class="profile-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.label||'External Link')}</a>`)});
+      const links=cfg.links.filter(x=>x&&x.url).map(x=>`<a class="profile-link" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.label||'External Link')}</a>`);
       document.getElementById('profileLinks').innerHTML=links.join('')||'<span style="color:#687587;font-size:11px">No public links added.</span>';
       document.getElementById('worksGrid').innerHTML=works.length?works.map(n=>`<article class="work-card"><div class="work-cover">${n.cover?`<img src="${esc(n.cover)}" alt="">`:'No Cover'}</div><div><h4>${esc(n.title)}</h4><p>${esc(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views</p><p style="margin-top:7px">${esc(n.description||'')}</p></div></article>`).join(''):'<div class="empty-works" style="grid-column:1/-1">No published works yet.</div>';
     }
 
-    async function syncPicture(){
-      if(author.customPicture||author.picture) return;
-      try{const r=await fetch('/api/me',{credentials:'same-origin'});const d=await r.json();if(d.authenticated&&d.user?.picture){window.__authorPicture=d.user.picture;author.picture=d.user.picture;MeteorInkData.saveAuthor(author);render();}}catch{}
-    }
-
     function populateEditor(){
-      document.getElementById('penName').value=author.name||'';document.getElementById('userHandle').value=author.username||String(author.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');document.getElementById('tagline').value=author.tagline||'';document.getElementById('bio').value=author.bio||'';
+      document.getElementById('penName').value=author.name||'';
+      document.getElementById('userHandle').value=author.username||'';
+      document.getElementById('tagline').value=author.tagline||'';
+      document.getElementById('bio').value=author.bio||'';
       renderExternalLinks();
-      document.getElementById('showBio').checked=author.showBio!==false;document.getElementById('showLinks').checked=author.showLinks!==false;document.getElementById('showStats').checked=author.showStats!==false;
+      document.getElementById('showBio').checked=author.showBio!==false;
+      document.getElementById('showLinks').checked=author.showLinks!==false;
+      document.getElementById('showStats').checked=author.showStats!==false;
+      updateBannerUploadUI(author.banner||'');
     }
 
     function normalizeUrl(value){let u=String(value||'').trim();if(u&&!/^https?:\/\//i.test(u))u='https://'+u;return u;}
-    function renderExternalLinks(){const host=document.getElementById('externalLinksList');host.innerHTML='';const links=Array.isArray(author.links)?author.links:[];const seed=links.length?links:[{label:'X',url:author.x||''},{label:'Instagram',url:author.instagram||''},{label:'Patreon',url:author.patreon||''}];(seed.length?seed:[{label:'X',url:''},{label:'Instagram',url:''},{label:'Patreon',url:''}]).forEach(addExternalLinkRow);}
-    function addExternalLinkRow(item={label:'',url:''}){const host=document.getElementById('externalLinksList');const row=document.createElement('div');row.className='external-link-row';row.innerHTML=`<input class="link-label" maxlength="30" placeholder="Name" value="${esc(item.label)}"><input class="link-url" type="url" placeholder="https://..." value="${esc(item.url)}"><button class="remove-link-btn" type="button" aria-label="Remove link">×</button>`;row.querySelector('.remove-link-btn').onclick=()=>{row.remove();};host.appendChild(row);}
+    function renderExternalLinks(){
+      const host=document.getElementById('externalLinksList');host.innerHTML='';
+      const links=Array.isArray(author.links)?author.links:[];
+      (links.length?links:[{label:'X',url:''},{label:'Instagram',url:''},{label:'Patreon',url:''}]).forEach(addExternalLinkRow);
+    }
+    function addExternalLinkRow(item={label:'',url:''}){
+      const host=document.getElementById('externalLinksList'),row=document.createElement('div');row.className='external-link-row';
+      row.innerHTML=`<input class="link-label" maxlength="30" placeholder="Name" value="${esc(item.label)}"><input class="link-url" type="url" placeholder="https://..." value="${esc(item.url)}"><button class="remove-link-btn" type="button" aria-label="Remove link">×</button>`;
+      row.querySelector('.remove-link-btn').onclick=()=>row.remove();host.appendChild(row);
+    }
     function collectExternalLinks(){return [...document.querySelectorAll('#externalLinksList .external-link-row')].map(row=>({label:row.querySelector('.link-label').value.trim()||'External Link',url:normalizeUrl(row.querySelector('.link-url').value)})).filter(x=>x.url);}
     document.getElementById('addExternalLink').onclick=()=>addExternalLinkRow();
 
-    function save(){
+    async function saveToServer(message='Profile saved.'){
       const username=document.getElementById('userHandle').value.trim().replace(/^@+/,'').toLowerCase();
-      if(!/^[a-z0-9_]{3,30}$/.test(username)){document.getElementById('editorStatus').textContent='User ID must be 3–30 characters using only letters, numbers and underscores.';document.getElementById('editorStatus').classList.add('error');return;}
-      const taken=MeteorInkData.getAuthors().some(a=>{if(a.id===author.id)return false;const existing=String(a.username||String(a.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));return existing.toLowerCase()===username;});
-      if(taken){document.getElementById('editorStatus').textContent='That User ID is already taken. Choose another one.';document.getElementById('editorStatus').classList.add('error');return;}
-      author={...author,
-        name:document.getElementById('penName').value.trim(),
-        username:username,
-        tagline:document.getElementById('tagline').value.trim(),
-        bio:document.getElementById('bio').value.trim(),
-        links:collectExternalLinks(),
-        showBio:document.getElementById('showBio').checked,
-        showLinks:document.getElementById('showLinks').checked,
-        showStats:document.getElementById('showStats').checked
-      };
-      try{
-        MeteorInkData.saveAuthor(author);
-        localStorage.setItem('meteorink_author_id',author.id||'');
-        render();
-        document.getElementById('editorStatus').textContent='Profile saved.';
-        document.getElementById('editorStatus').classList.remove('error');
-        setTimeout(()=>document.getElementById('editorStatus').textContent='',1800);
-      }catch(err){
-        document.getElementById('editorStatus').textContent='Unable to save profile. The selected images may be too large.';
-        document.getElementById('editorStatus').classList.add('error');
-      }
+      if(!/^[a-z0-9_]{3,30}$/.test(username)) throw new Error('User ID must be 3–30 characters using letters, numbers and underscores.');
+      const payload={name:document.getElementById('penName').value.trim(),username,tagline:document.getElementById('tagline').value.trim(),bio:document.getElementById('bio').value.trim(),links:collectExternalLinks(),picture:author.picture||'',banner:author.banner||'',showBio:document.getElementById('showBio').checked,showLinks:document.getElementById('showLinks').checked,showStats:document.getElementById('showStats').checked};
+      const r=await fetch('/api/author/me',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(payload)});
+      const out=await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(out.error||'Unable to save author profile.');
+      author=out.author;MeteorInkData.saveAuthor(author);localStorage.setItem('meteorink_author_id',author.id||'');render();populateEditor();
+      const status=document.getElementById('editorStatus');status.textContent=message;status.classList.remove('error');setTimeout(()=>status.textContent='',1800);
     }
 
-    document.getElementById('saveProfile').onclick=save;
+    document.getElementById('saveProfile').onclick=async()=>{try{await saveToServer();}catch(err){const s=document.getElementById('editorStatus');s.textContent=err.message;s.classList.add('error');}};
     document.getElementById('viewReaderBtn').onclick=()=>{location.href=`author-profile.html?id=${encodeURIComponent(author.id)}`};
-    function persistAuthor(message){
-      try{
-        MeteorInkData.saveAuthor(author);
-        localStorage.setItem('meteorink_author_id',author.id||'');
-        render();
-        document.getElementById('editorStatus').textContent=message;
-        document.getElementById('editorStatus').classList.remove('error');
-        setTimeout(()=>document.getElementById('editorStatus').textContent='',1800);
-        return true;
-      }catch(err){
-        document.getElementById('editorStatus').textContent='Unable to save. Please use a smaller image.';
-        document.getElementById('editorStatus').classList.add('error');
-        return false;
-      }
-    }
 
-    function compressImage(file,maxW,maxH,quality){
-      return new Promise((resolve,reject)=>{
-        const reader=new FileReader();
-        reader.onerror=()=>reject(new Error('Unable to read image.'));
-        reader.onload=()=>{
-          const img=new Image();
-          img.onload=()=>{
-            const scale=Math.min(1,maxW/img.naturalWidth,maxH/img.naturalHeight);
-            const canvas=document.createElement('canvas');
-            canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
-            canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
-            const ctx=canvas.getContext('2d');
-            ctx.drawImage(img,0,0,canvas.width,canvas.height);
-            resolve(canvas.toDataURL('image/jpeg',quality));
-          };
-          img.onerror=()=>reject(new Error('Invalid image.'));
-          img.src=reader.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
+    function persistLocalOnly(message){MeteorInkData.saveAuthor(author);localStorage.setItem('meteorink_author_id',author.id||'');render();const s=document.getElementById('editorStatus');s.textContent=message;s.classList.remove('error');setTimeout(()=>s.textContent='',1800);}
+    function compressImage(file,maxW,maxH,quality){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error('Unable to read image.'));reader.onload=()=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,maxW/img.naturalWidth,maxH/img.naturalHeight),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL('image/jpeg',quality));};img.onerror=()=>reject(new Error('Invalid image.'));img.src=reader.result;};reader.readAsDataURL(file);});}
 
     document.getElementById('bannerUploadButton').onclick=()=>document.getElementById('bannerInput').click();
-    document.getElementById('bannerRemoveButton').onclick=()=>{
-      author.banner='';
-      document.getElementById('bannerInput').value='';
-      updateBannerUploadUI('');
-      persistAuthor('Banner removed and saved.');
-    };
-    document.getElementById('bannerInput').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>8*1024*1024){document.getElementById('editorStatus').textContent='Banner image must be under 8 MB.';document.getElementById('editorStatus').classList.add('error');e.target.value='';return;}openCropper(file,'banner');};
+    document.getElementById('bannerRemoveButton').onclick=async()=>{author.banner='';updateBannerUploadUI('');try{await saveToServer('Banner removed and saved.');}catch(err){persistLocalOnly('Banner removed locally. Server save failed.');}};
+    document.getElementById('bannerInput').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>8*1024*1024){const s=document.getElementById('editorStatus');s.textContent='Banner image must be under 8 MB.';s.classList.add('error');return;}openCropper(file,'banner');};
     function updateBannerUploadUI(value,fileName=''){const preview=document.getElementById('bannerPreview'),img=document.getElementById('bannerPreviewImage'),name=document.getElementById('bannerFileName'),remove=document.getElementById('bannerRemoveButton');if(value){img.src=value;preview.style.display='block';remove.style.display='inline-flex';name.textContent=fileName||'Current banner image';}else{img.removeAttribute('src');preview.style.display='none';remove.style.display='none';name.textContent='Choose a JPG, PNG, or WebP image. A wide image works best.';}}
-
     document.getElementById('profilePhotoButton').onclick=()=>document.getElementById('profilePhotoInput').click();
-    document.getElementById('profilePhotoInput').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>8*1024*1024){document.getElementById('editorStatus').textContent='Profile photo must be under 8 MB.';document.getElementById('editorStatus').classList.add('error');e.target.value='';return;}openCropper(file,'photo');};
+    document.getElementById('profilePhotoInput').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>8*1024*1024){const s=document.getElementById('editorStatus');s.textContent='Profile photo must be under 8 MB.';s.classList.add('error');return;}openCropper(file,'photo');};
 
     let cropState=null;
-    function openCropper(file,type){const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{cropState={img,type,zoom:1,x:0,y:0,drag:false,lastX:0,lastY:0};document.getElementById('cropTitle').textContent=type==='photo'?'Crop Profile Photo':'Crop Profile Banner';document.getElementById('cropZoom').value='1';document.getElementById('cropOverlay').style.display='flex';drawCrop();};img.onerror=()=>{document.getElementById('editorStatus').textContent='Unable to open image.';document.getElementById('editorStatus').classList.add('error');};img.src=reader.result;};reader.readAsDataURL(file);}
-    function drawCrop(){if(!cropState)return;const canvas=document.getElementById('cropCanvas'),stage=document.getElementById('cropStage');const dpr=window.devicePixelRatio||1,w=stage.clientWidth,h=stage.clientHeight;canvas.width=w*dpr;canvas.height=h*dpr;const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const img=cropState.img;const aspect=cropState.type==='photo'?1:1400/600;let cw=w,ch=w/aspect;if(ch>h){ch=h;cw=h*aspect;}const scale=Math.max(cw/img.naturalWidth,ch/img.naturalHeight)*cropState.zoom;const iw=img.naturalWidth*scale,ih=img.naturalHeight*scale;const cx=w/2+cropState.x,cy=h/2+cropState.y;ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.fillStyle='rgba(0,0,0,.48)';ctx.fillRect(0,0,w,h);const rx=(w-cw)/2,ry=(h-ch)/2;ctx.save();ctx.beginPath();ctx.rect(rx,ry,cw,ch);ctx.clip();ctx.clearRect(rx,ry,cw,ch);ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.restore();ctx.strokeStyle='rgba(244,211,139,.9)';ctx.lineWidth=2;ctx.strokeRect(rx,ry,cw,ch);}
+    function openCropper(file,type){const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{cropState={img,type,zoom:1,x:0,y:0,drag:false,lastX:0,lastY:0};document.getElementById('cropTitle').textContent=type==='photo'?'Crop Profile Photo':'Crop Profile Banner';document.getElementById('cropZoom').value='1';document.getElementById('cropOverlay').style.display='flex';drawCrop();};img.onerror=()=>{const s=document.getElementById('editorStatus');s.textContent='Unable to open image.';s.classList.add('error');};img.src=reader.result;};reader.readAsDataURL(file);}
+    function drawCrop(){if(!cropState)return;const canvas=document.getElementById('cropCanvas'),stage=document.getElementById('cropStage'),dpr=window.devicePixelRatio||1,w=stage.clientWidth,h=stage.clientHeight;canvas.width=w*dpr;canvas.height=h*dpr;const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const img=cropState.img,aspect=cropState.type==='photo'?1:1400/600;let cw=w,ch=w/aspect;if(ch>h){ch=h;cw=h*aspect;}const scale=Math.max(cw/img.naturalWidth,ch/img.naturalHeight)*cropState.zoom,iw=img.naturalWidth*scale,ih=img.naturalHeight*scale,cx=w/2+cropState.x,cy=h/2+cropState.y;ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.fillStyle='rgba(0,0,0,.48)';ctx.fillRect(0,0,w,h);const rx=(w-cw)/2,ry=(h-ch)/2;ctx.save();ctx.beginPath();ctx.rect(rx,ry,cw,ch);ctx.clip();ctx.clearRect(rx,ry,cw,ch);ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.restore();ctx.strokeStyle='rgba(244,211,139,.9)';ctx.lineWidth=2;ctx.strokeRect(rx,ry,cw,ch);}
     document.getElementById('cropZoom').oninput=e=>{if(cropState){cropState.zoom=Number(e.target.value);drawCrop();}};
     const cropStage=document.getElementById('cropStage');cropStage.addEventListener('pointerdown',e=>{if(!cropState)return;cropState.drag=true;cropState.lastX=e.clientX;cropState.lastY=e.clientY;cropStage.setPointerCapture(e.pointerId);});cropStage.addEventListener('pointermove',e=>{if(!cropState?.drag)return;cropState.x+=e.clientX-cropState.lastX;cropState.y+=e.clientY-cropState.lastY;cropState.lastX=e.clientX;cropState.lastY=e.clientY;drawCrop();});cropStage.addEventListener('pointerup',()=>{if(cropState)cropState.drag=false;});cropStage.addEventListener('pointercancel',()=>{if(cropState)cropState.drag=false;});
     document.getElementById('cropCancel').onclick=()=>{document.getElementById('cropOverlay').style.display='none';cropState=null;document.getElementById('profilePhotoInput').value='';document.getElementById('bannerInput').value='';};
-    document.getElementById('cropApply').onclick=()=>{if(!cropState)return;const {img,type}=cropState;const stage=document.getElementById('cropStage'),canvas=document.createElement('canvas');const outW=type==='photo'?800:1400,outH=type==='photo'?800:600;canvas.width=outW;canvas.height=outH;const ctx=canvas.getContext('2d');const aspect=outW/outH;let cw=stage.clientWidth,ch=cw/aspect;if(ch>stage.clientHeight){ch=stage.clientHeight;cw=ch*aspect;}const scale=Math.max(cw/img.naturalWidth,ch/img.naturalHeight)*cropState.zoom;const iw=img.naturalWidth*scale,ih=img.naturalHeight*scale;const cx=stage.clientWidth/2+cropState.x,cy=stage.clientHeight/2+cropState.y;const sx=(cx-iw/2-(stage.clientWidth-cw)/2)/scale;const sy=(cy-ih/2-(stage.clientHeight-ch)/2)/scale;const sw=cw/scale,sh=ch/scale;ctx.drawImage(img,sx,sy,sw,sh,0,0,outW,outH);const data=canvas.toDataURL('image/jpeg',type==='photo'?.84:.8);if(type==='photo'){author.picture=data;author.customPicture=true;persistAuthor('Profile photo cropped and saved.');}else{author.banner=data;updateBannerUploadUI(data,'Cropped banner');persistAuthor('Banner cropped and saved.');}document.getElementById('cropOverlay').style.display='none';cropState=null;document.getElementById('profilePhotoInput').value='';document.getElementById('bannerInput').value='';};
+    document.getElementById('cropApply').onclick=async()=>{if(!cropState)return;const {img,type}=cropState,stage=document.getElementById('cropStage'),canvas=document.createElement('canvas'),outW=type==='photo'?800:1400,outH=type==='photo'?800:600;canvas.width=outW;canvas.height=outH;const ctx=canvas.getContext('2d'),aspect=outW/outH;let cw=stage.clientWidth,ch=cw/aspect;if(ch>stage.clientHeight){ch=stage.clientHeight;cw=ch*aspect;}const scale=Math.max(cw/img.naturalWidth,ch/img.naturalHeight)*cropState.zoom,iw=img.naturalWidth*scale,ih=img.naturalHeight*scale,cx=stage.clientWidth/2+cropState.x,cy=stage.clientHeight/2+cropState.y,sx=(cx-iw/2-(stage.clientWidth-cw)/2)/scale,sy=(cy-ih/2-(stage.clientHeight-ch)/2)/scale,sw=cw/scale,sh=ch/scale;ctx.drawImage(img,sx,sy,sw,sh,0,0,outW,outH);const data=canvas.toDataURL('image/jpeg',type==='photo'?.84:.8);if(type==='photo'){author.picture=data;author.customPicture=true;}else{author.banner=data;updateBannerUploadUI(data,'Cropped banner');}document.getElementById('cropOverlay').style.display='none';cropState=null;document.getElementById('profilePhotoInput').value='';document.getElementById('bannerInput').value='';render();try{await saveToServer(type==='photo'?'Profile photo cropped and saved.':'Banner cropped and saved.');}catch(err){persistLocalOnly(type==='photo'?'Profile photo saved locally. Server save failed.':'Banner saved locally. Server save failed.');}};
 
-    if(!editMode){document.body.classList.add('author-readonly');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
-    else {if(!session||session.id!==author.userId){location.href=`author-profile.html?id=${encodeURIComponent(author.id)}`;}populateEditor();updateBannerUploadUI(author.banner||'');}
-    render();
-    syncPicture();
+    (async()=>{
+      try{
+        await loadAuthor();
+        if(!author) throw new Error('Author profile not found.');
+        if(!editMode){document.body.classList.add('author-readonly');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.getElementById('profilePhotoButton').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
+        else {if(!session){location.href='auth.html?next=writer';return;}populateEditor();}
+        render();
+      }catch(err){document.getElementById('pageHeading').textContent='Author Profile';document.getElementById('pageSubheading').textContent=err.message||'Unable to load this profile.';document.getElementById('editorPanel').style.display='none';}
+    })();
   </script>
   <script src="meteorink-app.js"></script>
 </body>

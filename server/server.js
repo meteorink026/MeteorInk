@@ -148,7 +148,7 @@ function safeUser(user) {
   };
 }
 
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "8mb" }));
 app.use(express.urlencoded({ extended: false }));
 
 // Baseline security headers. The app currently relies on inline scripts and
@@ -492,6 +492,130 @@ app.post("/api/google/complete-profile", async (req, res) => {
   res.json({ ok: true, user: safeUser(updatedUser), next: safeNext(req.body.next) });
 });
 
+// Public author directory/profile API. Public fields only.
+function publicAuthor(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    userId: row.user_id,
+    username: row.username || "",
+    name: row.name || "",
+    tagline: row.tagline || "",
+    bio: row.bio || "",
+    picture: row.picture || "",
+    banner: row.banner || "",
+    links: Array.isArray(row.external_links) ? row.external_links : [],
+    followers: Number(row.followers || 0),
+    verified: !!row.verified,
+    profileCreatedAt: row.profile_created_at || row.created_at,
+    updatedAt: row.updated_at || row.created_at,
+    showBio: row.show_bio !== false,
+    showLinks: row.show_links !== false,
+    showStats: row.show_stats !== false
+  };
+}
+
+app.get("/api/authors", async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim().toLowerCase().slice(0, 80);
+    const rows = await supabaseRequest("authors", {
+      query: { select: "id,user_id,username,name,tagline,bio,picture,banner,external_links,followers,verified,profile_created_at,created_at,updated_at", order: "created_at.desc", limit: "1000" }
+    });
+    const filtered = (rows || []).filter(row => !q || [row.username, row.name, row.tagline, row.bio].some(v => String(v || "").toLowerCase().includes(q)));
+    res.json({ authors: filtered.map(publicAuthor) });
+  } catch (err) {
+    console.error("/api/authors error:", err);
+    res.status(500).json({ authors: [], error: "Unable to load authors." });
+  }
+});
+
+app.get("/api/authors/:id", async (req, res) => {
+  try {
+    const id = String(req.params.id || "").trim();
+    const rows = await supabaseRequest("authors", {
+      query: { select: "id,user_id,username,name,tagline,bio,picture,banner,external_links,followers,verified,profile_created_at,created_at,updated_at", id: `eq.${id}`, limit: "1" }
+    });
+    const author = publicAuthor(rows?.[0]);
+    if (!author) return res.status(404).json({ error: "Author not found." });
+    res.json({ author });
+  } catch (err) {
+    console.error("/api/authors/:id error:", err);
+    res.status(404).json({ error: "Author not found." });
+  }
+});
+
+app.get("/api/authors/by-username/:username", async (req, res) => {
+  try {
+    const username = String(req.params.username || "").trim().toLowerCase();
+    const rows = await supabaseRequest("authors", {
+      query: { select: "id,user_id,username,name,tagline,bio,picture,banner,external_links,followers,verified,profile_created_at,created_at,updated_at", username: `eq.${username}`, limit: "1" }
+    });
+    const author = publicAuthor(rows?.[0]);
+    if (!author) return res.status(404).json({ error: "Author not found." });
+    res.json({ author });
+  } catch (err) {
+    console.error("/api/authors/by-username error:", err);
+    res.status(404).json({ error: "Author not found." });
+  }
+});
+
+app.get("/api/author/me", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  try {
+    const rows = await supabaseRequest("authors", {
+      query: { select: "*", user_id: `eq.${req.session.userId}`, limit: "1" }
+    });
+    const author = publicAuthor(rows?.[0]);
+    if (!author) return res.status(404).json({ error: "Author profile not found." });
+    res.json({ author });
+  } catch (err) {
+    console.error("/api/author/me error:", err);
+    res.status(500).json({ error: "Unable to load author profile." });
+  }
+});
+
+app.patch("/api/author/me", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  const username = String(req.body.username || "").trim().replace(/^@+/, "").toLowerCase();
+  const name = String(req.body.name || "").trim();
+  const tagline = String(req.body.tagline || "").trim();
+  const bio = String(req.body.bio || "").trim();
+  const picture = String(req.body.picture || "").trim();
+  const banner = String(req.body.banner || "").trim();
+  const links = Array.isArray(req.body.links) ? req.body.links : [];
+  const showBio = req.body.showBio !== false;
+  const showLinks = req.body.showLinks !== false;
+  const showStats = req.body.showStats !== false;
+
+  if (!/^[a-z0-9_]{3,30}$/.test(username)) return res.status(400).json({ error: "User ID must be 3–30 characters using letters, numbers and underscores." });
+  if (!name || name.length > 80) return res.status(400).json({ error: "Please provide a valid pen name." });
+  if (tagline.length > 120 || bio.length > 1200) return res.status(400).json({ error: "Profile text is too long." });
+  if (links.length > 30) return res.status(400).json({ error: "You can add up to 30 external links." });
+  for (const link of links) {
+    if (!link || String(link.url || "").length > 1000 || !/^https?:\/\//i.test(String(link.url || ""))) return res.status(400).json({ error: "Each external link must use http:// or https://." });
+  }
+  if (picture && picture.length > 3000000) return res.status(413).json({ error: "Profile photo is too large." });
+  if (banner && banner.length > 5000000) return res.status(413).json({ error: "Profile banner is too large." });
+
+  try {
+    const existing = await supabaseRequest("authors", { query: { select: "*", user_id: `eq.${req.session.userId}`, limit: "1" } });
+    const current = existing?.[0];
+    if (!current) return res.status(404).json({ error: "Author profile not found." });
+    const conflict = await supabaseRequest("authors", { query: { select: "id,user_id", username: `eq.${username}`, limit: "1" } });
+    if (conflict?.[0] && conflict[0].id !== current.id) return res.status(409).json({ error: "That User ID is already taken." });
+    const rows = await supabaseRequest("authors", {
+      method: "PATCH",
+      query: { id: `eq.${current.id}` },
+      body: { username, name, tagline, bio, picture, banner, external_links: links, show_bio: showBio, show_links: showLinks, show_stats: showStats, updated_at: new Date().toISOString() }
+    });
+    res.json({ ok: true, author: publicAuthor(rows?.[0] || { ...current, username, name, tagline, bio, picture, banner, external_links: links, show_bio: showBio, show_links: showLinks, show_stats: showStats }) });
+  } catch (err) {
+    console.error("/api/author/me PATCH error:", err);
+    if (String(err.message || "").includes("duplicate key") || String(err.message || "").includes("authors_username_key")) return res.status(409).json({ error: "That User ID is already taken." });
+    res.status(500).json({ error: "Unable to save author profile." });
+  }
+});
+
 app.get("/health", async (_req, res) => {
   try {
     await supabaseRequest("users", { query: { select: "id", limit: "1" } });
@@ -507,6 +631,7 @@ app.post("/api/author/setup", async (req, res) => {
   const realName = String(req.body.realName || "").trim();
   const dob = String(req.body.dob || "").trim();
   const penName = String(req.body.penName || "").trim();
+  let username = String(req.body.username || "").trim().replace(/^@+/, "").toLowerCase();
   const bio = String(req.body.bio || "").trim();
 
   if (!realName) return res.status(400).json({ error: "Please provide your real name." });
@@ -514,6 +639,8 @@ app.post("/api/author/setup", async (req, res) => {
     return res.status(400).json({ error: "Please provide a valid date of birth." });
   }
   if (!penName) return res.status(400).json({ error: "Please provide a pen name." });
+  if (!username) username = penName.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 30);
+  if (!/^[a-z0-9_]{3,30}$/.test(username)) return res.status(400).json({ error: "Please choose a valid User ID." });
   if (penName.length > 80) return res.status(400).json({ error: "Pen name is too long." });
   if (bio.length > 1200) return res.status(400).json({ error: "Bio is too long." });
 
@@ -534,6 +661,10 @@ app.post("/api/author/setup", async (req, res) => {
     const existing = await supabaseRequest("authors", {
       query: { select: "*", user_id: `eq.${user.id}`, limit: "1" }
     });
+    const usernameConflict = await supabaseRequest("authors", {
+      query: { select: "id,user_id", username: `eq.${username}`, limit: "1" }
+    });
+    if (usernameConflict?.[0] && usernameConflict[0].user_id !== user.id) return res.status(409).json({ error: "That User ID is already taken." });
 
     let author;
     if (existing?.[0]) {
@@ -541,6 +672,7 @@ app.post("/api/author/setup", async (req, res) => {
         method: "PATCH",
         query: { id: `eq.${existing[0].id}` },
         body: {
+          username,
           name: penName,
           bio,
           updated_at: new Date().toISOString()
@@ -552,6 +684,7 @@ app.post("/api/author/setup", async (req, res) => {
         method: "POST",
         body: {
           user_id: user.id,
+          username,
           name: penName,
           bio,
           followers: 0,
@@ -582,6 +715,7 @@ app.post("/api/author/setup", async (req, res) => {
       ok: true,
       author: {
         id: author.id,
+        username: author.username || username,
         userId: author.user_id,
         name: author.name || "",
         bio: author.bio || "",

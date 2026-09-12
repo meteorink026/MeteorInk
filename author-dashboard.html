@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="assets/meteorink-favicon.png">
+<link rel="manifest" href="manifest.webmanifest">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>MeteorInk — Author Dashboard</title>
@@ -54,77 +56,6 @@
     .dashboard-actions a{
       text-decoration:none;
     }
-
-    .profile-edit-btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:9px;
-      min-height:56px;
-      padding:0 22px;
-      border:1px solid rgba(231,170,49,.78);
-      border-radius:10px;
-      background:rgba(7,14,25,.72);
-      color:#f2f4f8;
-      font:inherit;
-      font-size:14px;
-      font-weight:600;
-      letter-spacing:.01em;
-      cursor:pointer;
-      transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
-    }
-    .profile-edit-btn:hover{
-      background:rgba(231,170,49,.08);
-      border-color:#e7aa31;
-      box-shadow:0 8px 24px rgba(231,170,49,.10);
-      transform:translateY(-1px);
-    }
-    .profile-edit-btn:focus-visible{
-      outline:none;
-      box-shadow:0 0 0 3px rgba(231,170,49,.16);
-    }
-    .profile-edit-btn-icon{
-      width:18px;
-      height:18px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      color:#e7aa31;
-      flex:0 0 auto;
-    }
-    .profile-edit-btn-icon svg{width:18px;height:18px;display:block;}
-
-    .profile-modal{
-      position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;
-      padding:24px;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
-    }
-    .profile-modal.open{display:flex}
-    .profile-modal-card{
-      width:min(760px,100%);max-height:min(88vh,900px);overflow:auto;
-      background:#07101b;border:1px solid rgba(231,170,49,.24);border-radius:18px;
-      box-shadow:0 28px 90px rgba(0,0,0,.55);padding:26px;
-    }
-    .profile-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}
-    .profile-modal-head h2{font-family:var(--serif);font-size:27px;margin:0 0 5px}
-    .profile-modal-head p{margin:0;color:#7f8a9b;font-size:11px;line-height:1.5}
-    .profile-modal-close{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:#101a28;color:#c7d0dc;cursor:pointer;font-size:18px;line-height:1}
-    .profile-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-    .profile-editor-field{margin-bottom:15px}
-    .profile-editor-field.full{grid-column:1/-1}
-    .profile-editor-field label{display:block;color:#dfe5ee;font-size:11px;font-weight:600;margin-bottom:7px}
-    .profile-editor-field input,.profile-editor-field textarea{width:100%;box-sizing:border-box;background:#030a13;color:#eef2f7;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 11px;font:inherit;font-size:12px;outline:none}
-    .profile-editor-field textarea{min-height:120px;resize:vertical;line-height:1.5}
-    .profile-editor-field input:focus,.profile-editor-field textarea:focus{border-color:rgba(231,170,49,.5);box-shadow:0 0 0 3px rgba(231,170,49,.07)}
-    .profile-upload-row{display:flex;align-items:center;gap:10px}
-    .profile-upload-row input[type=file]{display:none}
-    .profile-upload-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#7f8a9b;font-size:10px}
-    .profile-checks{display:grid;gap:8px;margin:2px 0 18px}
-    .profile-check{display:flex;gap:8px;align-items:center;color:#9da8ba;font-size:11px}
-    .profile-check input{accent-color:#e7aa31}
-    .profile-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07)}
-    .profile-modal-status{margin-right:auto;color:#d8bb7b;font-size:10px;min-height:16px}
-    .profile-modal-status.error{color:#ef9a9a}
-    @media(max-width:620px){.profile-editor-grid{grid-template-columns:1fr}.profile-editor-field.full{grid-column:auto}.profile-modal{padding:12px}.profile-modal-card{padding:20px}.profile-modal-footer{flex-wrap:wrap}.profile-modal-status{width:100%;margin:0}.dashboard-actions{width:100%;}.profile-edit-btn{flex:1;min-height:50px;}}
 
     .dashboard-panel{
       background:rgba(7,14,25,.9);
@@ -244,82 +175,6 @@
       font-size:10px;
     }
 
-    .genre-picker{position:relative}
-
-    .genre-picker-button{
-      width:100%;
-      height:46px;
-      box-sizing:border-box;
-      border:1px solid rgba(255,255,255,.11);
-      border-radius:9px;
-      background:#07101c;
-      color:#eef2f7;
-      padding:0 14px;
-      font:inherit;
-      font-size:13px;
-      outline:none;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      cursor:pointer;
-      text-align:left;
-      transition:border-color .15s ease,box-shadow .15s ease;
-    }
-
-    .genre-picker-button:hover,.genre-picker-button[aria-expanded="true"]{
-      border-color:rgba(231,170,49,.55);
-      box-shadow:0 0 0 3px rgba(231,170,49,.08);
-    }
-
-    .genre-picker-value{color:#eef2f7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .genre-picker-value.placeholder{color:#687587}
-    .genre-picker-chevron{font-size:15px;color:#d7b04d;transition:transform .15s ease}
-    .genre-picker-button[aria-expanded="true"] .genre-picker-chevron{transform:rotate(180deg)}
-
-    .genre-picker-menu{
-      position:absolute;
-      left:0;
-      right:0;
-      top:calc(100% + 7px);
-      z-index:30;
-      display:none;
-      padding:8px;
-      background:linear-gradient(180deg,#0a1423,#07101c);
-      border:1px solid rgba(231,170,49,.25);
-      border-radius:11px;
-      box-shadow:0 18px 45px rgba(0,0,0,.42);
-      max-height:280px;
-      overflow:auto;
-    }
-
-    .genre-picker-menu.open{display:block}
-
-    .genre-option{
-      width:100%;
-      min-height:38px;
-      border:0;
-      border-radius:7px;
-      background:transparent;
-      color:#cfd7e4;
-      padding:9px 10px;
-      font:600 12px/1.3 "DM Sans",sans-serif;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      text-align:left;
-    }
-
-    .genre-option:hover{background:rgba(231,170,49,.08);color:#fff}
-    .genre-option.selected{background:rgba(231,170,49,.13);color:#ffd86f}
-    .genre-option.selected::after{content:'✓';font-size:13px;color:#e7aa31}
-    .genre-picker-note{margin-top:6px;color:#687587;font-size:10px}
-    .genre-picker-count{color:#d7b04d;font-weight:700}
-    .genre-option:disabled{opacity:.45;cursor:not-allowed;background:transparent;color:#7b8798}
-    .genre-option:disabled:hover{transform:none;border-color:transparent}
-
     .publish-footer{
       grid-column:1 / -1;
       display:flex;
@@ -438,16 +293,7 @@
         gap:6px;
       }
     }
-  
-    .cover-upload{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-    .cover-upload-button{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:inherit;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer;}
-    .cover-upload-button:hover{background:rgba(255,255,255,.09);}
-    .cover-file-name{font-size:.9rem;opacity:.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
-    .cover-preview-wrap{display:flex;align-items:flex-start;gap:12px;margin-top:14px;}
-    .cover-preview{width:110px;height:150px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#111;}
-    .cover-remove-button{border:0;background:transparent;color:inherit;opacity:.72;cursor:pointer;padding:4px 0;font:inherit;}
-    .cover-remove-button:hover{opacity:1;}
-</style>
+  </style>
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-MWX483HZEH"></script>
@@ -474,15 +320,6 @@
         </div>
 
         <div class="dashboard-actions">
-          <a class="profile-edit-btn" id="editProfileButton" href="author-profile.html?edit=1">
-            <span class="profile-edit-btn-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.5 21a8.5 8.5 0 0 0-17 0"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </span>
-            <span>Edit Your Profile</span>
-          </a>
           <a class="gold-btn" href="index.html">Back to Home</a>
         </div>
       </header>
@@ -516,15 +353,7 @@
 
           <div class="form-field">
             <label for="novelGenre">Genre</label>
-            <div class="genre-picker" id="genrePicker">
-              <button type="button" id="genrePickerButton" class="genre-picker-button" aria-haspopup="listbox" aria-expanded="false">
-                <span id="genrePickerValue" class="genre-picker-value placeholder">Select a genre</span>
-                <span class="genre-picker-chevron" aria-hidden="true">▾</span>
-              </button>
-              <div id="genrePickerMenu" class="genre-picker-menu" role="listbox" aria-label="Novel genres"></div>
-              <input id="novelGenre" name="genre" type="hidden" required>
-              <div class="genre-picker-note">Choose up to <span class="genre-picker-count">6 genres</span>. Click a selected genre again to remove it.</div>
-            </div>
+            <input id="novelGenre" name="genre" type="text" placeholder="e.g. Fantasy, Romance, Action" required>
           </div>
 
           <div class="form-field full">
@@ -533,18 +362,9 @@
           </div>
 
           <div class="form-field full">
-            <label for="novelCoverFile">Cover Image <span class="optional">(optional)</span></label>
-            <div class="cover-upload">
-              <input id="novelCoverFile" name="coverFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-              <button type="button" id="coverUploadButton" class="cover-upload-button">Upload Cover Image</button>
-              <span id="coverFileName" class="cover-file-name">No image selected</span>
-            </div>
-            <div id="coverPreviewWrap" class="cover-preview-wrap" hidden>
-              <img id="coverPreview" class="cover-preview" alt="Novel cover preview">
-              <button type="button" id="removeCoverButton" class="cover-remove-button">Remove</button>
-            </div>
-            <input id="novelCover" name="cover" type="hidden">
-            <div class="field-note">Upload your own JPG, PNG, or WebP cover. The image is resized for web use automatically.</div>
+            <label for="novelCover">Cover Image URL <span class="optional">(optional)</span></label>
+            <input id="novelCover" name="cover" type="text" placeholder="assets/your-cover.jpg">
+            <div class="field-note">Use a direct image path or URL for your novel cover.</div>
           </div>
 
           <div class="publish-footer">
@@ -566,79 +386,6 @@
     </div>
   </main>
 
-  <div class="profile-modal" id="profileModal" aria-hidden="true">
-    <div class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
-      <div class="profile-modal-head">
-        <div>
-          <h2 id="profileModalTitle">Edit Your Profile</h2>
-          <p>Customize the profile readers will see. Your private account details are not shown here.</p>
-        </div>
-        <button class="profile-modal-close" id="closeProfileModal" type="button" aria-label="Close">×</button>
-      </div>
-
-      <form id="profileEditForm">
-        <div class="profile-editor-grid">
-          <div class="profile-editor-field">
-            <label for="profilePenName">Pen Name</label>
-            <input id="profilePenName" maxlength="80" required>
-          </div>
-          <div class="profile-editor-field">
-            <label for="profileTagline">Tagline</label>
-            <input id="profileTagline" maxlength="120" placeholder="A short line readers will remember">
-          </div>
-          <div class="profile-editor-field full">
-            <label for="profileBio">About You</label>
-            <textarea id="profileBio" maxlength="1200" placeholder="Tell readers about yourself and the stories you write."></textarea>
-          </div>
-          <div class="profile-editor-field">
-            <label for="profileWebsite">Website</label>
-            <input id="profileWebsite" placeholder="https://...">
-          </div>
-          <div class="profile-editor-field">
-            <label for="profileX">X Profile</label>
-            <input id="profileX" placeholder="https://x.com/...">
-          </div>
-          <div class="profile-editor-field">
-            <label for="profileInstagram">Instagram</label>
-            <input id="profileInstagram" placeholder="https://instagram.com/...">
-          </div>
-          <div class="profile-editor-field">
-            <label for="profileTelegram">Telegram</label>
-            <input id="profileTelegram" placeholder="https://t.me/...">
-          </div>
-          <div class="profile-editor-field">
-            <label>Profile Banner</label>
-            <div class="profile-upload-row">
-              <input id="profileBannerFile" type="file" accept="image/jpeg,image/png,image/webp">
-              <button class="text-btn" id="profileBannerButton" type="button">Upload Image</button>
-              <span class="profile-upload-name" id="profileBannerName">No new image selected</span>
-            </div>
-          </div>
-          <div class="profile-editor-field">
-            <label>Profile Photo</label>
-            <div class="profile-upload-row">
-              <input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp">
-              <button class="text-btn" id="profileAvatarButton" type="button">Upload Image</button>
-              <span class="profile-upload-name" id="profileAvatarName">No new image selected</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="profile-checks">
-          <label class="profile-check"><input id="profileShowBio" type="checkbox"> Show bio on public profile</label>
-          <label class="profile-check"><input id="profileShowLinks" type="checkbox"> Show social links</label>
-          <label class="profile-check"><input id="profileShowStats" type="checkbox"> Show profile stats</label>
-        </div>
-
-        <div class="profile-modal-footer">
-          <div class="profile-modal-status" id="profileModalStatus"></div>
-          <button class="text-btn" id="cancelProfileEdit" type="button">Cancel</button>
-          <button class="gold-btn" type="submit">Save Profile</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script src="meteorink-data.js"></script>
   <script>
     const session=MeteorInkData.getSession();
@@ -654,164 +401,6 @@
     if(!author){
       location.href='author-setup.html';
     }
-
-    const profileModal=document.getElementById('profileModal');
-    const profileEditForm=document.getElementById('profileEditForm');
-    const profileModalStatus=document.getElementById('profileModalStatus');
-    const profileBannerFile=document.getElementById('profileBannerFile');
-    const profileAvatarFile=document.getElementById('profileAvatarFile');
-    let pendingProfileBanner=author.banner||'';
-    let pendingProfileAvatar=author.picture||'';
-
-    const setProfileStatus=(message,error=false)=>{
-      profileModalStatus.textContent=message;
-      profileModalStatus.classList.toggle('error',error);
-    };
-
-    const populateProfileModal=()=>{
-      document.getElementById('profilePenName').value=author.name||'';
-      document.getElementById('profileTagline').value=author.tagline||'';
-      document.getElementById('profileBio').value=author.bio||'';
-      document.getElementById('profileWebsite').value=author.website||'';
-      document.getElementById('profileX').value=author.x||'';
-      document.getElementById('profileInstagram').value=author.instagram||'';
-      document.getElementById('profileTelegram').value=author.telegram||'';
-      document.getElementById('profileShowBio').checked=author.showBio!==false;
-      document.getElementById('profileShowLinks').checked=author.showLinks!==false;
-      document.getElementById('profileShowStats').checked=author.showStats!==false;
-      pendingProfileBanner=author.banner||'';
-      pendingProfileAvatar=author.picture||'';
-      document.getElementById('profileBannerName').textContent='No new image selected';
-      document.getElementById('profileAvatarName').textContent='No new image selected';
-      profileBannerFile.value='';profileAvatarFile.value='';
-      setProfileStatus('');
-    };
-
-    const openProfileModal=()=>{populateProfileModal();profileModal.classList.add('open');profileModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';setTimeout(()=>document.getElementById('profilePenName').focus(),0);};
-    const closeProfileModal=()=>{profileModal.classList.remove('open');profileModal.setAttribute('aria-hidden','true');document.body.style.overflow='';};
-
-    document.getElementById('closeProfileModal').addEventListener('click',closeProfileModal);
-    document.getElementById('cancelProfileEdit').addEventListener('click',closeProfileModal);
-    profileModal.addEventListener('click',e=>{if(e.target===profileModal)closeProfileModal();});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&profileModal.classList.contains('open'))closeProfileModal();});
-
-    const readImageAsDataUrl=(file,maxSizeMB=8)=>new Promise((resolve,reject)=>{
-      if(!file)return resolve('');
-      if(!['image/jpeg','image/png','image/webp'].includes(file.type))return reject(new Error('Please choose a JPG, PNG, or WebP image.'));
-      if(file.size>maxSizeMB*1024*1024)return reject(new Error(`Image is too large. Maximum upload size is ${maxSizeMB} MB.`));
-      const reader=new FileReader();
-      reader.onload=()=>resolve(reader.result);
-      reader.onerror=()=>reject(new Error('Could not read that image.'));
-      reader.readAsDataURL(file);
-    });
-
-    document.getElementById('profileBannerButton').addEventListener('click',()=>profileBannerFile.click());
-    document.getElementById('profileAvatarButton').addEventListener('click',()=>profileAvatarFile.click());
-    profileBannerFile.addEventListener('change',async()=>{
-      const file=profileBannerFile.files?.[0];if(!file)return;
-      try{pendingProfileBanner=await readImageAsDataUrl(file,8);document.getElementById('profileBannerName').textContent=file.name;}catch(err){setProfileStatus(err.message,true);profileBannerFile.value='';}
-    });
-    profileAvatarFile.addEventListener('change',async()=>{
-      const file=profileAvatarFile.files?.[0];if(!file)return;
-      try{pendingProfileAvatar=await readImageAsDataUrl(file,4);document.getElementById('profileAvatarName').textContent=file.name;}catch(err){setProfileStatus(err.message,true);profileAvatarFile.value='';}
-    });
-
-    profileEditForm.addEventListener('submit',e=>{
-      e.preventDefault();
-      author={...author,
-        name:document.getElementById('profilePenName').value.trim(),
-        tagline:document.getElementById('profileTagline').value.trim(),
-        bio:document.getElementById('profileBio').value.trim(),
-        website:document.getElementById('profileWebsite').value.trim(),
-        x:document.getElementById('profileX').value.trim(),
-        instagram:document.getElementById('profileInstagram').value.trim(),
-        telegram:document.getElementById('profileTelegram').value.trim(),
-        banner:pendingProfileBanner,
-        picture:pendingProfileAvatar,
-        showBio:document.getElementById('profileShowBio').checked,
-        showLinks:document.getElementById('profileShowLinks').checked,
-        showStats:document.getElementById('profileShowStats').checked
-      };
-      MeteorInkData.saveAuthor(author);
-      localStorage.setItem('meteorink_author_id',author.id||'');
-      document.getElementById('welcome').textContent=`Welcome, ${author.name}`;
-      render();
-      setProfileStatus('Profile saved.');
-      setTimeout(closeProfileModal,700);
-    });
-
-    const primaryGenres=[
-      'Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama',
-      'Young Adult',"Children's Fiction",'Comedy','Western','Supernatural / Paranormal','Spiritual / Religious','Military / War',
-      'Post-Apocalyptic / Dystopian','Speculative Fiction','Sports','Psychological','Philosophical / Intellectual','Slice of Life',
-      'School / Academy','Webnovel-Specific / Modern Digital Genres','Mythology / Folklore','Other / Hybrid'
-    ];
-
-    const genrePickerButton=document.getElementById('genrePickerButton');
-    const genrePickerMenu=document.getElementById('genrePickerMenu');
-    const genrePickerValue=document.getElementById('genrePickerValue');
-    const novelGenre=document.getElementById('novelGenre');
-    const genrePicker=document.getElementById('genrePicker');
-
-    const selectedGenres=[];
-    const MAX_GENRES=6;
-
-    genrePickerMenu.innerHTML=primaryGenres.map(g=>`<button type="button" class="genre-option" role="option" aria-selected="false" data-genre="${g.replace(/"/g,'&quot;')}">${g}</button>`).join('');
-
-    const updateGenrePicker=()=>{
-      novelGenre.value=selectedGenres.join(', ');
-      if(selectedGenres.length===0){
-        genrePickerValue.textContent='Select a genre';
-        genrePickerValue.classList.add('placeholder');
-      }else if(selectedGenres.length===1){
-        genrePickerValue.textContent=selectedGenres[0];
-        genrePickerValue.classList.remove('placeholder');
-      }else{
-        genrePickerValue.textContent=`${selectedGenres.length} genres selected`;
-        genrePickerValue.classList.remove('placeholder');
-      }
-
-      genrePickerMenu.querySelectorAll('.genre-option').forEach(btn=>{
-        const isSelected=selectedGenres.includes(btn.dataset.genre);
-        btn.classList.toggle('selected',isSelected);
-        btn.setAttribute('aria-selected',String(isSelected));
-        btn.disabled=!isSelected && selectedGenres.length>=MAX_GENRES;
-      });
-    };
-
-    const closeGenrePicker=()=>{
-      genrePickerMenu.classList.remove('open');
-      genrePickerButton.setAttribute('aria-expanded','false');
-    };
-
-    genrePickerButton.addEventListener('click',()=>{
-      const open=!genrePickerMenu.classList.contains('open');
-      genrePickerMenu.classList.toggle('open',open);
-      genrePickerButton.setAttribute('aria-expanded',String(open));
-    });
-
-    genrePickerMenu.addEventListener('click',e=>{
-      const option=e.target.closest('.genre-option');
-      if(!option)return;
-      const selected=option.dataset.genre;
-      const index=selectedGenres.indexOf(selected);
-
-      if(index>=0){
-        selectedGenres.splice(index,1);
-      }else if(selectedGenres.length<MAX_GENRES){
-        selectedGenres.push(selected);
-      }
-
-      updateGenrePicker();
-    });
-
-    document.addEventListener('click',e=>{
-      if(!genrePicker.contains(e.target))closeGenrePicker();
-    });
-
-    document.addEventListener('keydown',e=>{
-      if(e.key==='Escape')closeGenrePicker();
-    });
 
     const novels=()=>MeteorInkData.getNovels().filter(n=>n.authorId===author.id);
 
@@ -842,65 +431,6 @@
 
     render();
 
-    const coverFileInput=document.getElementById('novelCoverFile');
-    const coverUploadButton=document.getElementById('coverUploadButton');
-    const coverFileName=document.getElementById('coverFileName');
-    const coverPreviewWrap=document.getElementById('coverPreviewWrap');
-    const coverPreview=document.getElementById('coverPreview');
-    const removeCoverButton=document.getElementById('removeCoverButton');
-    const novelCover=document.getElementById('novelCover');
-
-    coverUploadButton.addEventListener('click',()=>coverFileInput.click());
-
-    function clearCover(){
-      coverFileInput.value='';
-      novelCover.value='';
-      coverFileName.textContent='No image selected';
-      coverPreview.removeAttribute('src');
-      coverPreviewWrap.hidden=true;
-    }
-
-    function prepareCover(file){
-      if(!file)return;
-      if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
-        coverFileName.textContent='Please choose a JPG, PNG, or WebP image.';
-        coverFileInput.value='';
-        return;
-      }
-      if(file.size>8*1024*1024){
-        coverFileName.textContent='Image is too large. Maximum upload size is 8 MB.';
-        coverFileInput.value='';
-        return;
-      }
-
-      const reader=new FileReader();
-      reader.onload=()=>{
-        const img=new Image();
-        img.onload=()=>{
-          const maxW=1000,maxH=1400;
-          const scale=Math.min(1,maxW/img.naturalWidth,maxH/img.naturalHeight);
-          const canvas=document.createElement('canvas');
-          canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
-          canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
-          const ctx=canvas.getContext('2d');
-          ctx.drawImage(img,0,0,canvas.width,canvas.height);
-          novelCover.value=canvas.toDataURL('image/jpeg',.82);
-          coverPreview.src=novelCover.value;
-          coverPreviewWrap.hidden=false;
-          coverFileName.textContent=`${file.name} · ${Math.round(file.size/1024)} KB`;
-        };
-        img.onerror=()=>{
-          coverFileName.textContent='Could not read that image.';
-          coverFileInput.value='';
-        };
-        img.src=reader.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    coverFileInput.addEventListener('change',()=>prepareCover(coverFileInput.files[0]));
-    removeCoverButton.addEventListener('click',clearCover);
-
     document.getElementById('publishNovelForm').addEventListener('submit',e=>{
       e.preventDefault();
 
@@ -917,10 +447,6 @@
         'Published. Homepage sections will update automatically.';
 
       e.target.reset();
-      clearCover();
-      selectedGenres.length=0;
-      updateGenrePicker();
-      closeGenrePicker();
       render();
     });
   </script>

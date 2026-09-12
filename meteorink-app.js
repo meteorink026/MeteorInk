@@ -130,11 +130,12 @@
 
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function read(key){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return []}}
-  function searchItems(term){
-    const novels=read('meteorink_novels').map(n=>({...n,type:'Novel',label:n.title||'Untitled Novel',popularity:Number(n.views||0)}));
-    const authors=read('meteorink_authors').map(a=>({...a,type:'Author',label:a.name||a.displayName||'Unnamed Author',popularity:Number(a.followers||0)}));
-    const q=term.toLowerCase();
-    return [...novels,...authors].filter(x=>[x.label,x.name,x.title,x.genre,x.description].filter(Boolean).some(v=>String(v).toLowerCase().includes(q))).sort((a,b)=>b.popularity-a.popularity).slice(0,5);
+  async function searchItems(term){
+    const q=term.toLowerCase().replace(/^@/,'');
+    const novels=read('meteorink_novels').map(n=>({...n,type:'Novel',label:n.title||'Untitled Novel',popularity:Number(n.views||0)})).filter(x=>[x.label,x.name,x.title,x.genre,x.description,x.authorName].filter(Boolean).some(v=>String(v).toLowerCase().includes(term.toLowerCase())));
+    let authors=[];
+    try{const r=await fetch('/api/authors?q='+encodeURIComponent(q),{credentials:'same-origin'});if(r.ok){const d=await r.json();authors=(d.authors||[]).map(a=>({...a,type:'Author',label:a.name||'Unnamed Author',popularity:Number(a.followers||0)}));}}catch{}
+    return [...novels,...authors].sort((a,b)=>b.popularity-a.popularity).slice(0,5);
   }
 
   function installSearch(){
@@ -143,11 +144,11 @@
     const box=input.closest('.search-box');
     let panel=box.querySelector('.search-suggestions');
     if(!panel){panel=document.createElement('div');panel.className='search-suggestions';panel.hidden=true;box.appendChild(panel)}
-    const render=()=>{
+    const render=async()=>{
       const term=input.value.trim();
       panel.innerHTML='';
       if(!term){panel.hidden=true;return}
-      const items=searchItems(term);
+      const items=await searchItems(term);
       if(!items.length){panel.innerHTML='<div class="search-suggestion-empty not-in-existence">Not In Existence</div>';panel.hidden=false;return}
       items.forEach(item=>{
         const a=document.createElement('a');a.className='search-suggestion';a.href='search.html?q='+encodeURIComponent(term);
