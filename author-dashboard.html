@@ -367,7 +367,16 @@
         gap:6px;
       }
     }
-  </style>
+  
+    .cover-upload{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .cover-upload-button{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:inherit;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer;}
+    .cover-upload-button:hover{background:rgba(255,255,255,.09);}
+    .cover-file-name{font-size:.9rem;opacity:.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+    .cover-preview-wrap{display:flex;align-items:flex-start;gap:12px;margin-top:14px;}
+    .cover-preview{width:110px;height:150px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#111;}
+    .cover-remove-button{border:0;background:transparent;color:inherit;opacity:.72;cursor:pointer;padding:4px 0;font:inherit;}
+    .cover-remove-button:hover{opacity:1;}
+</style>
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-MWX483HZEH"></script>
@@ -444,9 +453,18 @@
           </div>
 
           <div class="form-field full">
-            <label for="novelCover">Cover Image URL <span class="optional">(optional)</span></label>
-            <input id="novelCover" name="cover" type="text" placeholder="assets/your-cover.jpg">
-            <div class="field-note">Use a direct image path or URL for your novel cover.</div>
+            <label for="novelCoverFile">Cover Image <span class="optional">(optional)</span></label>
+            <div class="cover-upload">
+              <input id="novelCoverFile" name="coverFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+              <button type="button" id="coverUploadButton" class="cover-upload-button">Upload Cover Image</button>
+              <span id="coverFileName" class="cover-file-name">No image selected</span>
+            </div>
+            <div id="coverPreviewWrap" class="cover-preview-wrap" hidden>
+              <img id="coverPreview" class="cover-preview" alt="Novel cover preview">
+              <button type="button" id="removeCoverButton" class="cover-remove-button">Remove</button>
+            </div>
+            <input id="novelCover" name="cover" type="hidden">
+            <div class="field-note">Upload your own JPG, PNG, or WebP cover. The image is resized for web use automatically.</div>
           </div>
 
           <div class="publish-footer">
@@ -586,6 +604,65 @@
 
     render();
 
+    const coverFileInput=document.getElementById('novelCoverFile');
+    const coverUploadButton=document.getElementById('coverUploadButton');
+    const coverFileName=document.getElementById('coverFileName');
+    const coverPreviewWrap=document.getElementById('coverPreviewWrap');
+    const coverPreview=document.getElementById('coverPreview');
+    const removeCoverButton=document.getElementById('removeCoverButton');
+    const novelCover=document.getElementById('novelCover');
+
+    coverUploadButton.addEventListener('click',()=>coverFileInput.click());
+
+    function clearCover(){
+      coverFileInput.value='';
+      novelCover.value='';
+      coverFileName.textContent='No image selected';
+      coverPreview.removeAttribute('src');
+      coverPreviewWrap.hidden=true;
+    }
+
+    function prepareCover(file){
+      if(!file)return;
+      if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
+        coverFileName.textContent='Please choose a JPG, PNG, or WebP image.';
+        coverFileInput.value='';
+        return;
+      }
+      if(file.size>8*1024*1024){
+        coverFileName.textContent='Image is too large. Maximum upload size is 8 MB.';
+        coverFileInput.value='';
+        return;
+      }
+
+      const reader=new FileReader();
+      reader.onload=()=>{
+        const img=new Image();
+        img.onload=()=>{
+          const maxW=1000,maxH=1400;
+          const scale=Math.min(1,maxW/img.naturalWidth,maxH/img.naturalHeight);
+          const canvas=document.createElement('canvas');
+          canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+          canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+          const ctx=canvas.getContext('2d');
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          novelCover.value=canvas.toDataURL('image/jpeg',.82);
+          coverPreview.src=novelCover.value;
+          coverPreviewWrap.hidden=false;
+          coverFileName.textContent=`${file.name} · ${Math.round(file.size/1024)} KB`;
+        };
+        img.onerror=()=>{
+          coverFileName.textContent='Could not read that image.';
+          coverFileInput.value='';
+        };
+        img.src=reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    coverFileInput.addEventListener('change',()=>prepareCover(coverFileInput.files[0]));
+    removeCoverButton.addEventListener('click',clearCover);
+
     document.getElementById('publishNovelForm').addEventListener('submit',e=>{
       e.preventDefault();
 
@@ -602,6 +679,7 @@
         'Published. Homepage sections will update automatically.';
 
       e.target.reset();
+      clearCover();
       selectedGenres.length=0;
       updateGenrePicker();
       closeGenrePicker();
