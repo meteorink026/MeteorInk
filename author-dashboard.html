@@ -73,10 +73,26 @@
       cursor:pointer;
       transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
     }
-    .profile-edit-btn:hover{background:rgba(231,170,49,.08);border-color:#e7aa31;box-shadow:0 8px 24px rgba(231,170,49,.10);transform:translateY(-1px)}
-    .profile-edit-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(231,170,49,.16)}
-    .profile-edit-btn-icon{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;color:#e7aa31;flex:0 0 auto}
-    .profile-edit-btn-icon svg{width:18px;height:18px;display:block}
+    .profile-edit-btn:hover{
+      background:rgba(231,170,49,.08);
+      border-color:#e7aa31;
+      box-shadow:0 8px 24px rgba(231,170,49,.10);
+      transform:translateY(-1px);
+    }
+    .profile-edit-btn:focus-visible{
+      outline:none;
+      box-shadow:0 0 0 3px rgba(231,170,49,.16);
+    }
+    .profile-edit-btn-icon{
+      width:18px;
+      height:18px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      color:#e7aa31;
+      flex:0 0 auto;
+    }
+    .profile-edit-btn-icon svg{width:18px;height:18px;display:block;}
 
     .profile-modal{
       position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;
@@ -108,7 +124,7 @@
     .profile-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07)}
     .profile-modal-status{margin-right:auto;color:#d8bb7b;font-size:10px;min-height:16px}
     .profile-modal-status.error{color:#ef9a9a}
-    @media(max-width:620px){.profile-editor-grid{grid-template-columns:1fr}.profile-editor-field.full{grid-column:auto}.profile-modal{padding:12px}.profile-modal-card{padding:20px}.profile-modal-footer{flex-wrap:wrap}.profile-modal-status{width:100%;margin:0}}
+    @media(max-width:620px){.profile-editor-grid{grid-template-columns:1fr}.profile-editor-field.full{grid-column:auto}.profile-modal{padding:12px}.profile-modal-card{padding:20px}.profile-modal-footer{flex-wrap:wrap}.profile-modal-status{width:100%;margin:0}.dashboard-actions{width:100%;}.profile-edit-btn{flex:1;min-height:50px;}}
 
     .dashboard-panel{
       background:rgba(7,14,25,.9);
@@ -674,7 +690,10 @@
     const openProfileModal=()=>{populateProfileModal();profileModal.classList.add('open');profileModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';setTimeout(()=>document.getElementById('profilePenName').focus(),0);};
     const closeProfileModal=()=>{profileModal.classList.remove('open');profileModal.setAttribute('aria-hidden','true');document.body.style.overflow='';};
 
-    document.getElementById('editProfileButton').addEventListener('click',openProfileModal);
+    document.getElementById('editProfileButton').addEventListener('click',()=>{
+      const profileWindow=window.open('author-profile.html?edit=1','MeteorInkAuthorProfile','width=1440,height=950,resizable=yes,scrollbars=yes');
+      if(!profileWindow){location.href='author-profile.html?edit=1';}
+    });
     document.getElementById('closeProfileModal').addEventListener('click',closeProfileModal);
     document.getElementById('cancelProfileEdit').addEventListener('click',closeProfileModal);
     profileModal.addEventListener('click',e=>{if(e.target===profileModal)closeProfileModal();});
