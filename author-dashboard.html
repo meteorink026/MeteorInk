@@ -55,6 +55,77 @@
       text-decoration:none;
     }
 
+    .profile-edit-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      min-height:56px;
+      padding:0 22px;
+      border:1px solid rgba(231,170,49,.78);
+      border-radius:10px;
+      background:rgba(7,14,25,.72);
+      color:#f2f4f8;
+      font:inherit;
+      font-size:14px;
+      font-weight:600;
+      letter-spacing:.01em;
+      cursor:pointer;
+      transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+    }
+    .profile-edit-btn:hover{
+      background:rgba(231,170,49,.08);
+      border-color:#e7aa31;
+      box-shadow:0 8px 24px rgba(231,170,49,.10);
+      transform:translateY(-1px);
+    }
+    .profile-edit-btn:focus-visible{
+      outline:none;
+      box-shadow:0 0 0 3px rgba(231,170,49,.16);
+    }
+    .profile-edit-btn-icon{
+      width:18px;
+      height:18px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      color:#e7aa31;
+      flex:0 0 auto;
+    }
+    .profile-edit-btn-icon svg{width:18px;height:18px;display:block;}
+
+    .profile-modal{
+      position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;
+      padding:24px;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+    }
+    .profile-modal.open{display:flex}
+    .profile-modal-card{
+      width:min(760px,100%);max-height:min(88vh,900px);overflow:auto;
+      background:#07101b;border:1px solid rgba(231,170,49,.24);border-radius:18px;
+      box-shadow:0 28px 90px rgba(0,0,0,.55);padding:26px;
+    }
+    .profile-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}
+    .profile-modal-head h2{font-family:var(--serif);font-size:27px;margin:0 0 5px}
+    .profile-modal-head p{margin:0;color:#7f8a9b;font-size:11px;line-height:1.5}
+    .profile-modal-close{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:#101a28;color:#c7d0dc;cursor:pointer;font-size:18px;line-height:1}
+    .profile-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+    .profile-editor-field{margin-bottom:15px}
+    .profile-editor-field.full{grid-column:1/-1}
+    .profile-editor-field label{display:block;color:#dfe5ee;font-size:11px;font-weight:600;margin-bottom:7px}
+    .profile-editor-field input,.profile-editor-field textarea{width:100%;box-sizing:border-box;background:#030a13;color:#eef2f7;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 11px;font:inherit;font-size:12px;outline:none}
+    .profile-editor-field textarea{min-height:120px;resize:vertical;line-height:1.5}
+    .profile-editor-field input:focus,.profile-editor-field textarea:focus{border-color:rgba(231,170,49,.5);box-shadow:0 0 0 3px rgba(231,170,49,.07)}
+    .profile-upload-row{display:flex;align-items:center;gap:10px}
+    .profile-upload-row input[type=file]{display:none}
+    .profile-upload-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#7f8a9b;font-size:10px}
+    .profile-checks{display:grid;gap:8px;margin:2px 0 18px}
+    .profile-check{display:flex;gap:8px;align-items:center;color:#9da8ba;font-size:11px}
+    .profile-check input{accent-color:#e7aa31}
+    .profile-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07)}
+    .profile-modal-status{margin-right:auto;color:#d8bb7b;font-size:10px;min-height:16px}
+    .profile-modal-status.error{color:#ef9a9a}
+    @media(max-width:620px){.profile-editor-grid{grid-template-columns:1fr}.profile-editor-field.full{grid-column:auto}.profile-modal{padding:12px}.profile-modal-card{padding:20px}.profile-modal-footer{flex-wrap:wrap}.profile-modal-status{width:100%;margin:0}.dashboard-actions{width:100%;}.profile-edit-btn{flex:1;min-height:50px;}}
+
     .dashboard-panel{
       background:rgba(7,14,25,.9);
       border:1px solid rgba(231,170,49,.2);
@@ -403,7 +474,15 @@
         </div>
 
         <div class="dashboard-actions">
-          <a class="text-btn" href="author-profile.html?edit=1">Edit Your Profile</a>
+          <button class="profile-edit-btn" id="editProfileButton" type="button">
+            <span class="profile-edit-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.5 21a8.5 8.5 0 0 0-17 0"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span>Edit Your Profile</span>
+          </button>
           <a class="gold-btn" href="index.html">Back to Home</a>
         </div>
       </header>
@@ -487,6 +566,79 @@
     </div>
   </main>
 
+  <div class="profile-modal" id="profileModal" aria-hidden="true">
+    <div class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="profile-modal-head">
+        <div>
+          <h2 id="profileModalTitle">Edit Your Profile</h2>
+          <p>Customize the profile readers will see. Your private account details are not shown here.</p>
+        </div>
+        <button class="profile-modal-close" id="closeProfileModal" type="button" aria-label="Close">×</button>
+      </div>
+
+      <form id="profileEditForm">
+        <div class="profile-editor-grid">
+          <div class="profile-editor-field">
+            <label for="profilePenName">Pen Name</label>
+            <input id="profilePenName" maxlength="80" required>
+          </div>
+          <div class="profile-editor-field">
+            <label for="profileTagline">Tagline</label>
+            <input id="profileTagline" maxlength="120" placeholder="A short line readers will remember">
+          </div>
+          <div class="profile-editor-field full">
+            <label for="profileBio">About You</label>
+            <textarea id="profileBio" maxlength="1200" placeholder="Tell readers about yourself and the stories you write."></textarea>
+          </div>
+          <div class="profile-editor-field">
+            <label for="profileWebsite">Website</label>
+            <input id="profileWebsite" placeholder="https://...">
+          </div>
+          <div class="profile-editor-field">
+            <label for="profileX">X Profile</label>
+            <input id="profileX" placeholder="https://x.com/...">
+          </div>
+          <div class="profile-editor-field">
+            <label for="profileInstagram">Instagram</label>
+            <input id="profileInstagram" placeholder="https://instagram.com/...">
+          </div>
+          <div class="profile-editor-field">
+            <label for="profileTelegram">Telegram</label>
+            <input id="profileTelegram" placeholder="https://t.me/...">
+          </div>
+          <div class="profile-editor-field">
+            <label>Profile Banner</label>
+            <div class="profile-upload-row">
+              <input id="profileBannerFile" type="file" accept="image/jpeg,image/png,image/webp">
+              <button class="text-btn" id="profileBannerButton" type="button">Upload Image</button>
+              <span class="profile-upload-name" id="profileBannerName">No new image selected</span>
+            </div>
+          </div>
+          <div class="profile-editor-field">
+            <label>Profile Photo</label>
+            <div class="profile-upload-row">
+              <input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp">
+              <button class="text-btn" id="profileAvatarButton" type="button">Upload Image</button>
+              <span class="profile-upload-name" id="profileAvatarName">No new image selected</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-checks">
+          <label class="profile-check"><input id="profileShowBio" type="checkbox"> Show bio on public profile</label>
+          <label class="profile-check"><input id="profileShowLinks" type="checkbox"> Show social links</label>
+          <label class="profile-check"><input id="profileShowStats" type="checkbox"> Show profile stats</label>
+        </div>
+
+        <div class="profile-modal-footer">
+          <div class="profile-modal-status" id="profileModalStatus"></div>
+          <button class="text-btn" id="cancelProfileEdit" type="button">Cancel</button>
+          <button class="gold-btn" type="submit">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="meteorink-data.js"></script>
   <script>
     const session=MeteorInkData.getSession();
@@ -502,6 +654,92 @@
     if(!author){
       location.href='author-setup.html';
     }
+
+    const profileModal=document.getElementById('profileModal');
+    const profileEditForm=document.getElementById('profileEditForm');
+    const profileModalStatus=document.getElementById('profileModalStatus');
+    const profileBannerFile=document.getElementById('profileBannerFile');
+    const profileAvatarFile=document.getElementById('profileAvatarFile');
+    let pendingProfileBanner=author.banner||'';
+    let pendingProfileAvatar=author.picture||'';
+
+    const setProfileStatus=(message,error=false)=>{
+      profileModalStatus.textContent=message;
+      profileModalStatus.classList.toggle('error',error);
+    };
+
+    const populateProfileModal=()=>{
+      document.getElementById('profilePenName').value=author.name||'';
+      document.getElementById('profileTagline').value=author.tagline||'';
+      document.getElementById('profileBio').value=author.bio||'';
+      document.getElementById('profileWebsite').value=author.website||'';
+      document.getElementById('profileX').value=author.x||'';
+      document.getElementById('profileInstagram').value=author.instagram||'';
+      document.getElementById('profileTelegram').value=author.telegram||'';
+      document.getElementById('profileShowBio').checked=author.showBio!==false;
+      document.getElementById('profileShowLinks').checked=author.showLinks!==false;
+      document.getElementById('profileShowStats').checked=author.showStats!==false;
+      pendingProfileBanner=author.banner||'';
+      pendingProfileAvatar=author.picture||'';
+      document.getElementById('profileBannerName').textContent='No new image selected';
+      document.getElementById('profileAvatarName').textContent='No new image selected';
+      profileBannerFile.value='';profileAvatarFile.value='';
+      setProfileStatus('');
+    };
+
+    const openProfileModal=()=>{populateProfileModal();profileModal.classList.add('open');profileModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';setTimeout(()=>document.getElementById('profilePenName').focus(),0);};
+    const closeProfileModal=()=>{profileModal.classList.remove('open');profileModal.setAttribute('aria-hidden','true');document.body.style.overflow='';};
+
+    document.getElementById('editProfileButton').addEventListener('click',openProfileModal);
+    document.getElementById('closeProfileModal').addEventListener('click',closeProfileModal);
+    document.getElementById('cancelProfileEdit').addEventListener('click',closeProfileModal);
+    profileModal.addEventListener('click',e=>{if(e.target===profileModal)closeProfileModal();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&profileModal.classList.contains('open'))closeProfileModal();});
+
+    const readImageAsDataUrl=(file,maxSizeMB=8)=>new Promise((resolve,reject)=>{
+      if(!file)return resolve('');
+      if(!['image/jpeg','image/png','image/webp'].includes(file.type))return reject(new Error('Please choose a JPG, PNG, or WebP image.'));
+      if(file.size>maxSizeMB*1024*1024)return reject(new Error(`Image is too large. Maximum upload size is ${maxSizeMB} MB.`));
+      const reader=new FileReader();
+      reader.onload=()=>resolve(reader.result);
+      reader.onerror=()=>reject(new Error('Could not read that image.'));
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('profileBannerButton').addEventListener('click',()=>profileBannerFile.click());
+    document.getElementById('profileAvatarButton').addEventListener('click',()=>profileAvatarFile.click());
+    profileBannerFile.addEventListener('change',async()=>{
+      const file=profileBannerFile.files?.[0];if(!file)return;
+      try{pendingProfileBanner=await readImageAsDataUrl(file,8);document.getElementById('profileBannerName').textContent=file.name;}catch(err){setProfileStatus(err.message,true);profileBannerFile.value='';}
+    });
+    profileAvatarFile.addEventListener('change',async()=>{
+      const file=profileAvatarFile.files?.[0];if(!file)return;
+      try{pendingProfileAvatar=await readImageAsDataUrl(file,4);document.getElementById('profileAvatarName').textContent=file.name;}catch(err){setProfileStatus(err.message,true);profileAvatarFile.value='';}
+    });
+
+    profileEditForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      author={...author,
+        name:document.getElementById('profilePenName').value.trim(),
+        tagline:document.getElementById('profileTagline').value.trim(),
+        bio:document.getElementById('profileBio').value.trim(),
+        website:document.getElementById('profileWebsite').value.trim(),
+        x:document.getElementById('profileX').value.trim(),
+        instagram:document.getElementById('profileInstagram').value.trim(),
+        telegram:document.getElementById('profileTelegram').value.trim(),
+        banner:pendingProfileBanner,
+        picture:pendingProfileAvatar,
+        showBio:document.getElementById('profileShowBio').checked,
+        showLinks:document.getElementById('profileShowLinks').checked,
+        showStats:document.getElementById('profileShowStats').checked
+      };
+      MeteorInkData.saveAuthor(author);
+      localStorage.setItem('meteorink_author_id',author.id||'');
+      document.getElementById('welcome').textContent=`Welcome, ${author.name}`;
+      render();
+      setProfileStatus('Profile saved.');
+      setTimeout(closeProfileModal,700);
+    });
 
     const primaryGenres=[
       'Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama',
