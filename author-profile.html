@@ -27,6 +27,8 @@
     .editor-panel{position:sticky;top:105px;background:rgba(7,14,25,.94);border:1px solid rgba(231,170,49,.2);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.editor-panel h2{font-family:var(--serif);margin:0 0 5px;font-size:23px}.editor-panel>p{margin:0 0 18px;color:#7f8a9b;font-size:11px;line-height:1.5}
     .editor-field{margin-bottom:15px}.editor-field label{display:block;color:#dfe5ee;font-size:11px;font-weight:600;margin-bottom:7px}.editor-field input,.editor-field textarea{width:100%;box-sizing:border-box;background:#07101c;color:#eef2f7;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 11px;font:inherit;font-size:12px;outline:none}.editor-field textarea{min-height:105px;resize:vertical;line-height:1.5}.editor-field input:focus,.editor-field textarea:focus{border-color:rgba(231,170,49,.5);box-shadow:0 0 0 3px rgba(231,170,49,.07)}
     .editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.editor-checks{display:grid;gap:8px;margin:4px 0 16px}.editor-check{display:flex;gap:8px;align-items:center;color:#9da8ba;font-size:11px}.editor-check input{accent-color:#e7aa31}.editor-note{font-size:10px;color:#667386;line-height:1.45}.editor-status{min-height:16px;margin:9px 0 0;color:#d8bb7b;font-size:10px}.editor-status.error{color:#ef9a9a}.cover-upload{display:flex;align-items:center;gap:9px}.cover-upload input{flex:1}.cover-upload button{flex:0 0 auto}.hidden-file{display:none}
+    .external-links-list{display:grid;gap:9px}.external-link-row{display:grid;grid-template-columns:86px 1fr 1fr 34px;gap:7px;align-items:center}.external-link-row input{min-width:0}.remove-link-btn{width:34px;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#07101c;color:#9da8ba;cursor:pointer}.remove-link-btn:hover{border-color:rgba(220,90,90,.45);color:#ef9a9a}.add-link-btn{margin-top:8px;border:1px dashed rgba(231,170,49,.35);background:rgba(231,170,49,.04);color:#d8bb7b;border-radius:8px;padding:8px 11px;cursor:pointer;font-size:11px}.add-link-btn:hover{border-color:rgba(231,170,49,.6);background:rgba(231,170,49,.08)}
+    .crop-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}.crop-modal{width:min(760px,96vw);background:#07101b;border:1px solid rgba(231,170,49,.25);border-radius:16px;padding:18px;box-shadow:0 30px 100px rgba(0,0,0,.6)}.crop-modal h3{font-family:var(--serif);margin:0 0 4px;font-size:22px}.crop-modal p{margin:0 0 14px;color:#7f8a9b;font-size:11px}.crop-stage{position:relative;width:100%;height:min(58vh,420px);background:#02060d;border-radius:11px;overflow:hidden;touch-action:none}.crop-stage canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab}.crop-stage canvas:active{cursor:grabbing}.crop-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px}.crop-zoom{display:flex;align-items:center;gap:8px;color:#9da8ba;font-size:11px}.crop-zoom input{width:150px}.crop-buttons{display:flex;gap:8px}.crop-buttons button{min-width:88px}.crop-hint{margin-top:8px;color:#667386;font-size:10px}
     .photo-pencil{position:absolute;right:-2px;bottom:2px;width:31px;height:31px;border-radius:50%;border:1px solid rgba(231,170,49,.6);background:#101a28;color:#f4d38b;cursor:pointer;display:grid;place-items:center}
     .author-readonly .editor-panel{display:none}.author-readonly .author-workspace{display:block}.author-readonly .profile-preview{max-width:900px;margin:auto}
     @media(max-width:900px){.author-workspace{grid-template-columns:1fr}.editor-panel{position:static}.works-grid{grid-template-columns:1fr 1fr}}
@@ -74,9 +76,10 @@
           <h2>Edit Profile</h2>
           <p>Everything here is public. Your real name and date of birth remain private.</p>
           <div class="editor-field"><label for="penName">Pen Name</label><input id="penName" maxlength="80"></div>
+          <div class="editor-field"><label for="userHandle">User ID</label><input id="userHandle" maxlength="30" placeholder="unique_username"><div class="editor-note">This becomes your public @UserID. Letters, numbers and underscores only. It must be unique.</div></div>
           <div class="editor-field"><label for="tagline">Tagline</label><input id="tagline" maxlength="120" placeholder="A short line readers will remember"></div>
           <div class="editor-field"><label for="bio">About You</label><textarea id="bio" maxlength="1200" placeholder="Tell readers about yourself and the stories you write."></textarea></div>
-          <div class="editor-field"><label>Social Links</label><div class="editor-grid"><input id="x" placeholder="X profile"><input id="instagram" placeholder="Instagram"><input id="telegram" placeholder="Telegram"></div></div>
+          <div class="editor-field"><label>External Links</label><div class="external-links-list" id="externalLinksList"></div><button class="add-link-btn" id="addExternalLink" type="button">＋ Add external link</button><div class="editor-note" style="margin-top:6px">Add as many external profiles or websites as you need.</div></div>
           <div class="editor-field"><label>Profile Banner</label><div class="cover-upload"><button class="text-btn" type="button" id="bannerUploadButton">Upload Banner Image</button><button class="text-btn" type="button" id="bannerRemoveButton" style="display:none">Remove</button><input class="hidden-file" id="bannerInput" type="file" accept="image/jpeg,image/png,image/webp"></div><div id="bannerFileName" class="editor-note">Choose a JPG, PNG, or WebP image. A wide image works best.</div><div id="bannerPreview" style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;background:#101c2b"><img id="bannerPreviewImage" alt="Banner preview" style="display:block;width:100%;height:110px;object-fit:cover"></div></div>
           <div class="editor-checks">
             <label class="editor-check"><input id="showBio" type="checkbox"> Show bio on public profile</label>
@@ -91,6 +94,14 @@
   </main>
 
   <input class="hidden-file" id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp">
+  <div class="crop-overlay" id="cropOverlay" role="dialog" aria-modal="true" aria-label="Crop image">
+    <div class="crop-modal">
+      <h3 id="cropTitle">Crop Image</h3><p>Drag the image to position it and use the slider to zoom.</p>
+      <div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas></div>
+      <div class="crop-actions"><div class="crop-zoom"><span>Zoom</span><input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1"></div><div class="crop-buttons"><button class="text-btn" id="cropCancel" type="button">Cancel</button><button class="gold-btn" id="cropApply" type="button">Use Image</button></div></div>
+      <div class="crop-hint">Profile photo uses a square crop. Banner uses a wide crop.</div>
+    </div>
+  </div>
   <script src="meteorink-data.js"></script>
   <script>
     const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -103,14 +114,14 @@
     if(!author){location.href=editMode?'author-setup.html':'index.html';throw new Error('Author not found');}
 
     const publicConfig=()=>({
-      tagline:author.tagline||'',banner:author.banner||'',x:author.x||'',instagram:author.instagram||'',telegram:author.telegram||'',
+      tagline:author.tagline||'',banner:author.banner||'',links:Array.isArray(author.links)?author.links:[],x:author.x||'',instagram:author.instagram||'',
       showBio:author.showBio!==false,showLinks:author.showLinks!==false,showStats:author.showStats!==false
     });
 
     function render(){
       const cfg=publicConfig();
       document.getElementById('profileName').textContent=author.name||'Author';
-      document.getElementById('profileHandle').textContent='@'+String(author.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+      document.getElementById('profileHandle').textContent='@'+(author.username||String(author.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));
       document.getElementById('profileTagline').textContent=cfg.tagline;
       document.getElementById('profileBio').textContent=author.bio||'This author has not added a biography yet.';
       document.getElementById('profileBio').style.display=cfg.showBio?'block':'none';
@@ -123,7 +134,7 @@
       document.getElementById('profileCover').style.backgroundImage=cfg.banner?`linear-gradient(180deg,rgba(3,7,17,.08),rgba(3,7,17,.6)),url("${cfg.banner.replace(/"/g,'')}" )`:'linear-gradient(135deg,#0d1c31,#07101b 55%,#172d42)';
       const avatar=author.picture||window.__authorPicture||'';
       document.getElementById('profileAvatar').innerHTML=avatar?`<img src="${esc(avatar)}" alt="${esc(author.name||'Author')}">`:'◉';
-      const links=[];[['X',cfg.x],['Instagram',cfg.instagram],['Telegram',cfg.telegram]].forEach(([label,url])=>{if(url)links.push(`<a class="profile-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`)});
+      const links=[];cfg.links.forEach(item=>{if(item&&item.url)links.push(`<a class="profile-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.label||'External Link')}</a>`)});
       document.getElementById('profileLinks').innerHTML=links.join('')||'<span style="color:#687587;font-size:11px">No public links added.</span>';
       document.getElementById('worksGrid').innerHTML=works.length?works.map(n=>`<article class="work-card"><div class="work-cover">${n.cover?`<img src="${esc(n.cover)}" alt="">`:'No Cover'}</div><div><h4>${esc(n.title)}</h4><p>${esc(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views</p><p style="margin-top:7px">${esc(n.description||'')}</p></div></article>`).join(''):'<div class="empty-works" style="grid-column:1/-1">No published works yet.</div>';
     }
@@ -134,19 +145,28 @@
     }
 
     function populateEditor(){
-      document.getElementById('penName').value=author.name||'';document.getElementById('tagline').value=author.tagline||'';document.getElementById('bio').value=author.bio||'';
-      document.getElementById('x').value=author.x||'';document.getElementById('instagram').value=author.instagram||'';document.getElementById('telegram').value=author.telegram||'';
+      document.getElementById('penName').value=author.name||'';document.getElementById('userHandle').value=author.username||String(author.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');document.getElementById('tagline').value=author.tagline||'';document.getElementById('bio').value=author.bio||'';
+      renderExternalLinks();
       document.getElementById('showBio').checked=author.showBio!==false;document.getElementById('showLinks').checked=author.showLinks!==false;document.getElementById('showStats').checked=author.showStats!==false;
     }
 
+    function normalizeUrl(value){let u=String(value||'').trim();if(u&&!/^https?:\/\//i.test(u))u='https://'+u;return u;}
+    function renderExternalLinks(){const host=document.getElementById('externalLinksList');host.innerHTML='';const links=Array.isArray(author.links)?author.links:[];const seed=links.length?links:[{label:'X',url:author.x||''},{label:'Instagram',url:author.instagram||''},{label:'Patreon',url:author.patreon||''}];(seed.length?seed:[{label:'X',url:''},{label:'Instagram',url:''},{label:'Patreon',url:''}]).forEach(addExternalLinkRow);}
+    function addExternalLinkRow(item={label:'',url:''}){const host=document.getElementById('externalLinksList');const row=document.createElement('div');row.className='external-link-row';row.innerHTML=`<input class="link-label" maxlength="30" placeholder="Name" value="${esc(item.label)}"><input class="link-url" type="url" placeholder="https://..." value="${esc(item.url)}"><button class="remove-link-btn" type="button" aria-label="Remove link">×</button>`;row.querySelector('.remove-link-btn').onclick=()=>{row.remove();};host.appendChild(row);}
+    function collectExternalLinks(){return [...document.querySelectorAll('#externalLinksList .external-link-row')].map(row=>({label:row.querySelector('.link-label').value.trim()||'External Link',url:normalizeUrl(row.querySelector('.link-url').value)})).filter(x=>x.url);}
+    document.getElementById('addExternalLink').onclick=()=>addExternalLinkRow();
+
     function save(){
+      const username=document.getElementById('userHandle').value.trim().replace(/^@+/,'').toLowerCase();
+      if(!/^[a-z0-9_]{3,30}$/.test(username)){document.getElementById('editorStatus').textContent='User ID must be 3–30 characters using only letters, numbers and underscores.';document.getElementById('editorStatus').classList.add('error');return;}
+      const taken=MeteorInkData.getAuthors().some(a=>{if(a.id===author.id)return false;const existing=String(a.username||String(a.name||'author').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));return existing.toLowerCase()===username;});
+      if(taken){document.getElementById('editorStatus').textContent='That User ID is already taken. Choose another one.';document.getElementById('editorStatus').classList.add('error');return;}
       author={...author,
         name:document.getElementById('penName').value.trim(),
+        username:username,
         tagline:document.getElementById('tagline').value.trim(),
         bio:document.getElementById('bio').value.trim(),
-        x:document.getElementById('x').value.trim(),
-        instagram:document.getElementById('instagram').value.trim(),
-        telegram:document.getElementById('telegram').value.trim(),
+        links:collectExternalLinks(),
         showBio:document.getElementById('showBio').checked,
         showLinks:document.getElementById('showLinks').checked,
         showStats:document.getElementById('showStats').checked
@@ -211,32 +231,22 @@
       updateBannerUploadUI('');
       persistAuthor('Banner removed and saved.');
     };
-    document.getElementById('bannerInput').onchange=async e=>{
-      const file=e.target.files?.[0];if(!file)return;
-      if(file.size>8*1024*1024){document.getElementById('editorStatus').textContent='Banner image must be under 8 MB.';document.getElementById('editorStatus').classList.add('error');e.target.value='';return;}
-      try{
-        const data=await compressImage(file,1400,600,.78);
-        author.banner=data;
-        updateBannerUploadUI(data,file.name);
-        persistAuthor('Banner updated and saved.');
-      }catch(err){document.getElementById('editorStatus').textContent='Unable to process banner image.';document.getElementById('editorStatus').classList.add('error');}
-    };
+    document.getElementById('bannerInput').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>8*1024*1024){document.getElementById('editorStatus').textContent='Banner image must be under 8 MB.';document.getElementById('editorStatus').classList.add('error');e.target.value='';return;}openCropper(file,'banner');};
     function updateBannerUploadUI(value,fileName=''){const preview=document.getElementById('bannerPreview'),img=document.getElementById('bannerPreviewImage'),name=document.getElementById('bannerFileName'),remove=document.getElementById('bannerRemoveButton');if(value){img.src=value;preview.style.display='block';remove.style.display='inline-flex';name.textContent=fileName||'Current banner image';}else{img.removeAttribute('src');preview.style.display='none';remove.style.display='none';name.textContent='Choose a JPG, PNG, or WebP image. A wide image works best.';}}
 
     document.getElementById('profilePhotoButton').onclick=()=>document.getElementById('profilePhotoInput').click();
-    document.getElementById('profilePhotoInput').onchange=async e=>{
-      const file=e.target.files?.[0];if(!file)return;
-      if(file.size>8*1024*1024){document.getElementById('editorStatus').textContent='Profile photo must be under 8 MB.';document.getElementById('editorStatus').classList.add('error');e.target.value='';return;}
-      try{
-        const data=await compressImage(file,800,800,.82);
-        author.picture=data;
-        author.customPicture=true;
-        persistAuthor('Profile photo updated and saved.');
-      }catch(err){document.getElementById('editorStatus').textContent='Unable to process profile photo.';document.getElementById('editorStatus').classList.add('error');}
-    };
+    document.getElementById('profilePhotoInput').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>8*1024*1024){document.getElementById('editorStatus').textContent='Profile photo must be under 8 MB.';document.getElementById('editorStatus').classList.add('error');e.target.value='';return;}openCropper(file,'photo');};
+
+    let cropState=null;
+    function openCropper(file,type){const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{cropState={img,type,zoom:1,x:0,y:0,drag:false,lastX:0,lastY:0};document.getElementById('cropTitle').textContent=type==='photo'?'Crop Profile Photo':'Crop Profile Banner';document.getElementById('cropZoom').value='1';document.getElementById('cropOverlay').style.display='flex';drawCrop();};img.onerror=()=>{document.getElementById('editorStatus').textContent='Unable to open image.';document.getElementById('editorStatus').classList.add('error');};img.src=reader.result;};reader.readAsDataURL(file);}
+    function drawCrop(){if(!cropState)return;const canvas=document.getElementById('cropCanvas'),stage=document.getElementById('cropStage');const dpr=window.devicePixelRatio||1,w=stage.clientWidth,h=stage.clientHeight;canvas.width=w*dpr;canvas.height=h*dpr;const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const img=cropState.img;const aspect=cropState.type==='photo'?1:1400/600;let cw=w,ch=w/aspect;if(ch>h){ch=h;cw=h*aspect;}const scale=Math.max(cw/img.naturalWidth,ch/img.naturalHeight)*cropState.zoom;const iw=img.naturalWidth*scale,ih=img.naturalHeight*scale;const cx=w/2+cropState.x,cy=h/2+cropState.y;ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.fillStyle='rgba(0,0,0,.48)';ctx.fillRect(0,0,w,h);const rx=(w-cw)/2,ry=(h-ch)/2;ctx.save();ctx.beginPath();ctx.rect(rx,ry,cw,ch);ctx.clip();ctx.clearRect(rx,ry,cw,ch);ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.restore();ctx.strokeStyle='rgba(244,211,139,.9)';ctx.lineWidth=2;ctx.strokeRect(rx,ry,cw,ch);}
+    document.getElementById('cropZoom').oninput=e=>{if(cropState){cropState.zoom=Number(e.target.value);drawCrop();}};
+    const cropStage=document.getElementById('cropStage');cropStage.addEventListener('pointerdown',e=>{if(!cropState)return;cropState.drag=true;cropState.lastX=e.clientX;cropState.lastY=e.clientY;cropStage.setPointerCapture(e.pointerId);});cropStage.addEventListener('pointermove',e=>{if(!cropState?.drag)return;cropState.x+=e.clientX-cropState.lastX;cropState.y+=e.clientY-cropState.lastY;cropState.lastX=e.clientX;cropState.lastY=e.clientY;drawCrop();});cropStage.addEventListener('pointerup',()=>{if(cropState)cropState.drag=false;});cropStage.addEventListener('pointercancel',()=>{if(cropState)cropState.drag=false;});
+    document.getElementById('cropCancel').onclick=()=>{document.getElementById('cropOverlay').style.display='none';cropState=null;document.getElementById('profilePhotoInput').value='';document.getElementById('bannerInput').value='';};
+    document.getElementById('cropApply').onclick=()=>{if(!cropState)return;const {img,type}=cropState;const stage=document.getElementById('cropStage'),canvas=document.createElement('canvas');const outW=type==='photo'?800:1400,outH=type==='photo'?800:600;canvas.width=outW;canvas.height=outH;const ctx=canvas.getContext('2d');const aspect=outW/outH;let cw=stage.clientWidth,ch=cw/aspect;if(ch>stage.clientHeight){ch=stage.clientHeight;cw=ch*aspect;}const scale=Math.max(cw/img.naturalWidth,ch/img.naturalHeight)*cropState.zoom;const iw=img.naturalWidth*scale,ih=img.naturalHeight*scale;const cx=stage.clientWidth/2+cropState.x,cy=stage.clientHeight/2+cropState.y;const sx=(cx-iw/2-(stage.clientWidth-cw)/2)/scale;const sy=(cy-ih/2-(stage.clientHeight-ch)/2)/scale;const sw=cw/scale,sh=ch/scale;ctx.drawImage(img,sx,sy,sw,sh,0,0,outW,outH);const data=canvas.toDataURL('image/jpeg',type==='photo'?.84:.8);if(type==='photo'){author.picture=data;author.customPicture=true;persistAuthor('Profile photo cropped and saved.');}else{author.banner=data;updateBannerUploadUI(data,'Cropped banner');persistAuthor('Banner cropped and saved.');}document.getElementById('cropOverlay').style.display='none';cropState=null;document.getElementById('profilePhotoInput').value='';document.getElementById('bannerInput').value='';};
 
     if(!editMode){document.body.classList.add('author-readonly');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
-    else {if(!session||session.id!==author.userId){location.href=`author-profile.html?id=${encodeURIComponent(author.id)}`;}populateEditor();}
+    else {if(!session||session.id!==author.userId){location.href=`author-profile.html?id=${encodeURIComponent(author.id)}`;}populateEditor();updateBannerUploadUI(author.banner||'');}
     render();
     syncPicture();
   </script>
