@@ -474,7 +474,7 @@
         </div>
 
         <div class="dashboard-actions">
-          <button class="profile-edit-btn" id="editProfileButton" type="button">
+          <a class="profile-edit-btn" id="editProfileButton" href="author-profile.html?edit=1">
             <span class="profile-edit-btn-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.5 21a8.5 8.5 0 0 0-17 0"/>
@@ -482,7 +482,7 @@
               </svg>
             </span>
             <span>Edit Your Profile</span>
-          </button>
+          </a>
           <a class="gold-btn" href="index.html">Back to Home</a>
         </div>
       </header>
@@ -690,10 +690,6 @@
     const openProfileModal=()=>{populateProfileModal();profileModal.classList.add('open');profileModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';setTimeout(()=>document.getElementById('profilePenName').focus(),0);};
     const closeProfileModal=()=>{profileModal.classList.remove('open');profileModal.setAttribute('aria-hidden','true');document.body.style.overflow='';};
 
-    document.getElementById('editProfileButton').addEventListener('click',()=>{
-      const profileWindow=window.open('author-profile.html?edit=1','MeteorInkAuthorProfile','width=1440,height=950,resizable=yes,scrollbars=yes');
-      if(!profileWindow){location.href='author-profile.html?edit=1';}
-    });
     document.getElementById('closeProfileModal').addEventListener('click',closeProfileModal);
     document.getElementById('cancelProfileEdit').addEventListener('click',closeProfileModal);
     profileModal.addEventListener('click',e=>{if(e.target===profileModal)closeProfileModal();});
