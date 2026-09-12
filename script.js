@@ -40,9 +40,48 @@
       </div>
     </article>`;
   }
-  function authorAvatarUrl(a){const m=String(a?.id||a?.name||'').match(/(\d+)$/);const n=m?((Number(m[1])-1)%70)+1:((Array.from(String(a?.name||'')).reduce((s,c)=>s+c.charCodeAt(0),0))%70)+1;return `https://i.pravatar.cc/300?img=${n}`;}
-  function authorCard(a,rank=0){return `<article class="dynamic-author-card" data-author-id="${esc(a.id)}"><div class="dynamic-avatar"><img src="${authorAvatarUrl(a)}" alt="${esc(a.name||'Author')} profile" loading="lazy"></div><div class="dynamic-author-main"><h3>${esc(a.name||'Unnamed Author')}${MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(a.id,a.name)?`<img class="author-verified-badge" src="${MeteorInkData.verificationBadgeAsset(a.id,a.name)}" alt="Verified Author" title="Verified Author">`:''}</h3><p>${Number(a.followers||0).toLocaleString()} followers</p></div>${rank?`<div class="author-rank-mini"><strong>#${rank}</strong></div>`:''}</article>`;}
-
+  function authorAvatarUrl(a){
+    if(a?.picture)return a.picture;
+    const initials=String(a?.name||a?.username||'A').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'A';
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#151a24"/><text x="150" y="170" text-anchor="middle" font-family="Arial,sans-serif" font-size="92" font-weight="700" fill="#f4bd3f">${initials}</text></svg>`;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  }
+  function authorCard(a,rank=0){
+    const id=esc(a.id||'');
+    const profileUrl=`author-profile.html?id=${encodeURIComponent(a.id||'')}`;
+    return `<article class="dynamic-author-card" data-author-id="${id}" role="link" tabindex="0" aria-label="Open ${esc(a.name||a.username||'Author')} profile">
+      <div class="dynamic-avatar"><img src="${esc(authorAvatarUrl(a))}" alt="${esc(a.name||a.username||'Author')} profile" loading="lazy"></div>
+      <div class="dynamic-author-main"><h3>${esc(a.name||a.username||'Unnamed Author')}${a.verified&&MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(a.id,a.name)?`<img class="author-verified-badge" src="${MeteorInkData.verificationBadgeAsset(a.id,a.name)}" alt="Verified Author" title="Verified Author">`:''}</h3><p>${Number(a.followers||0).toLocaleString()} followers</p></div>
+      ${rank?`<div class="author-rank-mini"><strong>#${rank}</strong></div>`:''}
+    </article>`;
+  }
+  let serverAuthorsCache=null;
+  let serverAuthorsPromise=null;
+  async function getServerAuthors(){
+    if(Array.isArray(serverAuthorsCache))return serverAuthorsCache;
+    if(serverAuthorsPromise)return serverAuthorsPromise;
+    serverAuthorsPromise=fetch('/api/authors?limit=1000',{headers:{Accept:'application/json'},cache:'no-store'})
+      .then(r=>r.ok?r.json():Promise.reject(new Error(`Author API returned ${r.status}`)))
+      .then(payload=>{
+        if(!Array.isArray(payload?.authors))throw new Error(payload?.error||'Invalid author API response');
+        serverAuthorsCache=payload.authors;
+        return serverAuthorsCache;
+      })
+      .catch(err=>{
+        console.error('[MeteorInk] Failed to load server authors:',err);
+        serverAuthorsCache=[];
+        return serverAuthorsCache;
+      });
+    return serverAuthorsPromise;
+  }
+  function bindAuthorCards(grid){
+    if(!grid)return;
+    grid.querySelectorAll('.dynamic-author-card').forEach(card=>{
+      const open=()=>{const id=card.dataset.authorId;if(id)window.location.href=`author-profile.html?id=${encodeURIComponent(id)}`;};
+      card.addEventListener('click',open);
+      card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    });
+  }
   function renderTrending(period='today'){
     const host=qs('#emptyLibrary');if(!host||!window.MeteorInkData)return;
     const baseNovels=MeteorInkData.getCatalogNovels?MeteorInkData.getCatalogNovels():MeteorInkData.getNovels(); const windows={today:86400000,'7days':7*86400000,month:30*86400000}; const ms=windows[period]||windows.today; const all=baseNovels.map(n=>({...n,rankingViews:Array.isArray(n.viewEvents)?n.viewEvents.filter(t=>Date.now()-new Date(t).getTime()<=ms).length:Number(n.views||0)})).sort((a,b)=>b.rankingViews-a.rankingViews);const per=6;const total=Math.max(1,Math.ceil(all.length/per));pageState.trending=Math.min(pageState.trending,total);
@@ -52,15 +91,27 @@
     host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';
     host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';grid.innerHTML=items.map(n=>novelCard(n,n.rankingViews)).join('');mountPager('dynamicTrendingGrid',total,pageState.trending,'trending',()=>renderTrending(period));
   }
-  function renderAuthors(period='7days'){
+  async function renderAuthors(period='7days'){
     const host=qs('.top-authors-empty');if(!host||!window.MeteorInkData)return;
-    const all=period==='goat'
-      ? (MeteorInkData.catalogTopAuthors?MeteorInkData.catalogTopAuthors('goat'):MeteorInkData.topAuthors('goat'))
-      : (MeteorInkData.catalogTopAuthors?MeteorInkData.catalogTopAuthors('views'):MeteorInkData.topAuthors(period));
-    const per=9;const total=1;pageState.authors=1;
-    const items=all.slice(0,per);let grid=document.getElementById('dynamicAuthorsGrid');
-    if(!grid){grid=document.createElement('div');grid.id='dynamicAuthorsGrid';grid.className='dynamic-author-grid';host.parentNode.insertBefore(grid,host);}
-    if(!all.length){grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';document.getElementById('dynamicAuthorsGridPagination')?.remove();return;}host.hidden=true;host.style.display='none';grid.hidden=false;grid.style.display='';grid.innerHTML=items.map((a,i)=>authorCard(a,(pageState.authors-1)*per+i+1)).join('');document.getElementById('dynamicAuthorsGridPagination')?.remove();
+    const gridId='dynamicAuthorsGrid';
+    let grid=document.getElementById(gridId);
+    if(!grid){grid=document.createElement('div');grid.id=gridId;grid.className='dynamic-author-grid';host.parentNode.insertBefore(grid,host);}
+    host.hidden=true;host.style.display='none';
+    grid.hidden=false;grid.style.display='';
+    grid.innerHTML='<div class="author-loading-state">Loading authors…</div>';
+    document.getElementById(gridId+'Pagination')?.remove();
+
+    const all=(await getServerAuthors()).slice().sort((a,b)=>Number(b.followers||0)-Number(a.followers||0));
+    const per=9;
+    const items=all.slice(0,per);
+    if(!items.length){
+      grid.innerHTML='';grid.hidden=true;grid.style.display='none';
+      host.hidden=false;host.style.display='';
+      return;
+    }
+    grid.hidden=false;grid.style.display='';
+    grid.innerHTML=items.map((a,i)=>authorCard(a,i+1)).join('');
+    bindAuthorCards(grid);
   }
   function renderLatest(){
     const host=qs('.latest-arrivals-empty');if(!host||!window.MeteorInkData)return;
