@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="assets/meteorink-favicon.png">
-<link rel="manifest" href="manifest.webmanifest">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>MeteorInk — Author Dashboard</title>
@@ -174,6 +172,79 @@
       color:#687587;
       font-size:10px;
     }
+
+    .genre-picker{position:relative}
+
+    .genre-picker-button{
+      width:100%;
+      height:46px;
+      box-sizing:border-box;
+      border:1px solid rgba(255,255,255,.11);
+      border-radius:9px;
+      background:#07101c;
+      color:#eef2f7;
+      padding:0 14px;
+      font:inherit;
+      font-size:13px;
+      outline:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      cursor:pointer;
+      text-align:left;
+      transition:border-color .15s ease,box-shadow .15s ease;
+    }
+
+    .genre-picker-button:hover,.genre-picker-button[aria-expanded="true"]{
+      border-color:rgba(231,170,49,.55);
+      box-shadow:0 0 0 3px rgba(231,170,49,.08);
+    }
+
+    .genre-picker-value{color:#eef2f7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .genre-picker-value.placeholder{color:#687587}
+    .genre-picker-chevron{font-size:15px;color:#d7b04d;transition:transform .15s ease}
+    .genre-picker-button[aria-expanded="true"] .genre-picker-chevron{transform:rotate(180deg)}
+
+    .genre-picker-menu{
+      position:absolute;
+      left:0;
+      right:0;
+      top:calc(100% + 7px);
+      z-index:30;
+      display:none;
+      padding:8px;
+      background:linear-gradient(180deg,#0a1423,#07101c);
+      border:1px solid rgba(231,170,49,.25);
+      border-radius:11px;
+      box-shadow:0 18px 45px rgba(0,0,0,.42);
+      max-height:280px;
+      overflow:auto;
+    }
+
+    .genre-picker-menu.open{display:block}
+
+    .genre-option{
+      width:100%;
+      min-height:38px;
+      border:0;
+      border-radius:7px;
+      background:transparent;
+      color:#cfd7e4;
+      padding:9px 10px;
+      font:600 12px/1.3 "DM Sans",sans-serif;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      text-align:left;
+    }
+
+    .genre-option:hover{background:rgba(231,170,49,.08);color:#fff}
+    .genre-option.selected{background:rgba(231,170,49,.13);color:#ffd86f}
+    .genre-option.selected::after{content:'✓';font-size:13px;color:#e7aa31}
+    .genre-picker-note{margin-top:6px;color:#687587;font-size:10px}
 
     .publish-footer{
       grid-column:1 / -1;
@@ -353,7 +424,15 @@
 
           <div class="form-field">
             <label for="novelGenre">Genre</label>
-            <input id="novelGenre" name="genre" type="text" placeholder="e.g. Fantasy, Romance, Action" required>
+            <div class="genre-picker" id="genrePicker">
+              <button type="button" id="genrePickerButton" class="genre-picker-button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="genrePickerValue" class="genre-picker-value placeholder">Select a genre</span>
+                <span class="genre-picker-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div id="genrePickerMenu" class="genre-picker-menu" role="listbox" aria-label="Novel genres"></div>
+              <input id="novelGenre" name="genre" type="hidden" required>
+              <div class="genre-picker-note">Choose from MeteorInk's available genres.</div>
+            </div>
           </div>
 
           <div class="form-field full">
@@ -402,6 +481,54 @@
       location.href='author-setup.html';
     }
 
+    const primaryGenres=[
+      'Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama',
+      'Young Adult',"Children's Fiction",'Comedy','Western','Supernatural / Paranormal','Spiritual / Religious','Military / War',
+      'Post-Apocalyptic / Dystopian','Speculative Fiction','Sports','Psychological','Philosophical / Intellectual','Slice of Life',
+      'School / Academy','Webnovel-Specific / Modern Digital Genres','Mythology / Folklore','Other / Hybrid'
+    ];
+
+    const genrePickerButton=document.getElementById('genrePickerButton');
+    const genrePickerMenu=document.getElementById('genrePickerMenu');
+    const genrePickerValue=document.getElementById('genrePickerValue');
+    const novelGenre=document.getElementById('novelGenre');
+    const genrePicker=document.getElementById('genrePicker');
+
+    genrePickerMenu.innerHTML=primaryGenres.map(g=>`<button type="button" class="genre-option" role="option" data-genre="${g.replace(/"/g,'&quot;')}">${g}</button>`).join('');
+
+    const closeGenrePicker=()=>{
+      genrePickerMenu.classList.remove('open');
+      genrePickerButton.setAttribute('aria-expanded','false');
+    };
+
+    genrePickerButton.addEventListener('click',()=>{
+      const open=!genrePickerMenu.classList.contains('open');
+      genrePickerMenu.classList.toggle('open',open);
+      genrePickerButton.setAttribute('aria-expanded',String(open));
+    });
+
+    genrePickerMenu.addEventListener('click',e=>{
+      const option=e.target.closest('.genre-option');
+      if(!option)return;
+      const selected=option.dataset.genre;
+      novelGenre.value=selected;
+      genrePickerValue.textContent=selected;
+      genrePickerValue.classList.remove('placeholder');
+      genrePickerMenu.querySelectorAll('.genre-option').forEach(btn=>{
+        btn.classList.toggle('selected',btn===option);
+        btn.setAttribute('aria-selected',String(btn===option));
+      });
+      closeGenrePicker();
+    });
+
+    document.addEventListener('click',e=>{
+      if(!genrePicker.contains(e.target))closeGenrePicker();
+    });
+
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape')closeGenrePicker();
+    });
+
     const novels=()=>MeteorInkData.getNovels().filter(n=>n.authorId===author.id);
 
     document.getElementById('welcome').textContent=`Welcome, ${author.name}`;
@@ -447,6 +574,13 @@
         'Published. Homepage sections will update automatically.';
 
       e.target.reset();
+      genrePickerValue.textContent='Select a genre';
+      genrePickerValue.classList.add('placeholder');
+      genrePickerMenu.querySelectorAll('.genre-option').forEach(btn=>{
+        btn.classList.remove('selected');
+        btn.setAttribute('aria-selected','false');
+      });
+      closeGenrePicker();
       render();
     });
   </script>
