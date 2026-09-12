@@ -1,4 +1,4 @@
-METEORINK v64
+METEORINK v67
 
 This build follows the MeteorInk master specification and keeps the existing visual direction while making the main flows functional in a browser.
 
@@ -39,3 +39,18 @@ Windows shortcut: double-click START_METEORINK.bat.
 Do NOT open index.html directly with file:// when testing Google OAuth.
 
 Google OAuth setup instructions are in OAUTH_SETUP.md.
+
+
+V67 audit notes:
+- Added baseline security response headers and disabled Express fingerprinting.
+- Added /api/status for a deployment-safe health check.
+- Added favicon + web manifest references across HTML pages.
+- Removed the external placeholder-avatar dependency from Top Authors; initials are generated locally.
+- Escaped dynamic novel/reader content before inserting it into HTML.
+- Fixed the reader missing-content message so it says “Novel not found” rather than “Chapter not found”.
+- The package delivered for review excludes .git, node_modules, and server/.env. Keep real production secrets outside the source archive.
+
+Still intentionally pending before a full production launch:
+- Frontend catalog/publishing is still localStorage-backed; Supabase is currently used by the auth/server foundation.
+- Chapter CRUD, real reader chapter loading, bookmarks, reading history, and contact/report submission still need server API wiring.
+- Real email delivery is not connected.

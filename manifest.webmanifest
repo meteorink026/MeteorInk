@@ -1,0 +1,9 @@
+{
+  "name": "MeteorInk",
+  "short_name": "MeteorInk",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#030711",
+  "theme_color": "#030711",
+  "icons": [{"src":"assets/meteorink-favicon.png","sizes":"192x192","type":"image/png"}]
+}

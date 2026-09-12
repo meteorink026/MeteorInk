@@ -150,6 +150,21 @@ function safeUser(user) {
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: false }));
+
+// Baseline security headers. The app currently relies on inline scripts and
+// Google Analytics, so a strict CSP is intentionally left for the deployment
+// hardening pass rather than breaking the existing browser build.
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
 app.use(session({
   store: new PgSession({
   pool: pgPool,
@@ -579,6 +594,17 @@ app.post("/api/author/setup", async (req, res) => {
     console.error("/api/author/setup error:", err);
     const message = err?.message || "Unable to create the author profile.";
     res.status(500).json({ error: message });
+  }
+});
+
+// Small operational endpoint for deployment checks. Keep this before static
+// file serving so it cannot be shadowed by a file named "health".
+app.get("/api/status", async (_req, res) => {
+  try {
+    await supabaseRequest("users", { query: { select: "id", limit: "1" } });
+    res.json({ ok: true, service: "meteorink", database: "connected" });
+  } catch (_err) {
+    res.status(503).json({ ok: false, service: "meteorink", database: "unavailable" });
   }
 });
 

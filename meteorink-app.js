@@ -41,7 +41,7 @@
                   <span><strong>${esc(currentUser.name||'User')}</strong><small>${esc(currentUser.email||'')}</small></span>
                 </div>
                 <div class="profile-dropdown-links">
-                  <a href="profile.html">My Profile</a>
+                  <a href="profile.html"><span class="profile-menu-icon"><img src="assets/my-profile-icon.png" alt="" aria-hidden="true"></span><span>My Profile</span></a>
                   <a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a>
                   <a href="author-dashboard.html">Author Dashboard</a>
                 </div>
@@ -119,7 +119,7 @@
       menu=document.createElement('div'); menu.id='mobileMenu'; menu.className='mobile-menu';
       menu.innerHTML=nav.map(([label,href])=>`<a class="${activeFor(label)?'active':''}" href="${href}">${label}</a>`).join('')+
         (currentUser
-          ? '<div class="mobile-account"><div class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</div><a href="profile.html">My Profile</a><a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a><a href="author-dashboard.html">Author Dashboard</a><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button></div>'
+          ? '<div class="mobile-account"><div class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</div><a href="profile.html"><span class="profile-menu-icon"><img src="assets/my-profile-icon.png" alt="" aria-hidden="true"></span><span>My Profile</span></a><a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a><a href="author-dashboard.html">Author Dashboard</a><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button></div>'
           : '<a href="auth.html">Log In</a><a href="signup.html">Sign Up</a>');
       header.after(menu);
     }
