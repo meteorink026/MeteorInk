@@ -151,11 +151,18 @@
     function updateBannerUploadUI(value,fileName=''){const preview=document.getElementById('bannerPreview'),img=document.getElementById('bannerPreviewImage'),name=document.getElementById('bannerFileName'),remove=document.getElementById('bannerRemoveButton');if(value){img.src=value;preview.style.display='block';remove.style.display='inline-flex';name.textContent=fileName||'Current banner image';}else{img.removeAttribute('src');preview.style.display='none';remove.style.display='none';name.textContent='Choose a JPG, PNG, or WebP image. A wide image works best.';}}
 
     document.getElementById('profilePhotoButton').onclick=()=>document.getElementById('profilePhotoInput').click();
-    document.getElementById('profilePhotoInput').onchange=async e=>{
+    document.getElementById('profilePhotoInput').onchange=e=>{
       const file=e.target.files?.[0];if(!file)return;
-      if(file.size>2*1024*1024){document.getElementById('editorStatus').textContent='Profile photo must be under 2 MB.';return;}
-      const reader=new FileReader();reader.onload=async()=>{
-        try{const r=await fetch('/api/profile/photo',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({picture:reader.result})});const out=await r.json();if(!r.ok)throw new Error(out.error||'Unable to update photo.');author.picture=out.user?.picture||reader.result;MeteorInkData.saveAuthor(author);render();document.getElementById('editorStatus').textContent='Profile photo updated.';}catch(err){document.getElementById('editorStatus').textContent=err.message;document.getElementById('editorStatus').classList.add('error');}}
+      if(file.size>2*1024*1024){document.getElementById('editorStatus').textContent='Profile photo must be under 2 MB.';document.getElementById('editorStatus').classList.add('error');e.target.value='';return;}
+      const reader=new FileReader();reader.onload=()=>{
+        author.picture=reader.result;
+        MeteorInkData.saveAuthor(author);
+        localStorage.setItem('meteorink_author_id',author.id||'');
+        render();
+        document.getElementById('editorStatus').textContent='Profile photo updated.';
+        document.getElementById('editorStatus').classList.remove('error');
+        setTimeout(()=>document.getElementById('editorStatus').textContent='',1800);
+      };
       reader.readAsDataURL(file);
     };
 
