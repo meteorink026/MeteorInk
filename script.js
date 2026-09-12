@@ -218,24 +218,30 @@
 window.renderMeteorInkAuthors=function(){
   const data=window.MeteorInkData;
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':'&quot;',"'":'&#39;'}[c]));
-  const card=(a,stat,label,rank=0)=>{
-    const novels=(data.getCatalogNovels?data.getCatalogNovels():data.getNovels()).filter(n=>n.authorId===a.id);
-    const totalReads=novels.reduce((sum,n)=>sum+Number(n.views||0),0);
-    const profile=a.profileImage||a.avatar||a.avatarUrl||a.profilePhoto||(()=>{const m=String(a?.id||a?.name||'').match(/(\d+)$/);const n=m?((Number(m[1])-1)%70)+1:((Array.from(String(a?.name||'')).reduce((sum,c)=>sum+c.charCodeAt(0),0))%70)+1;return `https://i.pravatar.cc/300?img=${n}`;})();
+  const initialsAvatar=(a)=>{
+    const initials=String(a?.name||a?.username||'A').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'A';
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#151a24"/><text x="150" y="170" text-anchor="middle" font-family="Arial,sans-serif" font-size="92" font-weight="700" fill="#f4bd3f">${esc(initials)}</text></svg>`;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  };
+  const avatarUrl=a=>a?.picture||initialsAvatar(a);
+  const card=(a,stat,label,rank=0,novels=[])=>{
+    const authorNovels=novels.filter(n=>n.authorId===a.id);
+    const totalReads=authorNovels.reduce((sum,n)=>sum+Number(n.views||0),0);
+    const profile=avatarUrl(a);
     const avatar=`<img src="${esc(profile)}" alt="${esc(a.name||'Author')} profile" loading="lazy">`;
     const isGoatRankOne=rank===1 && label.toLowerCase().includes('goat');
     const isGoatRankTwo=rank===2 && label.toLowerCase().includes('goat');
     const isGoatRankThree=rank===3 && label.toLowerCase().includes('goat');
     const quote=a.quote||a.tagline||a.bio||'We don’t just write stories, we build worlds.';
     const rankLabel=label.includes('GOAT')?'ALL TIME':label.includes('Emerging')?'EMERGING':'THIS WEEK';
-    return `<article class="author-card">
+    return `<article class="author-card" data-author-id="${esc(a.id||'')}" role="link" tabindex="0" aria-label="Open ${esc(a.name||'Author')} profile">
       <div class="author-avatar${isGoatRankOne?' goat-rank-one-avatar':isGoatRankTwo?' goat-rank-two-avatar':isGoatRankThree?' goat-rank-three-avatar':''}">${avatar}${isGoatRankOne?'<img class="goat-rank-one-frame" src="assets/goat-number-one-frame.png" alt="GOAT #1 frame" aria-hidden="true">':isGoatRankTwo?'<img class="goat-rank-two-frame" src="assets/goat-number-two-frame.png" alt="GOAT #2 frame" aria-hidden="true">':isGoatRankThree?'<img class="goat-rank-three-frame" src="assets/goat-number-three-frame.png" alt="GOAT #3 frame" aria-hidden="true">':''}</div>
       <div class="author-card-main">
-        <h3>${esc(a.name||"Unnamed Author")}${data.isAuthorVerified&&data.isAuthorVerified(a.id,a.name)?`<img class="author-verified-badge" src="${data.verificationBadgeAsset(a.id,a.name)}" alt="Verified Author" title="Verified Author">`:''}</h3>
+        <h3>${esc(a.name||"Unnamed Author")}${a.verified&&data.isAuthorVerified&&data.isAuthorVerified(a.id,a.name)?`<img class="author-verified-badge" src="${data.verificationBadgeAsset(a.id,a.name)}" alt="Verified Author" title="Verified Author">`:''}</h3>
         <div class="author-card-role-row"><div class="author-card-role">${esc(label)}</div><span class="author-card-followers">${Number(a.followers||0).toLocaleString()} followers</span></div>
         <p class="author-card-quote">“${esc(quote)}”</p>
         <div class="author-card-stats">
-          <div><strong>${novels.length.toLocaleString()}</strong><span>Novels</span></div>
+          <div><strong>${authorNovels.length.toLocaleString()}</strong><span>Novels</span></div>
           <div><strong>${totalReads.toLocaleString()}</strong><span>Total Reads</span></div>
         </div>
       </div>
@@ -245,17 +251,47 @@ window.renderMeteorInkAuthors=function(){
   const empty=(title,text)=>`<div class="author-empty"><strong>${title}</strong>${text}</div>`;
   const pagerHtml=(total,current)=>{if(total<=1)return "";const max=7,half=3;let first=Math.max(1,current-half),last=Math.min(total,first+max-1);first=Math.max(1,last-max+1);let h=`<nav class="asset-pagination" aria-label="Pages"><button type="button" data-page="${current-1}" ${current===1?"disabled":""}>Previous</button>`;for(let i=first;i<=last;i++)h+=`<button type="button" class="${i===current?"active":""}" data-page="${i}" aria-current="${i===current?"page":"false"}">${i}</button>`;return h+`<span>Page ${current} of ${total}</span><button type="button" data-page="${current+1}" ${current===total?"disabled":""}>Next</button></nav>`};
   const state={goat:window.__authorGoatPage||1,period:window.__authorPeriodPage||1,emerging:window.__authorEmergingPage||1};
+  let serverAuthors=null,serverNovels=null;
+  const loadServer=async()=>{
+    if(serverAuthors&&serverNovels)return {authors:serverAuthors,novels:serverNovels};
+    const [ar,nr]=await Promise.all([
+      fetch('/api/authors?limit=1000',{headers:{Accept:'application/json'},cache:'no-store'}),
+      fetch('/api/novels?limit=1000',{headers:{Accept:'application/json'},cache:'no-store'})
+    ]);
+    const [aPayload,nPayload]=await Promise.all([ar.json(),nr.json()]);
+    if(!ar.ok||!Array.isArray(aPayload.authors))throw new Error(aPayload.error||'Unable to load authors.');
+    if(!nr.ok||!Array.isArray(nPayload.novels))throw new Error(nPayload.error||'Unable to load novels.');
+    serverAuthors=aPayload.authors;
+    serverNovels=nPayload.novels;
+    return {authors:serverAuthors,novels:serverNovels};
+  };
   const draw=(id,items,per,page,key,make,emptyHtml)=>{
     const grid=document.getElementById(id), total=Math.max(1,Math.ceil(items.length/per));page=Math.min(page,total);if(!grid)return;
     grid.innerHTML=items.length?items.slice((page-1)*per,page*per).map((item,i)=>make(item,(page-1)*per+i+1)).join(""):emptyHtml;
     const old=document.getElementById(id+'Pagination');old?.remove();
     if(items.length>per){const pager=document.createElement('div');pager.id=id+'Pagination';pager.className='asset-pagination-wrap';pager.innerHTML=pagerHtml(total,page);grid.parentNode.insertBefore(pager,grid.nextSibling);pager.querySelectorAll('button[data-page]').forEach(b=>b.addEventListener('click',()=>{if(b.disabled)return;const n=Number(b.dataset.page);if(key==='goat')window.__authorGoatPage=n;if(key==='period')window.__authorPeriodPage=n;if(key==='emerging')window.__authorEmergingPage=n;window.renderMeteorInkAuthors();window.scrollTo({top:grid.getBoundingClientRect().top+window.scrollY-110,behavior:'smooth'});}));}
   };
-  const renderGoat=()=>draw('goatGrid',(data.catalogTopAuthors?data.catalogTopAuthors('goat'):data.topAuthors('goat')).slice(0,20),8,state.goat,'goat',(a,rank)=>card(a,`${Number(a.followers||0).toLocaleString()} followers`,'GOAT • All-time',rank),empty('No GOAT authors yet.','The hall of legends is waiting for its first names.'));
-  const renderPeriod=period=>draw('periodGrid',(data.catalogTopAuthors?data.catalogTopAuthors('views'):data.topAuthors(period)),8,state.period,'period',(a,rank)=>card(a,`${Number(a.rankingViews||0).toLocaleString()} novel views`,'Ranked by novel views',rank),empty('No ranked authors yet.','Published stories will determine this ranking automatically.'));
-  const renderEmerging=()=>{const now=Date.now(),month=30*24*60*60*1000,authors=data.getCatalogAuthors?data.getCatalogAuthors():data.getAuthors(),novels=data.getCatalogNovels?data.getCatalogNovels():data.getNovels();const qualifying=authors.filter(a=>{const created=new Date(a.createdAt||a.profileCreatedAt||0).getTime();return created&&now-created<=month&&novels.some(n=>n.authorId===a.id&&Number(n.views||0)>2000);});draw('emergingGrid',qualifying,8,state.emerging,'emerging',(a,rank)=>{const n=novels.filter(x=>x.authorId===a.id).sort((x,y)=>Number(y.views||0)-Number(x.views||0))[0];return card(a,`${Number(n.views||0).toLocaleString()} views`,'Emerging • New profile',rank);},empty('No emerging authors yet.','New voices crossing 2,000 views will appear here automatically.'));};
-  document.querySelectorAll('.author-tab').forEach(btn=>{if(btn.dataset.boundPager)return;btn.dataset.boundPager='1';btn.addEventListener('click',()=>{document.querySelectorAll('.author-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');window.__authorPeriodPage=1;renderPeriod(btn.dataset.period);});});
-  renderGoat();renderPeriod(document.querySelector('.author-tab.active')?.dataset.period||'7days');renderEmerging();
+  const run=async()=>{
+    try{
+      const {authors,novels}=await loadServer();
+      const byFollowers=authors.slice().sort((a,b)=>Number(b.followers||0)-Number(a.followers||0));
+      const renderGoat=()=>draw('goatGrid',byFollowers.slice(0,20),8,state.goat,'goat',(a,rank)=>card(a,`${Number(a.followers||0).toLocaleString()} followers`,'GOAT • All-time',rank,novels),empty('No GOAT authors yet.','The hall of legends is waiting for its first names.'));
+      const viewsByAuthor={};
+      novels.forEach(n=>{if(n.authorId)viewsByAuthor[n.authorId]=(viewsByAuthor[n.authorId]||0)+Number(n.views||0);});
+      const renderPeriod=()=>{const ranked=authors.map(a=>({...a,rankingViews:Number(viewsByAuthor[a.id]||0)})).filter(a=>a.rankingViews>0).sort((a,b)=>b.rankingViews-a.rankingViews);draw('periodGrid',ranked,8,state.period,'period',(a,rank)=>card(a,`${a.rankingViews.toLocaleString()} novel views`,'Ranked by novel views',rank,novels),empty('No ranked authors yet.','Published stories will determine this ranking automatically.'));};
+      const renderEmerging=()=>{const now=Date.now(),month=30*24*60*60*1000,qualifying=authors.filter(a=>{const created=new Date(a.profileCreatedAt||a.createdAt||0).getTime();return created&&now-created<=month&&novels.some(n=>n.authorId===a.id&&Number(n.views||0)>2000);});draw('emergingGrid',qualifying,8,state.emerging,'emerging',(a,rank)=>{const n=novels.filter(x=>x.authorId===a.id).sort((x,y)=>Number(y.views||0)-Number(x.views||0))[0];return card(a,`${Number(n?.views||0).toLocaleString()} views`,'Emerging • New profile',rank,novels);},empty('No emerging authors yet.','New voices crossing 2,000 views will appear here automatically.'));};
+      document.querySelectorAll('.author-tab').forEach(btn=>{if(btn.dataset.boundPager)return;btn.dataset.boundPager='1';btn.addEventListener('click',()=>{document.querySelectorAll('.author-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');window.__authorPeriodPage=1;renderPeriod();});});
+      renderGoat();renderPeriod();renderEmerging();
+      document.querySelectorAll('.author-card[data-author-id]').forEach(cardEl=>{const open=()=>{const id=cardEl.dataset.authorId;if(id)location.href=`author-profile.html?id=${encodeURIComponent(id)}`;};cardEl.addEventListener('click',open);cardEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});});
+    }catch(err){
+      console.error('[MeteorInk] Failed to load server-backed authors page:',err);
+      const goat=document.getElementById('goatGrid'),period=document.getElementById('periodGrid'),emerging=document.getElementById('emergingGrid');
+      if(goat)goat.innerHTML=empty('Unable to load authors.','Please refresh and try again.');
+      if(period)period.innerHTML=empty('Unable to load authors.','Please refresh and try again.');
+      if(emerging)emerging.innerHTML=empty('Unable to load authors.','Please refresh and try again.');
+    }
+  };
+  run();
 };
 
 
