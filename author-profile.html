@@ -50,6 +50,7 @@
         <div><div class="section-kicker">AUTHOR PROFILE</div><h1 id="pageHeading">Your Public Profile</h1><p id="pageSubheading">This is how readers will see you on MeteorInk.</p></div>
         <div class="author-actions">
           <a class="text-btn" id="backDashboardLink" href="author-dashboard.html">Back to Dashboard</a>
+          <a class="text-btn" id="editProfileLink" href="#" style="display:none">Edit Your Profile</a>
           <button class="gold-btn" id="viewReaderBtn" type="button">View as Reader</button>
         </div>
       </div>
@@ -120,6 +121,7 @@
     const requestedId=params.get('id')||'';
     let author=null;
     let followState={following:false,self:false,ready:false,busy:false};
+    let profileOwner=false;
 
     const localFallback=()=>{
       const all=MeteorInkData.getAuthors();
@@ -146,6 +148,22 @@
         if(!author) throw err;
       }
       if(author) MeteorInkData.saveAuthor(author);
+    }
+
+    async function checkProfileOwner(){
+      const editLink=document.getElementById('editProfileLink');
+      if(!editLink || editMode || !session || !author?.id) return false;
+      try{
+        const r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+        const out=await r.json().catch(()=>({}));
+        if(!r.ok || !out?.author) return false;
+        profileOwner=String(out.author.id||'')===String(author.id||'');
+        if(profileOwner){
+          editLink.href=`author-profile.html?id=${encodeURIComponent(author.id)}&edit=1`;
+          editLink.style.display='inline-flex';
+        }
+      }catch{}
+      return profileOwner;
     }
 
     async function loadFollowState(){
@@ -292,7 +310,7 @@
         if(!editMode){document.body.classList.add('author-readonly');document.documentElement.classList.remove('author-readonly-boot');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.getElementById('profilePhotoButton').style.display='none';document.getElementById('backDashboardLink').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
         else {if(!session){location.href='auth.html?next=writer';return;}document.getElementById('followAuthorBtn').style.display='none';populateEditor();}
         render();
-        if(!editMode) await loadFollowState();
+        if(!editMode){await checkProfileOwner();await loadFollowState();}
         document.documentElement.classList.remove('author-profile-loading');
       }catch(err){
         if(editMode && (err.status===401 || err.status===404)){
