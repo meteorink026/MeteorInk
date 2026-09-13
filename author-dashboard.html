@@ -698,9 +698,20 @@
           cover:document.getElementById('novelCover').value.trim()
         };
         try{
-          const r=await fetch('/api/novels',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
-          const d=await r.json();
-          if(!r.ok) throw new Error(d.error||'Unable to publish novel.');
+          let r,d;
+          for(let attempt=0;attempt<2;attempt++){
+            try{
+              r=await fetch('/api/novels',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),cache:'no-store'});
+              d=await r.json().catch(()=>({}));
+              if(r.ok) break;
+              if(attempt===0 && r.status>=500){ status.textContent='Retrying publish…'; await new Promise(resolve=>setTimeout(resolve,700)); continue; }
+              throw new Error(d.error||d.detail||`Unable to publish novel (${r.status}).`);
+            }catch(fetchErr){
+              if(attempt===0){ status.textContent='Retrying publish…'; await new Promise(resolve=>setTimeout(resolve,700)); continue; }
+              throw fetchErr;
+            }
+          }
+          if(!r?.ok) throw new Error(d?.error||d?.detail||'Unable to publish novel.');
           if(d.novel){ serverNovels=[d.novel,...serverNovels.filter(n=>n.id!==d.novel.id)]; }
           status.textContent='Published. The library will update automatically.';
           e.target.reset();

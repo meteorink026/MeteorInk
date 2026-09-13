@@ -842,7 +842,7 @@ app.post("/api/novels", async (req, res) => {
     console.error("/api/novels POST error:", err);
     const message = String(err?.message || "");
     const status = Number(err?.status) >= 400 && Number(err?.status) < 500 ? Number(err.status) : 500;
-    res.status(status).json({ error: message || "Unable to publish novel." });
+    res.status(status).json({ error: message || "Unable to publish novel.", detail: message || null });
   }
 });
 
