@@ -129,41 +129,55 @@
     };
 
     async function loadAuthor(){
-      try{
-        let r=null,out={};
+      const localAuthor=localFallback();
 
-        if(editMode){
-          // Edit mode is always loaded from the authenticated author endpoint.
-          // Do not depend on a public author lookup or a URL id, because those
-          // can be stale and can incorrectly send the owner back to the dashboard.
-          r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
-          out=await r.json().catch(()=>({}));
-          if(!r.ok || !out?.author){
-            const error=new Error(out.error||'Unable to load your author profile.');
-            error.status=r.status;
-            throw error;
-          }
-          author=out.author;
-          if(requestedId && String(requestedId)!==String(author.id||'')){
-            const error=new Error('You can only edit your own author profile.');
-            error.status=403;
-            throw error;
-          }
-        }else{
-          const url=requestedId?'/api/authors/'+encodeURIComponent(requestedId):'';
-          if(!url) throw new Error('Author profile not found.');
-          r=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
-          out=await r.json().catch(()=>({}));
-          if(!r.ok || !out?.author){
-            const error=new Error(out.error||'Unable to load author profile.');
-            error.status=r?.status;
-            throw error;
-          }
-          author=out.author;
+      if(editMode){
+        // Editor mode must not depend on a fresh session round-trip just to
+        // render the form. The dashboard already knows the current author, and
+        // older builds keep the same author record locally. Render that record
+        // first, then refresh it from the server when the session is available.
+        // This prevents the editor from becoming an empty "Author" shell.
+        if(localAuthor){
+          author=localAuthor;
+          try{
+            const r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+            const out=await r.json().catch(()=>({}));
+            if(r.ok && out?.author){
+              author=out.author;
+              if(localAuthor.id && author.id && String(localAuthor.id)!==String(author.id)){
+                author=localAuthor;
+              }
+            }
+          }catch{}
+          MeteorInkData.saveAuthor(author);
+          return;
         }
+
+        const r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+        const out=await r.json().catch(()=>({}));
+        if(!r.ok || !out?.author){
+          const error=new Error(out.error||'Unable to load your author profile.');
+          error.status=r.status;
+          throw error;
+        }
+        author=out.author;
+        MeteorInkData.saveAuthor(author);
+        return;
+      }
+
+      try{
+        const url=requestedId?'/api/authors/'+encodeURIComponent(requestedId):'';
+        if(!url) throw new Error('Author profile not found.');
+        const r=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+        const out=await r.json().catch(()=>({}));
+        if(!r.ok || !out?.author){
+          const error=new Error(out.error||'Unable to load author profile.');
+          error.status=r.status;
+          throw error;
+        }
+        author=out.author;
       }catch(err){
-        if(editMode) throw err;
-        author=localFallback();
+        author=localAuthor;
         if(!author) throw err;
       }
       if(author) MeteorInkData.saveAuthor(author);
@@ -172,12 +186,20 @@
     async function checkProfileOwner(){
       const editLink=document.getElementById('editProfileLink');
       if(!editLink || editMode || !session || !author?.id) return false;
+
+      // The public author response already contains userId. Use it immediately
+      // so the owner gets the editor link even if the session endpoint is slow.
+      if(session.id && author.userId && String(session.id)===String(author.userId)){
+        profileOwner=true;
+        editLink.href=`author-profile.html?id=${encodeURIComponent(author.id)}&edit=1`;
+        editLink.style.display='inline-flex';
+      }
+
       try{
         const r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
         const out=await r.json().catch(()=>({}));
-        if(!r.ok || !out?.author) return false;
-        profileOwner=String(out.author.id||'')===String(author.id||'');
-        if(profileOwner){
+        if(r.ok && out?.author && String(out.author.id||'')===String(author.id||'')){
+          profileOwner=true;
           editLink.href=`author-profile.html?id=${encodeURIComponent(author.id)}&edit=1`;
           editLink.style.display='inline-flex';
         }
@@ -326,26 +348,40 @@
       try{
         await loadAuthor();
         if(!author) throw new Error('Author profile not found.');
-        if(!editMode){document.body.classList.add('author-readonly');document.documentElement.classList.remove('author-readonly-boot');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.getElementById('profilePhotoButton').style.display='none';document.getElementById('backDashboardLink').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
-        else {if(!session){location.href='auth.html?next=writer';return;}document.getElementById('followAuthorBtn').style.display='none';populateEditor();}
-        render();
-        if(!editMode){await checkProfileOwner();await loadFollowState();}
-        document.documentElement.classList.remove('author-profile-loading');
-      }catch(err){
-        if(editMode && (err.status===401 || err.status===404)){
-          // Never bounce an authenticated author back to the dashboard on a
-          // profile-loading failure. Keep them on the editor and show the error.
+
+        if(editMode){
+          if(!session){
+            location.href='auth.html?next=writer';
+            return;
+          }
           document.getElementById('pageHeading').textContent='Edit Your Profile';
-          document.getElementById('pageSubheading').textContent=err.message||'Unable to load your author profile.';
-          document.getElementById('editorPanel').style.display='none';
-          document.documentElement.classList.remove('author-profile-loading');
-          return;
+          document.getElementById('pageSubheading').textContent='Manage the profile readers see on MeteorInk.';
+          document.getElementById('viewReaderBtn').style.display='inline-flex';
+          document.getElementById('followAuthorBtn').style.display='none';
+          populateEditor();
+        }else{
+          document.body.classList.add('author-readonly');
+          document.documentElement.classList.remove('author-readonly-boot');
+          document.getElementById('pageHeading').textContent=author.name||'Author';
+          document.getElementById('pageSubheading').textContent='Author profile';
+          document.getElementById('viewReaderBtn').style.display='none';
+          document.getElementById('profilePhotoButton').style.display='none';
+          document.getElementById('backDashboardLink').style.display='none';
+          document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');
         }
-        if(editMode && err.status===403){
-          location.replace(requestedId?`author-profile.html?id=${encodeURIComponent(requestedId)}`:'author-dashboard.html');
-          return;
+
+        render();
+        document.documentElement.classList.remove('author-profile-loading');
+
+        if(!editMode){
+          await checkProfileOwner();
+          await loadFollowState();
         }
-        document.getElementById('pageHeading').textContent='Author Profile';document.getElementById('pageSubheading').textContent=err.message||'Unable to load this profile.';document.getElementById('editorPanel').style.display='none';document.documentElement.classList.remove('author-profile-loading');
+      }catch(err){
+        document.getElementById('pageHeading').textContent=editMode?'Edit Your Profile':'Author Profile';
+        document.getElementById('pageSubheading').textContent=err.message||'Unable to load this profile.';
+        document.getElementById('editorPanel').style.display='none';
+        document.documentElement.classList.remove('author-profile-loading');
       }
     })();
   </script>
