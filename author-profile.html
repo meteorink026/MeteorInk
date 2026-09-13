@@ -34,7 +34,12 @@
     @media(max-width:900px){.author-workspace{grid-template-columns:1fr}.editor-panel{position:static}.works-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:620px){.author-page{padding:95px 14px 55px}.author-topbar{align-items:flex-start;flex-direction:column}.profile-cover{height:190px}.profile-content{padding:0 18px 25px}.profile-head{align-items:flex-start;flex-direction:column;margin-top:-48px;gap:10px}.profile-avatar{width:96px;height:96px}.profile-identity h2{font-size:27px}.profile-stats{grid-template-columns:1fr 1fr 1fr}.works-grid{grid-template-columns:1fr}.editor-grid{grid-template-columns:1fr}.author-actions{width:100%}.author-actions>*{flex:1;text-align:center}}
   </style>
+  <style>
+    /* Keep the profile shell hidden until the requested author is resolved. */
+    html.author-profile-loading .author-page{visibility:hidden}
+  </style>
   <script>
+    document.documentElement.classList.add('author-profile-loading');
     if(new URLSearchParams(location.search).get('edit')!=='1') document.documentElement.classList.add('author-readonly-boot');
   </script>
 </head>
@@ -288,12 +293,13 @@
         else {if(!session){location.href='auth.html?next=writer';return;}document.getElementById('followAuthorBtn').style.display='none';populateEditor();}
         render();
         if(!editMode) await loadFollowState();
+        document.documentElement.classList.remove('author-profile-loading');
       }catch(err){
         if(editMode && (err.status===401 || err.status===404)){
           location.replace(session?'index.html':'auth.html?next=writer');
           return;
         }
-        document.getElementById('pageHeading').textContent='Author Profile';document.getElementById('pageSubheading').textContent=err.message||'Unable to load this profile.';document.getElementById('editorPanel').style.display='none';
+        document.getElementById('pageHeading').textContent='Author Profile';document.getElementById('pageSubheading').textContent=err.message||'Unable to load this profile.';document.getElementById('editorPanel').style.display='none';document.documentElement.classList.remove('author-profile-loading');
       }
     })();
   </script>
