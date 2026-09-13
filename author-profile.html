@@ -19,7 +19,7 @@
     .profile-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(3,7,17,.02),rgba(3,7,17,.55))}
     .profile-content{padding:0 34px 34px}.profile-head{display:flex;gap:20px;align-items:flex-end;margin-top:-58px;position:relative;z-index:2}
     .profile-avatar-wrap{position:relative;flex:0 0 auto}.profile-avatar{width:116px;height:116px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#0d1c31;border:4px solid #07101b;box-shadow:0 8px 28px rgba(0,0,0,.4);color:#e7aa31;font-size:34px;font-weight:800}.profile-avatar img{width:100%;height:100%;object-fit:cover}
-    .profile-identity{padding-bottom:9px}.profile-identity h2{font-family:var(--serif);font-size:31px;margin:0 0 4px}.profile-handle{color:#7f8a9b;font-size:11px}.profile-tagline{color:#d8bb7b;font-size:12px;margin-top:8px}
+    .profile-identity{padding-bottom:9px}.profile-identity h2{font-family:var(--serif);font-size:31px;margin:0 0 4px}.profile-handle{color:#7f8a9b;font-size:11px}.profile-tagline{color:#d8bb7b;font-size:12px;margin-top:8px}.follow-author-btn{margin-top:11px;min-width:112px;min-height:34px;padding:0 14px;font-size:11px}.follow-author-btn.following{background:transparent;color:#f4d38b;border:1px solid rgba(231,170,49,.5)}.follow-author-btn:disabled{opacity:.65;cursor:wait}
     .profile-bio{margin:24px 0 20px;color:#aab4c3;font-size:13px;line-height:1.75;white-space:pre-wrap}
     .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);padding:17px 0;margin-bottom:24px}.profile-stat{text-align:center}.profile-stat strong{display:block;color:#eef2f7;font-size:18px}.profile-stat span{color:#7f8a9b;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
     .profile-section-title{font-family:var(--serif);font-size:22px;margin:0 0 13px}.profile-links{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px}.profile-link{padding:7px 10px;border:1px solid rgba(255,255,255,.08);border-radius:999px;color:#b8c1ce;text-decoration:none;font-size:10px}.profile-link:hover{border-color:rgba(231,170,49,.35);color:#f4d38b}
@@ -30,10 +30,13 @@
     .external-links-list{display:grid;gap:9px}.external-link-row{display:grid;grid-template-columns:86px 1fr 1fr 34px;gap:7px;align-items:center}.external-link-row input{min-width:0}.remove-link-btn{width:34px;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#07101c;color:#9da8ba;cursor:pointer}.remove-link-btn:hover{border-color:rgba(220,90,90,.45);color:#ef9a9a}.add-link-btn{margin-top:8px;border:1px dashed rgba(231,170,49,.35);background:rgba(231,170,49,.04);color:#d8bb7b;border-radius:8px;padding:8px 11px;cursor:pointer;font-size:11px}.add-link-btn:hover{border-color:rgba(231,170,49,.6);background:rgba(231,170,49,.08)}
     .crop-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}.crop-modal{width:min(760px,96vw);background:#07101b;border:1px solid rgba(231,170,49,.25);border-radius:16px;padding:18px;box-shadow:0 30px 100px rgba(0,0,0,.6)}.crop-modal h3{font-family:var(--serif);margin:0 0 4px;font-size:22px}.crop-modal p{margin:0 0 14px;color:#7f8a9b;font-size:11px}.crop-stage{position:relative;width:100%;height:min(58vh,420px);background:#02060d;border-radius:11px;overflow:hidden;touch-action:none}.crop-stage canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab}.crop-stage canvas:active{cursor:grabbing}.crop-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px}.crop-zoom{display:flex;align-items:center;gap:8px;color:#9da8ba;font-size:11px}.crop-zoom input{width:150px}.crop-buttons{display:flex;gap:8px}.crop-buttons button{min-width:88px}.crop-hint{margin-top:8px;color:#667386;font-size:10px}
     .photo-pencil{position:absolute;right:-2px;bottom:2px;width:31px;height:31px;border-radius:50%;border:1px solid rgba(231,170,49,.6);background:#101a28;color:#f4d38b;cursor:pointer;display:grid;place-items:center}
-    .author-readonly .editor-panel{display:none}.author-readonly .author-workspace{display:block}.author-readonly .profile-preview{max-width:900px;margin:auto}
+    .author-readonly .editor-panel{display:none}.author-readonly .author-workspace{display:block}.author-readonly .profile-preview{max-width:900px;margin:auto}.author-readonly-boot .editor-panel,.author-readonly-boot #viewReaderBtn,.author-readonly-boot #profilePhotoButton,.author-readonly-boot #backDashboardLink{display:none!important}.author-readonly-boot .author-workspace{display:block}.author-readonly-boot .profile-preview{max-width:900px;margin:auto}
     @media(max-width:900px){.author-workspace{grid-template-columns:1fr}.editor-panel{position:static}.works-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:620px){.author-page{padding:95px 14px 55px}.author-topbar{align-items:flex-start;flex-direction:column}.profile-cover{height:190px}.profile-content{padding:0 18px 25px}.profile-head{align-items:flex-start;flex-direction:column;margin-top:-48px;gap:10px}.profile-avatar{width:96px;height:96px}.profile-identity h2{font-size:27px}.profile-stats{grid-template-columns:1fr 1fr 1fr}.works-grid{grid-template-columns:1fr}.editor-grid{grid-template-columns:1fr}.author-actions{width:100%}.author-actions>*{flex:1;text-align:center}}
   </style>
+  <script>
+    if(new URLSearchParams(location.search).get('edit')!=='1') document.documentElement.classList.add('author-readonly-boot');
+  </script>
 </head>
 <body>
   <main class="author-page" id="authorPage">
@@ -41,7 +44,7 @@
       <div class="author-topbar">
         <div><div class="section-kicker">AUTHOR PROFILE</div><h1 id="pageHeading">Your Public Profile</h1><p id="pageSubheading">This is how readers will see you on MeteorInk.</p></div>
         <div class="author-actions">
-          <a class="text-btn" href="author-dashboard.html">Back to Dashboard</a>
+          <a class="text-btn" id="backDashboardLink" href="author-dashboard.html">Back to Dashboard</a>
           <button class="gold-btn" id="viewReaderBtn" type="button">View as Reader</button>
         </div>
       </div>
@@ -59,6 +62,7 @@
                 <h2 id="profileName">Author</h2>
                 <div class="profile-handle" id="profileHandle">@author</div>
                 <div class="profile-tagline" id="profileTagline"></div>
+                <button class="gold-btn follow-author-btn" id="followAuthorBtn" type="button">Follow</button>
               </div>
             </div>
             <div class="profile-bio" id="profileBio"></div>
@@ -110,6 +114,7 @@
     const editMode=params.get('edit')==='1';
     const requestedId=params.get('id')||'';
     let author=null;
+    let followState={following:false,self:false,ready:false,busy:false};
 
     const localFallback=()=>{
       const all=MeteorInkData.getAuthors();
@@ -122,14 +127,73 @@
         if(!url) throw new Error('Author profile not found.');
         const r=await fetch(url,{credentials:'same-origin'});
         const out=await r.json().catch(()=>({}));
-        if(!r.ok) throw new Error(out.error||'Unable to load author profile.');
+        if(!r.ok){
+          const error=new Error(out.error||'Unable to load author profile.');
+          error.status=r.status;
+          throw error;
+        }
         author=out.author;
       }catch(err){
+        // The editor endpoint is owner-only. A reader must never fall back into
+        // an editor screen from a stale local author record.
+        if(editMode && (err.status===401 || err.status===404)) throw err;
         author=localFallback();
         if(!author) throw err;
       }
       if(author) MeteorInkData.saveAuthor(author);
     }
+
+    async function loadFollowState(){
+      const btn=document.getElementById('followAuthorBtn');
+      if(!btn || !author?.id) return;
+      try{
+        const r=await fetch('/api/authors/'+encodeURIComponent(author.id)+'/follow',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+        const out=await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(out.error||'Unable to load follow status.');
+        followState={following:!!out.following,self:!!out.self,ready:true,busy:false};
+        if(Number.isFinite(Number(out.followers))) author.followers=Number(out.followers);
+      }catch(_e){
+        followState={following:false,self:false,ready:true,busy:false};
+      }
+      updateFollowButton();
+    }
+
+    function updateFollowButton(){
+      const btn=document.getElementById('followAuthorBtn');
+      if(!btn) return;
+      btn.classList.toggle('following',followState.following);
+      btn.textContent=followState.following?'Unfollow':'Follow';
+      btn.style.display=followState.self?'none':'';
+      btn.disabled=followState.busy;
+      btn.style.visibility=followState.ready?'visible':'hidden';
+      document.getElementById('profileFollowers').textContent=Number(author?.followers||0).toLocaleString();
+    }
+
+    async function toggleFollow(){
+      const btn=document.getElementById('followAuthorBtn');
+      if(!btn || followState.busy || followState.self) return;
+      followState.busy=true; updateFollowButton();
+      try{
+        const method=followState.following?'DELETE':'POST';
+        const r=await fetch('/api/authors/'+encodeURIComponent(author.id)+'/follow',{method,credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+        const out=await r.json().catch(()=>({}));
+        if(r.status===401){
+          localStorage.setItem('meteorink_return_after_auth',location.href);
+          location.href='auth.html';
+          return;
+        }
+        if(!r.ok) throw new Error(out.error||'Unable to update follow status.');
+        followState.following=!!out.following;
+        if(Number.isFinite(Number(out.followers))) author.followers=Number(out.followers);
+      }catch(err){
+        btn.textContent=err.message||'Try again';
+        setTimeout(updateFollowButton,1600);
+      }finally{
+        followState.busy=false; updateFollowButton();
+      }
+    }
+
+    document.getElementById('followAuthorBtn').addEventListener('click',toggleFollow);
 
     const publicConfig=()=>({
       tagline:author.tagline||'',banner:author.banner||'',links:Array.isArray(author.links)?author.links:[],
@@ -220,10 +284,17 @@
       try{
         await loadAuthor();
         if(!author) throw new Error('Author profile not found.');
-        if(!editMode){document.body.classList.add('author-readonly');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.getElementById('profilePhotoButton').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
-        else {if(!session){location.href='auth.html?next=writer';return;}populateEditor();}
+        if(!editMode){document.body.classList.add('author-readonly');document.documentElement.classList.remove('author-readonly-boot');document.getElementById('pageHeading').textContent=author.name||'Author';document.getElementById('pageSubheading').textContent='Author profile';document.getElementById('viewReaderBtn').style.display='none';document.getElementById('profilePhotoButton').style.display='none';document.getElementById('backDashboardLink').style.display='none';document.querySelector('.author-actions').insertAdjacentHTML('afterbegin','<a class="text-btn" href="index.html#authors">All Authors</a>');}
+        else {if(!session){location.href='auth.html?next=writer';return;}document.getElementById('followAuthorBtn').style.display='none';populateEditor();}
         render();
-      }catch(err){document.getElementById('pageHeading').textContent='Author Profile';document.getElementById('pageSubheading').textContent=err.message||'Unable to load this profile.';document.getElementById('editorPanel').style.display='none';}
+        if(!editMode) await loadFollowState();
+      }catch(err){
+        if(editMode && (err.status===401 || err.status===404)){
+          location.replace(session?'index.html':'auth.html?next=writer');
+          return;
+        }
+        document.getElementById('pageHeading').textContent='Author Profile';document.getElementById('pageSubheading').textContent=err.message||'Unable to load this profile.';document.getElementById('editorPanel').style.display='none';
+      }
     })();
   </script>
   <script src="meteorink-app.js"></script>

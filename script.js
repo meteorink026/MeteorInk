@@ -61,8 +61,10 @@
     if(Array.isArray(serverNovelsCache))return serverNovelsCache;
     if(serverNovelsPromise)return serverNovelsPromise;
     serverNovelsPromise=fetch('/api/novels?limit=1000',{headers:{Accept:'application/json'},cache:'no-store'})
-      .then(r=>r.ok?r.json():Promise.reject(new Error(`Novel API returned ${r.status}`)))
-      .then(payload=>{
+      .then(async r=>{
+        let payload=null;
+        try{payload=await r.json();}catch{}
+        if(!r.ok)throw new Error(payload?.error||`Novel API returned ${r.status}`);
         if(!Array.isArray(payload?.novels))throw new Error(payload?.error||'Invalid novel API response');
         serverNovelsCache=payload.novels;
         return serverNovelsCache;
@@ -70,6 +72,7 @@
       .catch(err=>{
         console.error('[MeteorInk] Failed to load server novels:',err);
         serverNovelsCache=[];
+        window.__meteorInkNovelApiError=err?.message||'Unable to load novels.';
         return serverNovelsCache;
       });
     return serverNovelsPromise;
@@ -110,7 +113,16 @@
     const all=(await getServerNovels()).slice().sort((a,b)=>Number(b.views||0)-Number(a.views||0)||new Date(b.publishedAt||0)-new Date(a.publishedAt||0));
     const per=6,total=Math.max(1,Math.ceil(all.length/per));pageState.trending=Math.min(pageState.trending,total);
     const items=all.slice((pageState.trending-1)*per,pageState.trending*per);
-    if(!all.length){grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';document.getElementById('dynamicTrendingGridPagination')?.remove();return;}
+    if(!all.length){
+      const apiError=window.__meteorInkNovelApiError;
+      if(apiError){
+        grid.innerHTML=`<div class="server-error-state"><h3>Novel catalog unavailable.</h3><p>${esc(apiError)}</p><p>Check the Supabase <code>public.novels</code> migration, then refresh.</p></div>`;
+        grid.hidden=false;grid.style.display='';host.hidden=true;host.style.display='none';
+      }else{
+        grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';
+      }
+      document.getElementById('dynamicTrendingGridPagination')?.remove();return;
+    }
     grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
     mountPager('dynamicTrendingGrid',total,pageState.trending,'trending',()=>renderTrending(period));
   }
@@ -144,7 +156,12 @@
     const all=(await getServerNovels()).slice().sort((a,b)=>new Date(b.publishedAt||0)-new Date(a.publishedAt||0));
     const per=4,total=Math.max(1,Math.ceil(all.length/per));pageState.latest=Math.min(pageState.latest,total);
     const items=all.slice((pageState.latest-1)*per,pageState.latest*per);
-    if(!all.length){grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';document.getElementById('dynamicLatestGridPagination')?.remove();return;}
+    if(!all.length){
+      const apiError=window.__meteorInkNovelApiError;
+      if(apiError){grid.innerHTML=`<div class="server-error-state"><h3>Novel catalog unavailable.</h3><p>${esc(apiError)}</p><p>Check the Supabase <code>public.novels</code> migration, then refresh.</p></div>`;grid.hidden=false;grid.style.display='';host.hidden=true;host.style.display='none';}
+      else{grid.innerHTML='';grid.hidden=true;grid.style.display='none';host.hidden=false;host.style.display='';}
+      document.getElementById('dynamicLatestGridPagination')?.remove();return;
+    }
     grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
     mountPager('dynamicLatestGrid',total,pageState.latest,'latest',renderLatest);
   }

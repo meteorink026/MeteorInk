@@ -58,6 +58,31 @@ async function supabaseRequest(table, options = {}) {
   return data;
 }
 
+async function supabaseRpc(functionName, body = {}) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
+    throw new Error("Supabase environment variables are missing.");
+  }
+  const url = new URL(`/rest/v1/rpc/${functionName}`, process.env.SUPABASE_URL);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      apikey: process.env.SUPABASE_SECRET_KEY,
+      Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation"
+    },
+    body: JSON.stringify(body)
+  });
+  const text = await response.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (!response.ok) {
+    const message = typeof data === "object" && data?.message ? data.message : text;
+    throw new Error(`Supabase ${response.status}: ${message}`);
+  }
+  return data;
+}
+
 async function findUserById(id) {
   const rows = await supabaseRequest("users", { query: { select: "*", id: `eq.${id}`, limit: "1" } });
   return rows?.[0] || null;
@@ -493,8 +518,15 @@ app.post("/api/google/complete-profile", async (req, res) => {
 });
 
 // Public author directory/profile API. Public fields only.
+function isDummyAuthorPicture(value) {
+  const url = String(value || "").trim().toLowerCase();
+  if (!url) return false;
+  return url.includes("pravatar.cc") || url.includes("randomuser.me");
+}
+
 function publicAuthor(row) {
   if (!row) return null;
+  const picture = isDummyAuthorPicture(row.picture) ? "" : (row.picture || "");
   return {
     id: row.id,
     userId: row.user_id,
@@ -502,7 +534,7 @@ function publicAuthor(row) {
     name: row.name || "",
     tagline: row.tagline || "",
     bio: row.bio || "",
-    picture: row.picture || "",
+    picture,
     banner: row.banner || "",
     links: Array.isArray(row.external_links) ? row.external_links : [],
     followers: Number(row.followers || 0),
@@ -526,6 +558,67 @@ app.get("/api/authors", async (req, res) => {
   } catch (err) {
     console.error("/api/authors error:", err);
     res.status(500).json({ authors: [], error: "Unable to load authors." });
+  }
+});
+
+app.get("/api/authors/:id/follow", async (req, res) => {
+  const authorId = String(req.params.id || "").trim();
+  if (!authorId) return res.status(400).json({ error: "Author ID is required." });
+  try {
+    const authors = await supabaseRequest("authors", {
+      query: { select: "id,user_id,followers", id: `eq.${authorId}`, limit: "1" }
+    });
+    const author = authors?.[0];
+    if (!author) return res.status(404).json({ error: "Author not found." });
+    let following = false;
+    const self = !!req.session.userId && author.user_id === req.session.userId;
+    if (req.session.userId && !self) {
+      const rows = await supabaseRequest("author_follows", {
+        query: { select: "author_id", user_id: `eq.${req.session.userId}`, author_id: `eq.${authorId}`, limit: "1" }
+      });
+      following = !!rows?.length;
+    }
+    res.json({ following, self, followers: Number(author.followers || 0) });
+  } catch (err) {
+    console.error("/api/authors/:id/follow GET error:", err);
+    res.status(500).json({ error: "Unable to load follow status." });
+  }
+});
+
+app.post("/api/authors/:id/follow", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  const authorId = String(req.params.id || "").trim();
+  try {
+    const authors = await supabaseRequest("authors", {
+      query: { select: "id,user_id,followers", id: `eq.${authorId}`, limit: "1" }
+    });
+    const author = authors?.[0];
+    if (!author) return res.status(404).json({ error: "Author not found." });
+    if (author.user_id === req.session.userId) return res.status(400).json({ error: "You cannot follow your own author profile." });
+    const result = await supabaseRpc("follow_author", { p_user_id: req.session.userId, p_author_id: authorId });
+    const followers = Number(Array.isArray(result) ? result[0] : result);
+    res.json({ ok: true, following: true, followers: Number.isFinite(followers) ? followers : Number(author.followers || 0) });
+  } catch (err) {
+    console.error("/api/authors/:id/follow POST error:", err);
+    res.status(500).json({ error: "Unable to follow author." });
+  }
+});
+
+app.delete("/api/authors/:id/follow", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  const authorId = String(req.params.id || "").trim();
+  try {
+    const authors = await supabaseRequest("authors", {
+      query: { select: "id,user_id,followers", id: `eq.${authorId}`, limit: "1" }
+    });
+    const author = authors?.[0];
+    if (!author) return res.status(404).json({ error: "Author not found." });
+    const result = await supabaseRpc("unfollow_author", { p_user_id: req.session.userId, p_author_id: authorId });
+    const followers = Number(Array.isArray(result) ? result[0] : result);
+    res.json({ ok: true, following: false, followers: Number.isFinite(followers) ? followers : Number(author.followers || 0) });
+  } catch (err) {
+    console.error("/api/authors/:id/follow DELETE error:", err);
+    res.status(500).json({ error: "Unable to unfollow author." });
   }
 });
 

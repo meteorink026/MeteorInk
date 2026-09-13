@@ -293,7 +293,9 @@
   }
 
   document.addEventListener('DOMContentLoaded',async()=>{
-    await syncServerSession();
+    // Render immediately from the browser session so authenticated users never
+    // see a flash of Log In / Sign Up while the server session is checked.
+    currentUser=window.MeteorInkData?.getSession ? MeteorInkData.getSession() : null;
     const openParam=new URLSearchParams(location.search).get('open');
     if(openParam==='authors'){
       history.replaceState({},'',location.pathname+'#authors');
@@ -302,7 +304,17 @@
       document.body.scrollTop=0;
     }
     installHeader();installMobile();updateAuthorLinks();bindAuthActions();installSearch();writerLinks();logoBehavior();installSingleWindowViews();
-  handleOAuthDestination();
+    document.body.classList.add('auth-ready');
+
+    // Confirm the real server session in the background, then refresh only the
+    // account chrome if it differs from the cached browser session.
+    await syncServerSession();
+    installHeader();
+    const oldMobile=document.getElementById('mobileMenu');
+    if(oldMobile) oldMobile.remove();
+    installMobile();updateAuthorLinks();bindAuthActions();
+    document.body.classList.add('auth-ready');
+    handleOAuthDestination();
   });
 })();
 
