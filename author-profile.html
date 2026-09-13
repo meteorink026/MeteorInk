@@ -324,10 +324,9 @@
     }
 
     async function saveToServer(message='Profile saved.'){
-      // The header can be rendered from the cached browser session while the
-      // real server session is still being restored. Never send a profile
-      // write until the server confirms the current account.
-      await ensureServerSession();
+      // Send the profile update directly. The PATCH endpoint is the authoritative
+      // authentication check, so a separate /api/me round-trip only introduced
+      // a race where the first click could be spent waiting for session hydration.
       const username=document.getElementById('userHandle').value.trim().replace(/^@+/,'').toLowerCase();
       if(!/^[a-z0-9_]{3,30}$/.test(username)) throw new Error('User ID must be 3–30 characters using letters, numbers and underscores.');
       const payload={name:document.getElementById('penName').value.trim(),username,tagline:document.getElementById('tagline').value.trim(),bio:document.getElementById('bio').value.trim(),links:collectExternalLinks(),picture:author.picture||'',banner:author.banner||'',showBio:document.getElementById('showBio').checked,showLinks:document.getElementById('showLinks').checked,showStats:document.getElementById('showStats').checked};
@@ -343,7 +342,17 @@
       const status=document.getElementById('editorStatus');status.textContent=message;status.classList.remove('error');setTimeout(()=>status.textContent='',1800);
     }
 
-    document.getElementById('saveProfile').onclick=async()=>{try{await saveToServer();}catch(err){const s=document.getElementById('editorStatus');s.textContent=err.message;s.classList.add('error');}};
+    document.getElementById('saveProfile').onclick=async()=>{
+      const btn=document.getElementById('saveProfile');
+      if(btn.dataset.saving==='1') return;
+      btn.dataset.saving='1';
+      const original=btn.textContent;
+      btn.disabled=true;
+      btn.textContent='Saving...';
+      try{await saveToServer();}
+      catch(err){const s=document.getElementById('editorStatus');s.textContent=err.message;s.classList.add('error');}
+      finally{btn.dataset.saving='0';btn.disabled=false;btn.textContent=original;}
+    };
     document.getElementById('viewReaderBtn').onclick=()=>{location.href=`author-profile.html?id=${encodeURIComponent(author.id)}`};
 
     function persistLocalOnly(message){MeteorInkData.saveAuthor(author);localStorage.setItem('meteorink_author_id',author.id||'');render();const s=document.getElementById('editorStatus');s.textContent=message;s.classList.remove('error');setTimeout(()=>s.textContent='',1800);}
