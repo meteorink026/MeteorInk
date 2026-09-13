@@ -133,32 +133,18 @@
         let r=null,out={};
 
         if(editMode){
-          // Dashboard already supplies the author's id. Load that public record
-          // first so editor navigation does not depend on a session handoff.
-          if(requestedId){
-            r=await fetch('/api/authors/'+encodeURIComponent(requestedId),{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
-            out=await r.json().catch(()=>({}));
-          }
-          if(!r?.ok){
-            r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
-            out=await r.json().catch(()=>({}));
-          }
-          if(!r?.ok || !out?.author){
+          // Edit mode is always loaded from the authenticated author endpoint.
+          // Do not depend on a public author lookup or a URL id, because those
+          // can be stale and can incorrectly send the owner back to the dashboard.
+          r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+          out=await r.json().catch(()=>({}));
+          if(!r.ok || !out?.author){
             const error=new Error(out.error||'Unable to load your author profile.');
-            error.status=r?.status;
+            error.status=r.status;
             throw error;
           }
           author=out.author;
-          let ownerVerified=!!(session?.id && author?.userId && String(session.id)===String(author.userId));
-          try{
-            const me=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
-            const meOut=await me.json().catch(()=>({}));
-            if(me.ok && meOut?.author){
-              ownerVerified=String(meOut.author.id||'')===String(author.id||'');
-              if(ownerVerified) author=meOut.author;
-            }
-          }catch{}
-          if(!ownerVerified){
+          if(requestedId && String(requestedId)!==String(author.id||'')){
             const error=new Error('You can only edit your own author profile.');
             error.status=403;
             throw error;
@@ -347,7 +333,12 @@
         document.documentElement.classList.remove('author-profile-loading');
       }catch(err){
         if(editMode && (err.status===401 || err.status===404)){
-          location.replace(session?'author-dashboard.html':'auth.html?next=writer');
+          // Never bounce an authenticated author back to the dashboard on a
+          // profile-loading failure. Keep them on the editor and show the error.
+          document.getElementById('pageHeading').textContent='Edit Your Profile';
+          document.getElementById('pageSubheading').textContent=err.message||'Unable to load your author profile.';
+          document.getElementById('editorPanel').style.display='none';
+          document.documentElement.classList.remove('author-profile-loading');
           return;
         }
         if(editMode && err.status===403){

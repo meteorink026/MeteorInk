@@ -446,7 +446,7 @@
 
       document.getElementById('welcome').textContent=`Welcome, ${author.name}`;
       const editProfileButton=document.getElementById('editProfileButton');
-      if(editProfileButton && author.id){ editProfileButton.href=`author-profile.html?id=${encodeURIComponent(author.id)}&edit=1`; }
+      if(editProfileButton){ editProfileButton.href='author-profile.html?edit=1'; }
 
       function render(){
         const ns=serverNovels;
