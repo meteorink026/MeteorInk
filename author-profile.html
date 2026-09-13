@@ -312,12 +312,32 @@
     function collectExternalLinks(){return [...document.querySelectorAll('#externalLinksList .external-link-row')].map(row=>({label:row.querySelector('.link-label').value.trim()||'External Link',url:normalizeUrl(row.querySelector('.link-url').value)})).filter(x=>x.url);}
     document.getElementById('addExternalLink').onclick=()=>addExternalLinkRow();
 
+    async function ensureServerSession(){
+      const r=await fetch('/api/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+      const out=await r.json().catch(()=>({}));
+      if(!r.ok || !out.authenticated || !out.user){
+        const err=new Error('Your login session is not active. Please log in again, then return to Edit Your Profile.');
+        err.status=401;
+        throw err;
+      }
+      return out.user;
+    }
+
     async function saveToServer(message='Profile saved.'){
+      // The header can be rendered from the cached browser session while the
+      // real server session is still being restored. Never send a profile
+      // write until the server confirms the current account.
+      await ensureServerSession();
       const username=document.getElementById('userHandle').value.trim().replace(/^@+/,'').toLowerCase();
       if(!/^[a-z0-9_]{3,30}$/.test(username)) throw new Error('User ID must be 3–30 characters using letters, numbers and underscores.');
       const payload={name:document.getElementById('penName').value.trim(),username,tagline:document.getElementById('tagline').value.trim(),bio:document.getElementById('bio').value.trim(),links:collectExternalLinks(),picture:author.picture||'',banner:author.banner||'',showBio:document.getElementById('showBio').checked,showLinks:document.getElementById('showLinks').checked,showStats:document.getElementById('showStats').checked};
       const r=await fetch('/api/author/me',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(payload)});
       const out=await r.json().catch(()=>({}));
+      if(r.status===401){
+        const err=new Error('Your login session expired. Please log in again before saving your profile.');
+        err.status=401;
+        throw err;
+      }
       if(!r.ok) throw new Error(out.error||'Unable to save author profile.');
       author=out.author;MeteorInkData.saveAuthor(author);localStorage.setItem('meteorink_author_id',author.id||'');render();populateEditor();
       const status=document.getElementById('editorStatus');status.textContent=message;status.classList.remove('error');setTimeout(()=>status.textContent='',1800);
