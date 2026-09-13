@@ -33,7 +33,6 @@
               <button type="button" class="profile-trigger" id="profileTrigger" aria-expanded="false" aria-haspopup="true">
                 <span class="profile-trigger-avatar">${currentUser.picture ? `<img src="${esc(currentUser.picture)}" alt="">` : '◉'}</span>
                 <span class="header-user">${esc(currentUser.name||currentUser.email||'User')}</span>
-                <span class="profile-trigger-chevron" aria-hidden="true">⌄</span>
               </button>
               <div class="profile-dropdown" id="profileDropdown" hidden>
                 <div class="profile-dropdown-head">
