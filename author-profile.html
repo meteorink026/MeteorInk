@@ -132,11 +132,24 @@
       try{
         const url=editMode?'/api/author/me':(requestedId?'/api/authors/'+encodeURIComponent(requestedId):'');
         if(!url) throw new Error('Author profile not found.');
-        const r=await fetch(url,{credentials:'same-origin'});
-        const out=await r.json().catch(()=>({}));
-        if(!r.ok){
+        let r=null,out={};
+        // The dashboard can navigate here immediately after the session is
+        // established. Give the server session a short window to become
+        // available instead of redirecting a legitimate author to Home.
+        const attempts=editMode?4:1;
+        for(let i=0;i<attempts;i++){
+          r=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+          out=await r.json().catch(()=>({}));
+          if(r.ok) break;
+          if(editMode && (r.status===401 || r.status===404 || r.status===500) && i<attempts-1){
+            await new Promise(resolve=>setTimeout(resolve,250));
+            continue;
+          }
+          break;
+        }
+        if(!r?.ok){
           const error=new Error(out.error||'Unable to load author profile.');
-          error.status=r.status;
+          error.status=r?.status;
           throw error;
         }
         author=out.author;
