@@ -46,7 +46,7 @@
     .genre-panel-backdrop.open{display:flex}
     .genre-panel{width:min(980px,100%);max-height:min(760px,90vh);overflow:auto;background:linear-gradient(180deg,rgba(8,15,29,.98),rgba(4,9,18,.98));border:1px solid rgba(231,170,49,.28);border-radius:18px;box-shadow:0 30px 90px rgba(0,0,0,.55);padding:28px;transform:translateY(42px)}
     .genre-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.genre-panel-head h2{font-family:var(--serif);font-size:38px;margin:4px 0 0;color:#f6f2e9}.genre-panel-close{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#fff;font-size:28px;line-height:1;cursor:pointer}.genre-panel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.genre-choice{border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(255,255,255,.03);color:#dfe6f1;padding:13px 14px;text-align:left;font:600 13px/1.3 "DM Sans",sans-serif;cursor:pointer;transition:.18s ease}.genre-choice:hover{border-color:rgba(231,170,49,.36);background:rgba(231,170,49,.08);color:#fff}.genre-choice.active{border-color:rgba(231,170,49,.6);background:rgba(231,170,49,.14);color:#ffd86f;box-shadow:inset 0 0 0 1px rgba(231,170,49,.12)}
-    .genre-panel-trigger{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}.genre-panel-trigger span{font-size:14px;color:#d7b04d}
+    .genre-picker{position:relative;z-index:20}.genre-picker>summary{list-style:none;height:42px;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:#091321;color:#cfd7e2;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none}.genre-picker>summary::-webkit-details-marker{display:none}.genre-picker>summary span{font-size:14px;color:#d7b04d;transition:transform .18s ease}.genre-picker[open]>summary{border-color:rgba(231,170,49,.55);box-shadow:0 0 0 3px rgba(231,170,49,.08)}.genre-picker[open]>summary span{transform:rotate(180deg)}.genre-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(430px,calc(100vw - 36px));max-height:390px;overflow:auto;padding:10px;border:1px solid rgba(231,170,49,.25);border-radius:14px;background:linear-gradient(180deg,#091321,#050b15);box-shadow:0 22px 55px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.genre-menu button{border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.025);color:#dfe6f1;padding:11px 12px;text-align:left;font:600 12px/1.3 "DM Sans",sans-serif;cursor:pointer}.genre-menu button:hover,.genre-menu button.active{border-color:rgba(231,170,49,.5);background:rgba(231,170,49,.12);color:#ffd86f}.genre-panel-backdrop{display:none!important}.genre-panel{display:none!important}
     @media(max-width:760px){.genre-panel{padding:22px}.genre-panel-grid{grid-template-columns:1fr 1fr}.genre-panel-head h2{font-size:32px}}
     @media(max-width:520px){.genre-panel-grid{grid-template-columns:1fr}}
     @media(max-width:1024px){.novels-controls{grid-template-columns:1fr 1fr}.novels-tabs{grid-column:1/-1}.novels-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -75,7 +75,13 @@
 
       <section class="novels-controls" aria-label="Novel filters">
         <input id="novelSearch" class="novels-filter-search" type="search" placeholder="Search novels or authors..." aria-label="Search novels or authors" autocomplete="off">
-        <button id="genreOpenBtn" class="novels-select genre-panel-trigger" type="button" aria-haspopup="dialog" aria-expanded="false">Genres <span aria-hidden="true">▾</span></button>
+        <details id="genrePicker" class="genre-picker">
+          <summary id="genreOpenBtn" aria-label="Choose a genre">Genres <span aria-hidden="true">▾</span></summary>
+          <div id="genreMenu" class="genre-menu" role="menu" aria-label="Genres">
+            <button type="button" class="genre-menu-option active" data-genre="all" role="menuitem">All Genres</button>
+            ${['Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama','Young Adult',"Children's Fiction",'Comedy','Western','Supernatural / Paranormal','Spiritual / Religious','Military / War','Post-Apocalyptic / Dystopian','Speculative Fiction','Sports','Psychological','Philosophical / Intellectual','Slice of Life','School / Academy','Webnovel-Specific / Modern Digital Genres','Mythology / Folklore','Other / Hybrid'].map(g=>`<button type="button" class="genre-menu-option" data-genre="${g.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}" role="menuitem">${g}</button>`).join('')}
+          </div>
+        </details>
         <select id="genreFilter" class="novels-select" aria-label="Filter by genre" hidden><option value="all">All Genres</option></select>
         <div class="novels-tabs" role="tablist" aria-label="Novel sorting">
           <button class="novels-tab active" data-sort="latest" type="button">Latest</button>
@@ -109,37 +115,17 @@
   <script>
     (()=>{
       const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-      const grid=document.getElementById('novelGrid'), search=document.getElementById('novelSearch'), genre=document.getElementById('genreFilter'), result=document.getElementById('novelResultText'), genreOpenBtn=document.getElementById('genreOpenBtn');
+      const grid=document.getElementById('novelGrid'), search=document.getElementById('novelSearch'), genre=document.getElementById('genreFilter'), result=document.getElementById('novelResultText');
+      const genrePicker=document.getElementById('genrePicker'), genreOpenBtn=document.getElementById('genreOpenBtn'), genreMenu=document.getElementById('genreMenu');
       let sort='latest'; let currentPage=1; const novelsPerPage=16; const initialGenre=new URLSearchParams(location.search).get('genre');
-      const primaryGenres=[
-        'Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama',
-        'Young Adult',"Children's Fiction",'Comedy','Western','Supernatural / Paranormal','Spiritual / Religious','Military / War',
-        'Post-Apocalyptic / Dystopian','Speculative Fiction','Sports','Psychological','Philosophical / Intellectual','Slice of Life',
-        'School / Academy','Webnovel-Specific / Modern Digital Genres','Mythology / Folklore','Other / Hybrid'
-      ];
+      const primaryGenres=['Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama','Young Adult',"Children's Fiction",'Comedy','Western','Supernatural / Paranormal','Spiritual / Religious','Military / War','Post-Apocalyptic / Dystopian','Speculative Fiction','Sports','Psychological','Philosophical / Intellectual','Slice of Life','School / Academy','Webnovel-Specific / Modern Digital Genres','Mythology / Folklore','Other / Hybrid'];
       primaryGenres.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;genre.appendChild(o)});
       if(initialGenre){const option=[...genre.options].find(o=>o.value.toLowerCase()===String(initialGenre).trim().toLowerCase());if(option)genre.value=option.value;}
-
-      const genrePanel=document.createElement('div');
-      genrePanel.className='genre-panel-backdrop';
-      genrePanel.innerHTML=`<section class="genre-panel" role="dialog" aria-modal="true" aria-labelledby="genrePanelTitle">
-        <div class="genre-panel-head"><div><p class="section-kicker">THE METEORINK LIBRARY</p><h2 id="genrePanelTitle">Choose a Genre</h2></div><button type="button" class="genre-panel-close" aria-label="Close genres">×</button></div>
-        <div class="genre-panel-grid"><button type="button" class="genre-choice active" data-genre="all">All Genres</button>${primaryGenres.map(g=>`<button type="button" class="genre-choice" data-genre="${esc(g)}">${esc(g)}</button>`).join('')}</div>
-      </section>`;
-      document.body.appendChild(genrePanel);
-      const syncGenreUI=()=>{
-        const selected=genre.value||'all';
-        document.querySelectorAll('.genre-choice').forEach(b=>b.classList.toggle('active',String(b.dataset.genre).toLowerCase()===String(selected).toLowerCase()));
-        genreOpenBtn.firstChild.textContent=(selected==='all'?'Genres':selected)+' ';
-      };
+      const syncGenreUI=()=>{const selected=genre.value||'all';genreMenu.querySelectorAll('.genre-menu-option').forEach(b=>b.classList.toggle('active',String(b.dataset.genre).toLowerCase()===String(selected).toLowerCase()));genreOpenBtn.firstChild.textContent=(selected==='all'?'Genres':selected)+' ';};
       syncGenreUI();
-      const closeGenrePanel=()=>{genrePanel.classList.remove('open');genrePanel.style.display='none';genrePanel.style.pointerEvents='none';genreOpenBtn.setAttribute('aria-expanded','false');};
-      const openGenrePanel=(e)=>{if(e)e.preventDefault();if(e)e.stopPropagation();syncGenreUI();genrePanel.classList.add('open');genrePanel.style.display='flex';genrePanel.style.pointerEvents='auto';genreOpenBtn.setAttribute('aria-expanded','true');};
-      closeGenrePanel();
-      genreOpenBtn.addEventListener('click',openGenrePanel);
-      genreOpenBtn.addEventListener('pointerup',openGenrePanel);
-      genrePanel.addEventListener('click',e=>{if(e.target===genrePanel || e.target.closest('.genre-panel-close')){closeGenrePanel();return;}const btn=e.target.closest('.genre-choice');if(!btn)return;genre.value=btn.dataset.genre;currentPage=1;syncGenreUI();render();closeGenrePanel();});
-      document.addEventListener('keydown',e=>{if(e.key==='Escape')closeGenrePanel();});
+      genreMenu.addEventListener('click',e=>{const btn=e.target.closest('.genre-menu-option');if(!btn)return;e.preventDefault();e.stopPropagation();genre.value=btn.dataset.genre;currentPage=1;syncGenreUI();genrePicker.open=false;render();});
+      genrePicker.addEventListener('toggle',()=>{if(genrePicker.open)syncGenreUI();});
+      document.addEventListener('click',e=>{if(genrePicker.open && !genrePicker.contains(e.target))genrePicker.open=false;});
       let serverNovelsCache=null;
       async function getServerNovels(){
         if(Array.isArray(serverNovelsCache))return serverNovelsCache;
