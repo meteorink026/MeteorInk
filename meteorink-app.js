@@ -14,6 +14,7 @@
     if((path==='index.html'||path==='') && location.hash==='#authors') return label==='Authors';
     if(path==='adaptation.html') return label==='Adaptation Room';
     if((path==='index.html'||path==='') && location.hash==='#adaptation') return label==='Adaptation Room';
+    if((path==='index.html'||path==='') && location.hash==='#about') return label==='About Us';
     if((path==='index.html'||path==='') && location.hash==='#contact') return label==='Contact';
     if(path==='index.html' || path==='') return label==='Home';
     return false;
@@ -255,17 +256,26 @@
         window.scrollTo({top:0,behavior:'smooth'});
         if(window.renderMeteorInkLibrary) window.renderMeteorInkLibrary();
       }
-      if(isAbout || isContact){
+      if(isAdaptation || isAbout || isContact){
         window.scrollTo({top:0,behavior:'smooth'});
       }
     };
 
     document.addEventListener('click',e=>{
-      const link=e.target.closest('a[href="#authors"],a[href="#home"],a[href="#novels"],a[href="#library"],a[href="#about"],a[href="#contact"]');
+      const link=e.target.closest('a[href^="#"]');
       if(!link) return;
+      const href=link.getAttribute('href')||'';
+      const supported=new Set(['#home','#authors','#novels','#library','#adaptation','#about','#contact']);
+      if(!supported.has(href)) return;
       e.preventDefault();
-      location.hash=link.getAttribute('href').slice(1);
-      setView();
+      if(location.hash===href){
+        setView();
+      }else{
+        location.hash=href.slice(1);
+        // Hash changes normally fire the listener above. Calling setView here too
+        // makes navigation deterministic even when another script delays the event.
+        setView();
+      }
     });
     window.addEventListener('hashchange',setView);
     window.addEventListener('popstate',setView);

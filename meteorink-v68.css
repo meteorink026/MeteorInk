@@ -1,0 +1,35 @@
+
+/* MeteorInk v67 enhancement styles */
+:root{scroll-behavior:smooth}
+html.mi-reduced-motion,html.mi-reduced-motion *{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+body{overflow-x:hidden}
+.mi-skip-link{position:fixed;left:12px;top:-60px;z-index:100000;padding:10px 14px;border-radius:8px;background:#f5c34a;color:#080b11;font-weight:800;text-decoration:none;transition:top .15s}
+.mi-skip-link:focus{top:12px}
+.mi-scroll-progress,.mi-reader-progress{position:fixed;left:0;top:0;width:100%;height:3px;background:#e7aa31;transform:scaleX(0);transform-origin:left center;z-index:100001;pointer-events:none}
+.mi-reader-progress{position:sticky;top:0;margin:-1px 0 14px;height:3px}
+.mi-top-btn{position:fixed;right:20px;bottom:20px;width:42px;height:42px;border-radius:50%;border:1px solid rgba(231,170,49,.45);background:rgba(5,10,18,.92);color:#f5c34a;font-size:20px;font-weight:800;opacity:0;transform:translateY(10px);pointer-events:none;z-index:9999;transition:.2s}
+.mi-top-btn.is-visible{opacity:1;transform:none;pointer-events:auto}
+.mi-toast{position:fixed;right:20px;bottom:76px;z-index:10000;max-width:min(380px,calc(100vw - 40px));padding:12px 15px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#0a111d;color:#e9eef6;box-shadow:0 12px 35px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:.2s;font-size:13px}
+.mi-toast.show{opacity:1;transform:none}
+.mi-toast-success{border-color:rgba(90,190,130,.45)}
+.mi-toast-warn{border-color:rgba(245,190,55,.45)}
+.mi-char-count{display:block;margin-top:4px;color:#718096;font-size:10px}
+.mi-invalid{border-color:#e26d6d!important;box-shadow:0 0 0 3px rgba(226,109,109,.08)!important}
+.mi-focus{outline:2px solid rgba(231,170,49,.65);outline-offset:2px}
+.mi-current{color:#f5c34a!important}
+.mi-img-error{opacity:.35;filter:grayscale(1)}
+.mi-empty-state,.server-error-state{grid-column:1/-1;padding:30px;text-align:center;border:1px dashed rgba(255,255,255,.12);border-radius:12px;color:#8995a8}
+.mi-live-region{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.mi-reader-tools{display:flex;gap:8px;align-items:center;margin:0 0 14px}
+.mi-reader-tools button{min-width:40px;min-height:38px;padding:0 10px;border:1px solid rgba(0,0,0,.14);border-radius:8px;background:#fff;color:#27231e;cursor:pointer}
+.mi-reader-tools button:hover{transform:translateY(-1px)}
+.mi-wide-reader{max-width:900px!important}
+@media(max-width:700px){
+  .mi-top-btn{right:14px;bottom:14px}
+  .mi-toast{right:14px;bottom:66px}
+  .mi-reader-tools{position:sticky;top:8px;z-index:20;justify-content:flex-end}
+}
+@media print{
+  .mi-top-btn,.mi-scroll-progress,.mi-reader-progress,.mi-reader-tools,.mi-skip-link{display:none!important}
+  body{background:#fff!important;color:#000!important}
+}
