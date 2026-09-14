@@ -1124,42 +1124,79 @@ app.patch("/api/novels/:id", async (req, res) => {
   }
 });
 
+
 app.delete("/api/novels/:id", async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
-  const id = String(req.params.id || "").trim();
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: "Invalid novel ID." });
 
   try {
-    // Resolve the author from the authenticated session and constrain the
-    // DELETE by both novel id and author id. This prevents one author from
-    // deleting somebody else's novel even if they know its UUID.
+    const novelId = String(req.params.id || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(novelId)) {
+      return res.status(400).json({ error: "Invalid novel ID." });
+    }
+
     const authors = await supabaseRequest("authors", {
-      query: { select: "id", user_id: `eq.${req.session.userId}`, limit: "1" }
+      query: {
+        select: "id",
+        user_id: `eq.${req.session.userId}`,
+        limit: "1"
+      }
     });
     const author = authors?.[0];
     if (!author) return res.status(403).json({ error: "Author profile not found." });
 
+    // Prefer PostgreSQL when it is available because this is the same database
+    // used by the chapter tables and therefore honours their FK cascades.
+    try {
+      if (await ensureNovelSchema()) {
+        const existing = await pgPool.query(
+          "select id, author_id from public.novels where id = $1 limit 1",
+          [novelId]
+        );
+        const current = existing.rows[0];
+        if (current) {
+          if (String(current.author_id) !== String(author.id)) {
+            return res.status(403).json({ error: "You can only delete your own novels." });
+          }
+          const deleted = await pgPool.query(
+            "delete from public.novels where id = $1 and author_id = $2 returning id",
+            [novelId, author.id]
+          );
+          if (!deleted.rows[0]) return res.status(404).json({ error: "Novel not found." });
+          return res.json({ ok: true, deletedId: deleted.rows[0].id });
+        }
+      }
+    } catch (pgErr) {
+      console.warn("[MeteorInk] PostgreSQL novel delete failed, falling back to Supabase REST:", pgErr.message);
+    }
+
     const existing = await supabaseRequest("novels", {
-      query: { select: "id,title,author_id", id: `eq.${id}`, limit: "1" }
+      query: {
+        select: "id,author_id",
+        id: `eq.${novelId}`,
+        limit: "1"
+      }
     });
-    const novel = existing?.[0];
-    if (!novel) return res.status(404).json({ error: "Novel not found." });
-    if (String(novel.author_id) !== String(author.id)) {
+    const current = existing?.[0];
+    if (!current) return res.status(404).json({ error: "Novel not found." });
+    if (String(current.author_id) !== String(author.id)) {
       return res.status(403).json({ error: "You can only delete your own novels." });
     }
 
-    await supabaseRequest("novels", {
+    const deleted = await supabaseRequest("novels", {
       method: "DELETE",
-      query: { id: `eq.${id}`, author_id: `eq.${author.id}` },
-      prefer: "return=minimal"
+      query: {
+        id: `eq.${novelId}`,
+        author_id: `eq.${author.id}`
+      },
+      prefer: "return=representation"
     });
-
-    res.json({ ok: true, deletedId: id });
+    if (!deleted?.length) return res.status(404).json({ error: "Novel not found." });
+    return res.json({ ok: true, deletedId: deleted[0].id });
   } catch (err) {
     console.error("/api/novels/:id DELETE error:", err);
     const message = String(err?.message || "Unable to delete novel.");
-    if (/relation .*novels|could not find the table|schema cache/i.test(message)) {
-      return res.status(503).json({ error: "The novels table is missing from Supabase." });
+    if (/foreign key|violates/i.test(message)) {
+      return res.status(409).json({ error: "This novel has linked records that must be removed before deletion." });
     }
     res.status(500).json({ error: message });
   }
