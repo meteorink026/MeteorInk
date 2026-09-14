@@ -27,6 +27,16 @@
     .novels-tab.active,.novels-tab:hover{background:var(--gold);border-color:var(--gold);color:#090d14}
     .novels-result-line{display:flex;justify-content:space-between;align-items:center;margin:0 2px 14px;color:#7f8da2;font-size:12px}
     .novels-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.novels-pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin:28px 0 6px;flex-wrap:wrap}.novels-pagination button{min-width:38px;height:38px;padding:0 12px;border:1px solid rgba(231,170,49,.2);border-radius:9px;background:rgba(255,255,255,.025);color:#bfc8d5;font-weight:700;cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease}.novels-pagination button:hover:not(:disabled){background:var(--gold);border-color:var(--gold);color:#090d14;transform:translateY(-1px)}.novels-pagination button.active{background:var(--gold);border-color:var(--gold);color:#090d14}.novels-pagination button:disabled{opacity:.35;cursor:not-allowed}.novels-page-info{font-size:12px;color:#7f8da2;padding:0 6px}
+    .novel-card{border:1px solid rgba(255,255,255,.075);border-radius:12px;background:linear-gradient(145deg,rgba(10,20,34,.92),rgba(4,10,18,.96));overflow:hidden;cursor:pointer;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+    .novel-card:hover{transform:translateY(-4px);border-color:rgba(231,170,49,.45);box-shadow:0 16px 35px rgba(0,0,0,.28)}
+    .novel-cover{height:245px;background:linear-gradient(145deg,#14223a,#060b15);display:flex;align-items:center;justify-content:center;color:var(--gold2);font-family:var(--serif);font-size:34px;overflow:hidden}
+    .novel-cover img{width:100%;height:100%;object-fit:cover}
+    .novel-card-body{padding:14px 14px 16px}
+    .novel-meta{font-size:9px;letter-spacing:.13em;color:var(--gold2);font-weight:800;text-transform:uppercase}
+    .novel-card h2{font-family:var(--serif);font-size:23px;line-height:1.08;margin:7px 0 5px;color:#f2eee6}
+    .novel-author{font-size:11px;color:#a3afc0;margin:0 0 9px}
+    .novel-desc{font-size:11px;line-height:1.55;color:#7f8da2;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .novel-stats{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:#69788d}
     .novel-empty{grid-column:1/-1;min-height:390px;border:1px dashed rgba(231,170,49,.25);border-radius:14px;background:rgba(5,11,22,.65);display:grid;place-items:center;text-align:center;padding:40px}
     .novel-empty-inner{max-width:600px}
     .novel-empty .star{font-size:35px;color:var(--gold2);margin-bottom:12px}
@@ -36,15 +46,7 @@
     .genre-panel-backdrop.open{display:flex}
     .genre-panel{width:min(980px,100%);max-height:min(760px,90vh);overflow:auto;background:linear-gradient(180deg,rgba(8,15,29,.98),rgba(4,9,18,.98));border:1px solid rgba(231,170,49,.28);border-radius:18px;box-shadow:0 30px 90px rgba(0,0,0,.55);padding:28px;transform:translateY(42px)}
     .genre-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.genre-panel-head h2{font-family:var(--serif);font-size:38px;margin:4px 0 0;color:#f6f2e9}.genre-panel-close{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#fff;font-size:28px;line-height:1;cursor:pointer}.genre-panel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.genre-choice{border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(255,255,255,.03);color:#dfe6f1;padding:13px 14px;text-align:left;font:600 13px/1.3 "DM Sans",sans-serif;cursor:pointer;transition:.18s ease}.genre-choice:hover{border-color:rgba(231,170,49,.36);background:rgba(231,170,49,.08);color:#fff}.genre-choice.active{border-color:rgba(231,170,49,.6);background:rgba(231,170,49,.14);color:#ffd86f;box-shadow:inset 0 0 0 1px rgba(231,170,49,.12)}
-    .genre-picker{position:relative;z-index:50;min-width:170px}
-    .genre-picker-trigger{width:100%%;height:42px;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:#091321;color:#cfd7e2;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none;font:600 14px/1 "DM Sans",sans-serif;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
-    .genre-picker-trigger:hover,.genre-picker-trigger[aria-expanded="true"]{border-color:rgba(231,170,49,.55);box-shadow:0 0 0 3px rgba(231,170,49,.08);background:#0b1727}
-    .genre-picker-trigger span{font-size:14px;color:#d7b04d;transition:transform .18s ease}
-    .genre-picker-trigger[aria-expanded="true"] span{transform:rotate(180deg)}
-    .genre-menu{position:absolute;right:0;top:calc(100%% + 8px);width:min(430px,calc(100vw - 36px));max-height:390px;overflow:auto;padding:10px;border:1px solid rgba(231,170,49,.25);border-radius:14px;background:linear-gradient(180deg,#091321,#050b15);box-shadow:0 22px 55px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-    .genre-menu[hidden]{display:none!important}
-    .genre-menu button{border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.025);color:#dfe6f1;padding:11px 12px;text-align:left;font:600 12px/1.3 "DM Sans",sans-serif;cursor:pointer}
-    .genre-menu button:hover,.genre-menu button.active{border-color:rgba(231,170,49,.5);background:rgba(231,170,49,.12);color:#ffd86f}
+    .genre-picker{position:relative;z-index:20}.genre-picker>summary{list-style:none;height:42px;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:#091321;color:#cfd7e2;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none}.genre-picker>summary::-webkit-details-marker{display:none}.genre-picker>summary span{font-size:14px;color:#d7b04d;transition:transform .18s ease}.genre-picker[open]>summary{border-color:rgba(231,170,49,.55);box-shadow:0 0 0 3px rgba(231,170,49,.08)}.genre-picker[open]>summary span{transform:rotate(180deg)}.genre-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(430px,calc(100vw - 36px));max-height:390px;overflow:auto;padding:10px;border:1px solid rgba(231,170,49,.25);border-radius:14px;background:linear-gradient(180deg,#091321,#050b15);box-shadow:0 22px 55px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.genre-menu button{border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.025);color:#dfe6f1;padding:11px 12px;text-align:left;font:600 12px/1.3 "DM Sans",sans-serif;cursor:pointer}.genre-menu button:hover,.genre-menu button.active{border-color:rgba(231,170,49,.5);background:rgba(231,170,49,.12);color:#ffd86f}.genre-panel-backdrop{display:none!important}.genre-panel{display:none!important}
     @media(max-width:760px){.genre-panel{padding:22px}.genre-panel-grid{grid-template-columns:1fr 1fr}.genre-panel-head h2{font-size:32px}}
     @media(max-width:520px){.genre-panel-grid{grid-template-columns:1fr}}
     @media(max-width:1024px){.novels-controls{grid-template-columns:1fr 1fr}.novels-tabs{grid-column:1/-1}.novels-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -73,12 +75,41 @@
 
       <section class="novels-controls" aria-label="Novel filters">
         <input id="novelSearch" class="novels-filter-search" type="search" placeholder="Search novels or authors..." aria-label="Search novels or authors" autocomplete="off">
-        <div id="genrePicker" class="genre-picker">
-          <button id="genreOpenBtn" class="genre-picker-trigger" type="button" aria-label="Choose a genre" aria-haspopup="true" aria-expanded="false">Genres <span aria-hidden="true">▾</span></button>
-          <div id="genreMenu" class="genre-menu" role="menu" aria-label="Genres" hidden>
-            <button type="button" class="genre-menu-option active" data-genre="all" role="menuitem">All Genres</button><button type="button" class="genre-menu-option" data-genre="Fantasy" role="menuitem">Fantasy</button><button type="button" class="genre-menu-option" data-genre="Science Fiction" role="menuitem">Science Fiction</button><button type="button" class="genre-menu-option" data-genre="Mystery" role="menuitem">Mystery</button><button type="button" class="genre-menu-option" data-genre="Thriller" role="menuitem">Thriller</button><button type="button" class="genre-menu-option" data-genre="Horror" role="menuitem">Horror</button><button type="button" class="genre-menu-option" data-genre="Romance" role="menuitem">Romance</button><button type="button" class="genre-menu-option" data-genre="Crime" role="menuitem">Crime</button><button type="button" class="genre-menu-option" data-genre="Historical" role="menuitem">Historical</button><button type="button" class="genre-menu-option" data-genre="Literary Fiction" role="menuitem">Literary Fiction</button><button type="button" class="genre-menu-option" data-genre="Adventure" role="menuitem">Adventure</button><button type="button" class="genre-menu-option" data-genre="Action" role="menuitem">Action</button><button type="button" class="genre-menu-option" data-genre="Drama" role="menuitem">Drama</button><button type="button" class="genre-menu-option" data-genre="Young Adult" role="menuitem">Young Adult</button><button type="button" class="genre-menu-option" data-genre="Children&#x27;s Fiction" role="menuitem">Children&#x27;s Fiction</button><button type="button" class="genre-menu-option" data-genre="Comedy" role="menuitem">Comedy</button><button type="button" class="genre-menu-option" data-genre="Western" role="menuitem">Western</button><button type="button" class="genre-menu-option" data-genre="Supernatural / Paranormal" role="menuitem">Supernatural / Paranormal</button><button type="button" class="genre-menu-option" data-genre="Spiritual / Religious" role="menuitem">Spiritual / Religious</button><button type="button" class="genre-menu-option" data-genre="Military / War" role="menuitem">Military / War</button><button type="button" class="genre-menu-option" data-genre="Post-Apocalyptic / Dystopian" role="menuitem">Post-Apocalyptic / Dystopian</button><button type="button" class="genre-menu-option" data-genre="Speculative Fiction" role="menuitem">Speculative Fiction</button><button type="button" class="genre-menu-option" data-genre="Sports" role="menuitem">Sports</button><button type="button" class="genre-menu-option" data-genre="Psychological" role="menuitem">Psychological</button><button type="button" class="genre-menu-option" data-genre="Philosophical / Intellectual" role="menuitem">Philosophical / Intellectual</button><button type="button" class="genre-menu-option" data-genre="Slice of Life" role="menuitem">Slice of Life</button><button type="button" class="genre-menu-option" data-genre="School / Academy" role="menuitem">School / Academy</button><button type="button" class="genre-menu-option" data-genre="Webnovel-Specific / Modern Digital Genres" role="menuitem">Webnovel-Specific / Modern Digital Genres</button><button type="button" class="genre-menu-option" data-genre="Mythology / Folklore" role="menuitem">Mythology / Folklore</button><button type="button" class="genre-menu-option" data-genre="Other / Hybrid" role="menuitem">Other / Hybrid</button>
+        <details id="genrePicker" class="genre-picker">
+          <summary id="genreOpenBtn" aria-label="Choose a genre"><span id="genreLabel">All Genres</span><span aria-hidden="true">▾</span></summary>
+          <div id="genreMenu" class="genre-menu" role="menu" aria-label="Genres">
+            <button type="button" class="genre-menu-option active" data-genre="all" role="menuitem">All Genres</button>
+            <button type="button" class="genre-menu-option" data-genre="Fantasy" role="menuitem">Fantasy</button>
+            <button type="button" class="genre-menu-option" data-genre="Science Fiction" role="menuitem">Science Fiction</button>
+            <button type="button" class="genre-menu-option" data-genre="Mystery" role="menuitem">Mystery</button>
+            <button type="button" class="genre-menu-option" data-genre="Thriller" role="menuitem">Thriller</button>
+            <button type="button" class="genre-menu-option" data-genre="Horror" role="menuitem">Horror</button>
+            <button type="button" class="genre-menu-option" data-genre="Romance" role="menuitem">Romance</button>
+            <button type="button" class="genre-menu-option" data-genre="Crime" role="menuitem">Crime</button>
+            <button type="button" class="genre-menu-option" data-genre="Historical" role="menuitem">Historical</button>
+            <button type="button" class="genre-menu-option" data-genre="Literary Fiction" role="menuitem">Literary Fiction</button>
+            <button type="button" class="genre-menu-option" data-genre="Adventure" role="menuitem">Adventure</button>
+            <button type="button" class="genre-menu-option" data-genre="Action" role="menuitem">Action</button>
+            <button type="button" class="genre-menu-option" data-genre="Drama" role="menuitem">Drama</button>
+            <button type="button" class="genre-menu-option" data-genre="Young Adult" role="menuitem">Young Adult</button>
+            <button type="button" class="genre-menu-option" data-genre="Children's Fiction" role="menuitem">Children's Fiction</button>
+            <button type="button" class="genre-menu-option" data-genre="Comedy" role="menuitem">Comedy</button>
+            <button type="button" class="genre-menu-option" data-genre="Western" role="menuitem">Western</button>
+            <button type="button" class="genre-menu-option" data-genre="Supernatural / Paranormal" role="menuitem">Supernatural / Paranormal</button>
+            <button type="button" class="genre-menu-option" data-genre="Spiritual / Religious" role="menuitem">Spiritual / Religious</button>
+            <button type="button" class="genre-menu-option" data-genre="Military / War" role="menuitem">Military / War</button>
+            <button type="button" class="genre-menu-option" data-genre="Post-Apocalyptic / Dystopian" role="menuitem">Post-Apocalyptic / Dystopian</button>
+            <button type="button" class="genre-menu-option" data-genre="Speculative Fiction" role="menuitem">Speculative Fiction</button>
+            <button type="button" class="genre-menu-option" data-genre="Sports" role="menuitem">Sports</button>
+            <button type="button" class="genre-menu-option" data-genre="Psychological" role="menuitem">Psychological</button>
+            <button type="button" class="genre-menu-option" data-genre="Philosophical / Intellectual" role="menuitem">Philosophical / Intellectual</button>
+            <button type="button" class="genre-menu-option" data-genre="Slice of Life" role="menuitem">Slice of Life</button>
+            <button type="button" class="genre-menu-option" data-genre="School / Academy" role="menuitem">School / Academy</button>
+            <button type="button" class="genre-menu-option" data-genre="Webnovel-Specific / Modern Digital Genres" role="menuitem">Webnovel-Specific / Modern Digital Genres</button>
+            <button type="button" class="genre-menu-option" data-genre="Mythology / Folklore" role="menuitem">Mythology / Folklore</button>
+            <button type="button" class="genre-menu-option" data-genre="Other / Hybrid" role="menuitem">Other / Hybrid</button>
           </div>
-        </div>
+        </details>
         <select id="genreFilter" class="novels-select" aria-label="Filter by genre" hidden><option value="all">All Genres</option></select>
         <div class="novels-tabs" role="tablist" aria-label="Novel sorting">
           <button class="novels-tab active" data-sort="latest" type="button">Latest</button>
@@ -118,15 +149,12 @@
       const primaryGenres=['Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama','Young Adult',"Children's Fiction",'Comedy','Western','Supernatural / Paranormal','Spiritual / Religious','Military / War','Post-Apocalyptic / Dystopian','Speculative Fiction','Sports','Psychological','Philosophical / Intellectual','Slice of Life','School / Academy','Webnovel-Specific / Modern Digital Genres','Mythology / Folklore','Other / Hybrid'];
       primaryGenres.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;genre.appendChild(o)});
       if(initialGenre){const option=[...genre.options].find(o=>o.value.toLowerCase()===String(initialGenre).trim().toLowerCase());if(option)genre.value=option.value;}
-      const syncGenreUI=()=>{const selected=genre.value||'all';genreMenu.querySelectorAll('.genre-menu-option').forEach(b=>b.classList.toggle('active',String(b.dataset.genre).toLowerCase()===String(selected).toLowerCase()));genreOpenBtn.childNodes[0].textContent=(selected==='all'?'Genres':selected)+' ';genreOpenBtn.setAttribute('aria-expanded',String(!genreMenu.hidden));};
-      const closeGenreMenu=()=>{genreMenu.hidden=true;genreOpenBtn.setAttribute('aria-expanded','false');};
-      const toggleGenreMenu=()=>{const willOpen=genreMenu.hidden;genreMenu.hidden=!willOpen;genreOpenBtn.setAttribute('aria-expanded',String(willOpen));if(willOpen){syncGenreUI();setTimeout(()=>genreMenu.querySelector('.genre-menu-option.active')?.focus(),0);}};
+      const genreLabel=document.getElementById('genreLabel');
+      const syncGenreUI=()=>{const selected=genre.value||'all';genreMenu.querySelectorAll('.genre-menu-option').forEach(b=>b.classList.toggle('active',String(b.dataset.genre).toLowerCase()===String(selected).toLowerCase()));genreLabel.textContent=selected==='all'?'All Genres':selected;genreOpenBtn.setAttribute('aria-label',selected==='all'?'Choose a genre, currently All Genres':`Choose a genre, currently ${selected}`);};
       syncGenreUI();
-      genreOpenBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleGenreMenu();});
-      genreMenu.addEventListener('click',e=>{const btn=e.target.closest('.genre-menu-option');if(!btn)return;e.preventDefault();e.stopPropagation();genre.value=btn.dataset.genre;currentPage=1;const url=new URL(location.href);if(btn.dataset.genre==='all')url.searchParams.delete('genre');else url.searchParams.set('genre',btn.dataset.genre);history.replaceState({},'',url);syncGenreUI();closeGenreMenu();render();});
-      genreMenu.addEventListener('keydown',e=>{if(e.key==='Escape'){closeGenreMenu();genreOpenBtn.focus();}});
-      document.addEventListener('click',e=>{if(!genrePicker.contains(e.target))closeGenreMenu();});
-      document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!genreMenu.hidden){closeGenreMenu();genreOpenBtn.focus();}});
+      genreMenu.addEventListener('click',e=>{const btn=e.target.closest('.genre-menu-option');if(!btn)return;e.preventDefault();e.stopPropagation();const selected=btn.dataset.genre||'all';genre.value=selected;currentPage=1;syncGenreUI();genrePicker.open=false;const url=new URL(location.href);if(selected==='all')url.searchParams.delete('genre');else url.searchParams.set('genre',selected);history.replaceState(null,'',url.pathname+(url.search?url.search:'')+(url.hash||''));render();});
+      genrePicker.addEventListener('toggle',()=>{if(genrePicker.open)syncGenreUI();});
+      document.addEventListener('click',e=>{if(genrePicker.open && !genrePicker.contains(e.target))genrePicker.open=false;});
       let serverNovelsCache=null;
       async function getServerNovels(){
         if(Array.isArray(serverNovelsCache))return serverNovelsCache;
