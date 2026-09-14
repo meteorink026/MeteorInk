@@ -58,6 +58,30 @@ async function supabaseRequest(table, options = {}) {
   return data;
 }
 
+async function ensureNovelSchema() {
+  // Keep the publishing/catalog path self-healing on deployments where the
+  // novel migration was not run manually. The same PostgreSQL connection is
+  // already required by the session store, so this does not add a new secret.
+  await pgPool.query(`
+    create table if not exists public.novels (
+      id uuid primary key default gen_random_uuid(),
+      author_id uuid not null references public.authors(id) on delete cascade,
+      title text not null,
+      description text not null default '',
+      genre text not null default 'Uncategorized',
+      cover text not null default '',
+      status text not null default 'published' check (status in ('draft','published','archived')),
+      views bigint not null default 0 check (views >= 0),
+      published_at timestamptz,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    );
+    create index if not exists novels_author_idx on public.novels (author_id);
+    create index if not exists novels_published_idx on public.novels (published_at desc);
+    alter table public.novels enable row level security;
+  `);
+}
+
 async function supabaseRpc(functionName, body = {}) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
     throw new Error("Supabase environment variables are missing.");
@@ -1007,6 +1031,20 @@ app.use((req, res, next) => {
 // Serve the existing MeteorInk browser app from the same origin.
 app.use(express.static(ROOT, { index: "index.html", dotfiles: "deny" }));
 
-app.listen(PORT, () => {
-  console.log(`MeteorInk running at http://localhost:${PORT}/`);
-});
+async function startServer() {
+  try {
+    await ensureNovelSchema();
+    app.listen(PORT, () => {
+      console.log(`MeteorInk running at http://localhost:${PORT}/`);
+    });
+  } catch (err) {
+    console.error('Novel database initialization failed:', err);
+    // Do not hide the real cause behind the dashboard's generic publish error.
+    // The server can still start so non-novel routes remain available.
+    app.listen(PORT, () => {
+      console.log(`MeteorInk running at http://localhost:${PORT}/ (novel schema initialization failed)`);
+    });
+  }
+}
+
+startServer();
