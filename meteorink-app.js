@@ -2,11 +2,15 @@
 (function(){
   const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
   let currentUser=null;
+  const viewHashes=new Set(['home','authors','novels','library','adaptation','about','contact']);
   const nav=[
-    ['Home','index.html#home'],['Authors','index.html#authors'],['Novels','index.html#novels'],
-    ['Adaptation Room','index.html#adaptation'],
-    ['About Us','index.html#about'],['Contact','index.html#contact']
+    ['Home','home'],['Authors','authors'],['Novels','novels'],
+    ['Adaptation Room','adaptation'],
+    ['About Us','about'],['Contact','contact']
   ];
+  function navHref(hash){
+    return (path==='index.html'||path==='') ? `#${hash}` : `index.html#${hash}`;
+  }
 
   function activeFor(label){
     if(path==='novels.html') return label==='Novels';
@@ -14,7 +18,6 @@
     if((path==='index.html'||path==='') && location.hash==='#authors') return label==='Authors';
     if(path==='adaptation.html') return label==='Adaptation Room';
     if((path==='index.html'||path==='') && location.hash==='#adaptation') return label==='Adaptation Room';
-    if((path==='index.html'||path==='') && location.hash==='#about') return label==='About Us';
     if((path==='index.html'||path==='') && location.hash==='#contact') return label==='Contact';
     if(path==='index.html' || path==='') return label==='Home';
     return false;
@@ -25,7 +28,7 @@
     existing.innerHTML=`
       <a class="brand" href="index.html" aria-label="MeteorInk home"><img src="assets/logo.jpg" alt="MeteorInk logo"></a>
       <nav class="desktop-nav" aria-label="Primary navigation">
-        ${nav.map(([label,href])=>`<a class="${activeFor(label)?'active':''}" href="${href}">${label}</a>`).join('')}
+        ${nav.map(([label,hash])=>`<a class="${activeFor(label)?'active':''}" href="${navHref(hash)}" data-mi-nav="${hash}">${label}</a>`).join('')}
       </nav>
       <div class="header-actions">
         <label class="search-box"><span aria-hidden="true">⌕</span><input id="siteSearch" type="search" placeholder="Search novels and authors." aria-label="Search novels and authors" autocomplete="off"></label>
@@ -124,7 +127,7 @@
     let menu=document.getElementById('mobileMenu');
     if(!menu){
       menu=document.createElement('div'); menu.id='mobileMenu'; menu.className='mobile-menu';
-      menu.innerHTML=nav.map(([label,href])=>`<a class="${activeFor(label)?'active':''}" href="${href}">${label}</a>`).join('')+
+      menu.innerHTML=nav.map(([label,hash])=>`<a class="${activeFor(label)?'active':''}" href="${navHref(hash)}" data-mi-nav="${hash}">${label}</a>`).join('')+
         (currentUser
           ? '<div class="mobile-account"><div class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</div><a href="profile.html"><span class="profile-menu-icon"><img src="assets/my-profile-icon.png" alt="" aria-hidden="true"></span><span>My Profile</span></a><a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a><a class="author-dashboard-menu-link" href="author-dashboard.html"><span class="profile-menu-icon author-dashboard-menu-icon"><img src="assets/author-dashboard-icon.png" alt="" aria-hidden="true"></span><span>Author Dashboard</span></a><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button></div>'
           : '<a href="auth.html">Log In</a><a href="signup.html">Sign Up</a>');
@@ -256,26 +259,30 @@
         window.scrollTo({top:0,behavior:'smooth'});
         if(window.renderMeteorInkLibrary) window.renderMeteorInkLibrary();
       }
-      if(isAdaptation || isAbout || isContact){
+      if(isAbout || isContact){
         window.scrollTo({top:0,behavior:'smooth'});
       }
     };
 
+    // Handle both the static #hash links and the dynamically-rendered
+    // index.html#hash links. Only intercept these links while already on the
+    // single-window index page. Links from other pages must navigate normally.
     document.addEventListener('click',e=>{
-      const link=e.target.closest('a[href^="#"]');
+      if(e.defaultPrevented || e.button!==0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link=e.target.closest('a[href]');
       if(!link) return;
-      const href=link.getAttribute('href')||'';
-      const supported=new Set(['#home','#authors','#novels','#library','#adaptation','#about','#contact']);
-      if(!supported.has(href)) return;
+      const raw=link.getAttribute('href')||'';
+      const url=new URL(raw,location.href);
+      const targetPath=(url.pathname.split('/').pop()||'index.html').toLowerCase();
+      if((targetPath!=='index.html' && targetPath!=='') || !url.hash) return;
+      const hash=url.hash.slice(1).toLowerCase();
+      if(!viewHashes.has(hash)) return;
+      if(url.origin!==location.origin) return;
+
       e.preventDefault();
-      if(location.hash===href){
-        setView();
-      }else{
-        location.hash=href.slice(1);
-        // Hash changes normally fire the listener above. Calling setView here too
-        // makes navigation deterministic even when another script delays the event.
-        setView();
-      }
+      const next=`${location.pathname||'index.html'}#${hash}`;
+      if(location.hash!==`#${hash}`) history.pushState({meteorInkView:hash},'',next);
+      setView();
     });
     window.addEventListener('hashchange',setView);
     window.addEventListener('popstate',setView);
