@@ -127,10 +127,16 @@
         <div class="genre-panel-grid"><button type="button" class="genre-choice active" data-genre="all">All Genres</button>${primaryGenres.map(g=>`<button type="button" class="genre-choice" data-genre="${esc(g)}">${esc(g)}</button>`).join('')}</div>
       </section>`;
       document.body.appendChild(genrePanel);
+      const syncGenreUI=()=>{
+        const selected=genre.value||'all';
+        document.querySelectorAll('.genre-choice').forEach(b=>b.classList.toggle('active',String(b.dataset.genre).toLowerCase()===String(selected).toLowerCase()));
+        genreOpenBtn.firstChild.textContent=(selected==='all'?'Genres':selected)+' ';
+      };
+      syncGenreUI();
       const closeGenrePanel=()=>{genrePanel.classList.remove('open');genreOpenBtn.setAttribute('aria-expanded','false');};
-      const openGenrePanel=()=>{genrePanel.classList.add('open');genreOpenBtn.setAttribute('aria-expanded','true');};
+      const openGenrePanel=()=>{syncGenreUI();genrePanel.classList.add('open');genreOpenBtn.setAttribute('aria-expanded','true');};
       genreOpenBtn.addEventListener('click',openGenrePanel);
-      genrePanel.addEventListener('click',e=>{if(e.target===genrePanel || e.target.closest('.genre-panel-close')){closeGenrePanel();return;}const btn=e.target.closest('.genre-choice');if(!btn)return;genre.value=btn.dataset.genre;document.querySelectorAll('.genre-choice').forEach(b=>b.classList.toggle('active',b===btn));render();closeGenrePanel();});
+      genrePanel.addEventListener('click',e=>{if(e.target===genrePanel || e.target.closest('.genre-panel-close')){closeGenrePanel();return;}const btn=e.target.closest('.genre-choice');if(!btn)return;genre.value=btn.dataset.genre;currentPage=1;syncGenreUI();render();closeGenrePanel();});
       document.addEventListener('keydown',e=>{if(e.key==='Escape')closeGenrePanel();});
       let serverNovelsCache=null;
       async function getServerNovels(){
