@@ -1124,6 +1124,47 @@ app.patch("/api/novels/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/novels/:id", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  const id = String(req.params.id || "").trim();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: "Invalid novel ID." });
+
+  try {
+    // Resolve the author from the authenticated session and constrain the
+    // DELETE by both novel id and author id. This prevents one author from
+    // deleting somebody else's novel even if they know its UUID.
+    const authors = await supabaseRequest("authors", {
+      query: { select: "id", user_id: `eq.${req.session.userId}`, limit: "1" }
+    });
+    const author = authors?.[0];
+    if (!author) return res.status(403).json({ error: "Author profile not found." });
+
+    const existing = await supabaseRequest("novels", {
+      query: { select: "id,title,author_id", id: `eq.${id}`, limit: "1" }
+    });
+    const novel = existing?.[0];
+    if (!novel) return res.status(404).json({ error: "Novel not found." });
+    if (String(novel.author_id) !== String(author.id)) {
+      return res.status(403).json({ error: "You can only delete your own novels." });
+    }
+
+    await supabaseRequest("novels", {
+      method: "DELETE",
+      query: { id: `eq.${id}`, author_id: `eq.${author.id}` },
+      prefer: "return=minimal"
+    });
+
+    res.json({ ok: true, deletedId: id });
+  } catch (err) {
+    console.error("/api/novels/:id DELETE error:", err);
+    const message = String(err?.message || "Unable to delete novel.");
+    if (/relation .*novels|could not find the table|schema cache/i.test(message)) {
+      return res.status(503).json({ error: "The novels table is missing from Supabase." });
+    }
+    res.status(500).json({ error: message });
+  }
+});
+
 app.get("/api/author/me/novels", async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
   try {

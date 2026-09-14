@@ -336,8 +336,8 @@
     }
     .published-item-content{min-width:0;flex:1}
     .published-item-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-    .novel-edit-btn,.novel-cancel-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(231,170,49,.45);background:rgba(231,170,49,.05);color:#e8b43e;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
-    .novel-edit-btn:hover,.novel-cancel-btn:hover{background:rgba(231,170,49,.12);border-color:#e8b43e}
+    .novel-edit-btn,.novel-delete-btn,.novel-cancel-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(231,170,49,.45);background:rgba(231,170,49,.05);color:#e8b43e;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
+    .novel-edit-btn:hover,.novel-cancel-btn:hover{background:rgba(231,170,49,.12);border-color:#e8b43e}.novel-delete-btn{border-color:rgba(220,90,90,.42);background:rgba(220,90,90,.045);color:#e77b7b}.novel-delete-btn:hover{background:rgba(220,90,90,.11);border-color:#e77b7b}
     .novel-cancel-btn{background:transparent;color:#9ca8ba;border-color:rgba(255,255,255,.12)}
     .novel-cancel-btn:hover{color:#eef2f7;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.04)}
     .editing-banner{display:none;margin:-8px 0 18px;padding:10px 12px;border:1px solid rgba(231,170,49,.25);border-radius:9px;background:rgba(231,170,49,.06);color:#d8c28a;font-size:11px}
@@ -434,7 +434,6 @@
     gtag('js', new Date());
     gtag('config', 'G-MWX483HZEH');
   </script>
-  <link rel="stylesheet" href="meteorink-v68.css">
 </head>
 
 <body>
@@ -657,7 +656,7 @@
         document.getElementById('novelCount').textContent=ns.filter(n=>n.status==='published').length;
         document.getElementById('viewCount').textContent=ns.reduce((s,n)=>s+Number(n.views||0),0).toLocaleString();
         document.getElementById('publishedList').innerHTML=ns.length
-          ? ns.map(n=>`<article class="published-item" data-novel-id="${escapeHtml(n.id)}"><div class="published-item-content"><h3>${escapeHtml(n.title||'Untitled Novel')}</h3><p>${escapeHtml(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views · ${n.publishedAt?new Date(n.publishedAt).toLocaleDateString():''}</p></div><div class="published-item-actions"><button type="button" class="novel-edit-btn" data-edit-novel="${escapeHtml(n.id)}">Edit Novel</button></div></article>`).join('')
+          ? ns.map(n=>`<article class="published-item" data-novel-id="${escapeHtml(n.id)}"><div class="published-item-content"><h3>${escapeHtml(n.title||'Untitled Novel')}</h3><p>${escapeHtml(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views · ${n.publishedAt?new Date(n.publishedAt).toLocaleDateString():''}</p></div><div class="published-item-actions"><button type="button" class="novel-edit-btn" data-edit-novel="${escapeHtml(n.id)}">Edit Novel</button><button type="button" class="novel-delete-btn" data-delete-novel="${escapeHtml(n.id)}">Delete Novel</button></div></article>`).join('')
           : '<div class="empty-state">No novels published yet.</div>';
       }
 
@@ -703,11 +702,58 @@
         document.getElementById('publishStatus').textContent='';
       };
 
-      document.getElementById('publishedList').addEventListener('click',e=>{
-        const button=e.target.closest('[data-edit-novel]');
-        if(!button)return;
-        const novel=serverNovels.find(n=>String(n.id)===String(button.dataset.editNovel));
-        beginNovelEdit(novel);
+      document.getElementById('publishedList').addEventListener('click',async e=>{
+        const editButton=e.target.closest('[data-edit-novel]');
+        if(editButton){
+          const novel=serverNovels.find(n=>String(n.id)===String(editButton.dataset.editNovel));
+          beginNovelEdit(novel);
+          return;
+        }
+
+        const deleteButton=e.target.closest('[data-delete-novel]');
+        if(!deleteButton || deleteButton.disabled)return;
+        const novel=serverNovels.find(n=>String(n.id)===String(deleteButton.dataset.deleteNovel));
+        if(!novel)return;
+
+        const title=String(novel.title||'Untitled Novel');
+        const confirmed=window.confirm(`Delete "${title}" permanently?\n\nThis will remove the novel from MeteorInk. This action cannot be undone.`);
+        if(!confirmed)return;
+
+        deleteButton.disabled=true;
+        deleteButton.textContent='Deleting…';
+        const status=document.getElementById('publishStatus');
+        status.textContent='Deleting novel…';
+        try{
+          const r=await fetch(`/api/novels/${encodeURIComponent(novel.id)}`,{
+            method:'DELETE',
+            credentials:'same-origin',
+            headers:{Accept:'application/json'},
+            cache:'no-store'
+          });
+          const d=await r.json().catch(()=>({}));
+          if(!r.ok)throw new Error(d.error||d.detail||`Unable to delete novel (${r.status}).`);
+
+          // Remove the deleted record from the legacy browser adapter too, so
+          // the old one-time sync cannot resurrect a novel that was deleted
+          // from Supabase.
+          try{
+            const key=MeteorInkData?.KEYS?.NOVELS||'meteorink_novels';
+            const local=JSON.parse(localStorage.getItem(key)||'[]');
+            if(Array.isArray(local)){
+              const filtered=local.filter(n=>String(n?.id)!==String(novel.id));
+              localStorage.setItem(key,JSON.stringify(filtered));
+            }
+          }catch{}
+
+          serverNovels=serverNovels.filter(n=>String(n.id)!==String(novel.id));
+          if(editingNovelId && String(editingNovelId)===String(novel.id))cancelNovelEdit();
+          status.textContent='Novel deleted successfully.';
+          render();
+        }catch(err){
+          deleteButton.disabled=false;
+          deleteButton.textContent='Delete Novel';
+          status.textContent=err.message||'Unable to delete novel.';
+        }
       });
 
       cancelEditButton.addEventListener('click',cancelNovelEdit);
@@ -821,6 +867,5 @@
     })();
   </script>
   <script src="meteorink-app.js"></script>
-  <script src="meteorink-v68.js"></script>
 </body>
 </html>
