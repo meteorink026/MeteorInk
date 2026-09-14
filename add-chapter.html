@@ -51,7 +51,7 @@
     .actions{display:flex;gap:9px}.action{min-height:44px;padding:0 18px;border-radius:9px;font:800 12px/1 "DM Sans",sans-serif;cursor:pointer}.secondary{border:1px solid rgba(255,255,255,.12);background:transparent;color:#aab5c5}.primary{border:1px solid rgba(231,170,49,.6);background:var(--mi-gold);color:#111827}.action:disabled{opacity:.55;cursor:not-allowed}
     .draft-note{margin:12px 0 0;color:#657389;font-size:11px}
     @media(max-width:720px){.chapter-page{padding:100px 14px 50px}.chapter-top{align-items:flex-start;flex-direction:column}.chapter-top h1{font-size:34px}.chapter-meta{grid-template-columns:1fr}.chapter-panel{padding:17px}.editor-body{min-height:520px;padding:28px 20px;font-size:17px}.toolbar{position:sticky;top:78px;padding:8px;max-height:calc(100vh - 90px);overflow:auto}.tool,.toolbar select,.color-tool{height:36px}.editor-footer{align-items:stretch;flex-direction:column}.actions{width:100%}.action{flex:1}}
-  .toolbar #fontFamily option:nth-child(1){font-family:Georgia,serif}
+  .toolbar #fontFamily option{font-size:14px}.toolbar #fontFamily optgroup{font-family:"DM Sans",Arial,sans-serif;font-weight:700}.toolbar #fontFamily option[value="Georgia"]{font-family:Georgia,serif}.toolbar #fontFamily option[value="Times New Roman"]{font-family:"Times New Roman",serif}.toolbar #fontFamily option[value="EB Garamond"]{font-family:"EB Garamond",serif}.toolbar #fontFamily option[value="Cormorant Garamond"]{font-family:"Cormorant Garamond",serif}.toolbar #fontFamily option[value="Libre Baskerville"]{font-family:"Libre Baskerville",serif}.toolbar #fontFamily option[value="Lora"]{font-family:Lora,serif}.toolbar #fontFamily option[value="Merriweather"]{font-family:Merriweather,serif}.toolbar #fontFamily option[value="Playfair Display"]{font-family:"Playfair Display",serif}.toolbar #fontFamily option[value="Roboto Slab"]{font-family:"Roboto Slab",serif}.toolbar #fontFamily option[value="Source Serif 4"]{font-family:"Source Serif 4",serif}.toolbar #fontFamily option[value="Inter"]{font-family:Inter,sans-serif}.toolbar #fontFamily option[value="Poppins"]{font-family:Poppins,sans-serif}.toolbar #fontFamily option[value="Montserrat"]{font-family:Montserrat,sans-serif}.toolbar #fontFamily option[value="Nunito"]{font-family:Nunito,sans-serif}.toolbar #fontFamily option[value="Quicksand"]{font-family:Quicksand,sans-serif}.toolbar #fontFamily option[value="Raleway"]{font-family:Raleway,sans-serif}.toolbar #fontFamily option[value="Archivo"]{font-family:Archivo,sans-serif}.toolbar #fontFamily option[value="Oswald"]{font-family:Oswald,sans-serif}.toolbar #fontFamily option[value="Cinzel"]{font-family:Cinzel,serif}.toolbar #fontFamily option[value="Caveat"]{font-family:Caveat,cursive}.toolbar #fontFamily option[value="Comic Neue"]{font-family:"Comic Neue",cursive}.toolbar #fontFamily option[value="Comfortaa"]{font-family:Comfortaa,cursive}.toolbar #fontFamily option[value="Pacifico"]{font-family:Pacifico,cursive}.toolbar #fontFamily option[value="Arial"]{font-family:Arial,sans-serif}.toolbar #fontFamily option[value="Verdana"]{font-family:Verdana,sans-serif}.toolbar #fontFamily option[value="Trebuchet MS"]{font-family:"Trebuchet MS",sans-serif}.toolbar #fontFamily option[value="Courier New"]{font-family:"Courier New",monospace}
     </style>
 </head>
 <body>
@@ -96,37 +96,37 @@
             </select>
             <select id="fontFamily" aria-label="Font family" title="Font family">
               <optgroup label="Classic & Formal">
-                <option value="Georgia">Georgia</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="EB Garamond">EB Garamond</option>
-                <option value="Cormorant Garamond">Cormorant Garamond</option>
-                <option value="Libre Baskerville">Libre Baskerville</option>
-                <option value="Lora">Lora</option>
-                <option value="Merriweather">Merriweather</option>
-                <option value="Playfair Display">Playfair Display</option>
-                <option value="Roboto Slab">Roboto Slab</option>
-                <option value="Source Serif 4">Source Serif 4</option>
+                <option value="Georgia" style="font-family: 'Georgia', sans-serif;">Georgia</option>
+                <option value="Times New Roman" style="font-family: 'Times New Roman', sans-serif;">Times New Roman</option>
+                <option value="EB Garamond" style="font-family: 'EB Garamond', sans-serif;">EB Garamond</option>
+                <option value="Cormorant Garamond" style="font-family: 'Cormorant Garamond', sans-serif;">Cormorant Garamond</option>
+                <option value="Libre Baskerville" style="font-family: 'Libre Baskerville', sans-serif;">Libre Baskerville</option>
+                <option value="Lora" style="font-family: 'Lora', sans-serif;">Lora</option>
+                <option value="Merriweather" style="font-family: 'Merriweather', sans-serif;">Merriweather</option>
+                <option value="Playfair Display" style="font-family: 'Playfair Display', sans-serif;">Playfair Display</option>
+                <option value="Roboto Slab" style="font-family: 'Roboto Slab', sans-serif;">Roboto Slab</option>
+                <option value="Source Serif 4" style="font-family: 'Source Serif 4', sans-serif;">Source Serif 4</option>
               </optgroup>
               <optgroup label="Modern & Clean">
-                <option value="Inter">Inter</option>
-                <option value="Poppins">Poppins</option>
-                <option value="Montserrat">Montserrat</option>
-                <option value="Nunito">Nunito</option>
-                <option value="Quicksand">Quicksand</option>
-                <option value="Raleway">Raleway</option>
-                <option value="Archivo">Archivo</option>
-                <option value="Oswald">Oswald</option>
+                <option value="Inter" style="font-family: 'Inter', sans-serif;">Inter</option>
+                <option value="Poppins" style="font-family: 'Poppins', sans-serif;">Poppins</option>
+                <option value="Montserrat" style="font-family: 'Montserrat', sans-serif;">Montserrat</option>
+                <option value="Nunito" style="font-family: 'Nunito', sans-serif;">Nunito</option>
+                <option value="Quicksand" style="font-family: 'Quicksand', sans-serif;">Quicksand</option>
+                <option value="Raleway" style="font-family: 'Raleway', sans-serif;">Raleway</option>
+                <option value="Archivo" style="font-family: 'Archivo', sans-serif;">Archivo</option>
+                <option value="Oswald" style="font-family: 'Oswald', sans-serif;">Oswald</option>
               </optgroup>
               <optgroup label="Stylish & Creative">
-                <option value="Cinzel">Cinzel</option>
-                <option value="Caveat">Caveat</option>
-                <option value="Comic Neue">Comic Neue</option>
-                <option value="Comfortaa">Comfortaa</option>
-                <option value="Pacifico">Pacifico</option>
-                <option value="Arial">Arial</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Trebuchet MS">Trebuchet MS</option>
-                <option value="Courier New">Courier New</option>
+                <option value="Cinzel" style="font-family: 'Cinzel', sans-serif;">Cinzel</option>
+                <option value="Caveat" style="font-family: 'Caveat', sans-serif;">Caveat</option>
+                <option value="Comic Neue" style="font-family: 'Comic Neue', sans-serif;">Comic Neue</option>
+                <option value="Comfortaa" style="font-family: 'Comfortaa', sans-serif;">Comfortaa</option>
+                <option value="Pacifico" style="font-family: 'Pacifico', sans-serif;">Pacifico</option>
+                <option value="Arial" style="font-family: 'Arial', sans-serif;">Arial</option>
+                <option value="Verdana" style="font-family: 'Verdana', sans-serif;">Verdana</option>
+                <option value="Trebuchet MS" style="font-family: 'Trebuchet MS', sans-serif;">Trebuchet MS</option>
+                <option value="Courier New" style="font-family: 'Courier New', sans-serif;">Courier New</option>
               </optgroup>
             </select>
             <select id="fontSize" aria-label="Font size" title="Font size">
