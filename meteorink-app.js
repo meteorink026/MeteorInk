@@ -42,7 +42,7 @@
                 <div class="profile-dropdown-links">
                   <a href="profile.html"><span class="profile-menu-icon"><img src="assets/my-profile-icon.png" alt="" aria-hidden="true"></span><span>My Profile</span></a>
                   <a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a>
-                  <a href="author-dashboard.html">Author Dashboard</a>
+                  <a class="author-dashboard-menu-link" href="author-dashboard.html"><span class="profile-menu-icon author-dashboard-menu-icon"><img src="assets/author-dashboard-icon.png" alt="" aria-hidden="true"></span><span>Author Dashboard</span></a>
                 </div>
                 <button type="button" class="profile-logout" id="logoutBtn">Log Out</button>
               </div>
@@ -50,6 +50,11 @@
           : `<a class="text-btn" href="auth.html">Log In</a><a class="gold-btn small" href="signup.html">Sign Up</a>`}
         <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
       </div>`;
+  }
+
+  function syncAuthorDashboardMenu(){
+    const isAuthor=currentUser?.role==='author';
+    document.querySelectorAll('.author-dashboard-menu-link').forEach(el=>{el.style.display=isAuthor?'flex':'none';});
   }
 
   async function syncServerSession(){
@@ -84,9 +89,11 @@
       header=document.createElement('header'); header.className='site-header';
       document.body.prepend(header); buildHeader(header);
     }
+    syncAuthorDashboardMenu();
   }
 
   function bindAuthActions(){
+    syncAuthorDashboardMenu();
     const btn=document.getElementById('logoutBtn');
     if(btn) btn.addEventListener('click',logout);
     const mobile=document.getElementById('mobileLogoutBtn');
@@ -118,10 +125,11 @@
       menu=document.createElement('div'); menu.id='mobileMenu'; menu.className='mobile-menu';
       menu.innerHTML=nav.map(([label,href])=>`<a class="${activeFor(label)?'active':''}" href="${href}">${label}</a>`).join('')+
         (currentUser
-          ? '<div class="mobile-account"><div class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</div><a href="profile.html"><span class="profile-menu-icon"><img src="assets/my-profile-icon.png" alt="" aria-hidden="true"></span><span>My Profile</span></a><a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a><a href="author-dashboard.html">Author Dashboard</a><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button></div>'
+          ? '<div class="mobile-account"><div class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</div><a href="profile.html"><span class="profile-menu-icon"><img src="assets/my-profile-icon.png" alt="" aria-hidden="true"></span><span>My Profile</span></a><a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a><a class="author-dashboard-menu-link" href="author-dashboard.html"><span class="profile-menu-icon author-dashboard-menu-icon"><img src="assets/author-dashboard-icon.png" alt="" aria-hidden="true"></span><span>Author Dashboard</span></a><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button></div>'
           : '<a href="auth.html">Log In</a><a href="signup.html">Sign Up</a>');
       header.after(menu);
     }
+    syncAuthorDashboardMenu();
     const btn=document.getElementById('menuBtn');
     if(btn) btn.addEventListener('click',()=>{const open=menu.classList.toggle('open');btn.setAttribute('aria-expanded',String(open));btn.textContent=open?'×':'☰';});
     menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menu.classList.remove('open');if(btn){btn.setAttribute('aria-expanded','false');btn.textContent='☰';}}));

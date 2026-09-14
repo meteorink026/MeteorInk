@@ -2336,7 +2336,23 @@ footer.site-footer[hidden]{display:none!important;}
   height:26px;
   object-fit:contain;
   display:block;
-}.library-menu-icon{
+}/* Author Dashboard artwork icon */
+.author-dashboard-menu-icon{
+  width:26px;
+  height:26px;
+  flex:0 0 26px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.author-dashboard-menu-icon img{
+  width:26px;
+  height:26px;
+  object-fit:contain;
+  display:block;
+}
+
+.library-menu-icon{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -2395,3 +2411,18 @@ footer.site-footer[hidden]{display:none!important;}
   width:26px;
   height:26px;
 }
+
+/* Author Dashboard feature artwork */
+.dashboard-feature-icon{
+  width:64px;
+  height:64px;
+  border:1px solid rgba(231,170,49,.62);
+  border-radius:50%;
+  overflow:hidden;
+  flex:none;
+  background:#030711;
+  box-shadow:0 0 22px rgba(231,170,49,.08),inset 0 0 18px rgba(231,170,49,.06);
+  transition:transform .22s ease,border-color .22s ease;
+}
+.dashboard-feature-icon img{width:100%;height:100%;object-fit:contain;display:block}
+.feature:hover .dashboard-feature-icon{transform:scale(1.07);border-color:rgba(255,214,106,.9)}

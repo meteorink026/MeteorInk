@@ -12,18 +12,35 @@
     .dashboard-page{
       min-height:100vh;
       padding:125px 5vw 80px;
-      background:#030711;
+      position:relative;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 78% 18%,rgba(231,170,49,.075),transparent 24%),
+        radial-gradient(circle at 18% 80%,rgba(64,102,145,.09),transparent 28%),
+        #030711;
+    }
+    .dashboard-page::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:linear-gradient(180deg,rgba(3,7,17,.12),rgba(3,7,17,.7));
     }
 
     .dashboard-shell{
       max-width:1180px;
       margin:0 auto;
+      position:relative;
+      z-index:1;
     }
 
     .dashboard-kicker{
       margin-bottom:10px;
     }
 
+    .dashboard-title-wrap{display:flex;align-items:center;gap:18px;min-width:0}
+    .dashboard-emblem{width:86px;height:86px;flex:0 0 86px;border-radius:50%;overflow:hidden;border:1px solid rgba(231,170,49,.55);background:#030711;box-shadow:0 10px 35px rgba(0,0,0,.28),0 0 30px rgba(231,170,49,.07)}
+    .dashboard-emblem img{width:100%;height:100%;object-fit:contain;display:block}
     .dashboard-header{
       display:flex;
       align-items:flex-end;
@@ -328,6 +345,7 @@
     }
 
     @media(max-width:850px){
+      .dashboard-title-wrap{width:100%}
       .dashboard-header{
         align-items:flex-start;
         flex-direction:column;
@@ -352,6 +370,8 @@
         padding:100px 14px 60px;
       }
 
+      .dashboard-title-wrap{align-items:flex-start;gap:13px}
+      .dashboard-emblem{width:66px;height:66px;flex-basis:66px}
       .dashboard-header h1{
         font-size:34px;
       }
@@ -413,11 +433,14 @@
       <div class="section-kicker dashboard-kicker">WRITER SPACE</div>
 
       <header class="dashboard-header">
-        <div>
+        <div class="dashboard-title-wrap">
+          <div class="dashboard-emblem" aria-hidden="true"><img src="assets/author-dashboard-icon.png" alt=""></div>
+          <div>
           <h1 id="welcome">Author Dashboard</h1>
           <p>
             Manage your author identity, publish stories, and keep track of how your work is performing.
           </p>
+          </div>
         </div>
 
         <div class="dashboard-actions">
