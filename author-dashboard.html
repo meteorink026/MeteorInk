@@ -342,6 +342,32 @@
     .novel-delete-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(220,82,82,.45);background:rgba(220,82,82,.06);color:#ef8b8b;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
     .novel-delete-btn:hover{background:rgba(220,82,82,.12);border-color:#e56d6d;color:#ffabab}
     .novel-delete-btn:disabled{opacity:.55;cursor:not-allowed}
+    .novel-chapter-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(88,157,255,.42);background:rgba(88,157,255,.06);color:#8bbcff;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
+    .novel-chapter-btn:hover{background:rgba(88,157,255,.12);border-color:#8bbcff;color:#b9d6ff}
+    .novel-chapter-btn:disabled{opacity:.55;cursor:not-allowed}
+    .chapter-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}
+    .chapter-modal.visible{display:flex}
+    .chapter-modal-card{width:min(760px,100%);max-height:min(90vh,820px);overflow:auto;border:1px solid rgba(231,170,49,.25);border-radius:16px;background:#07101d;box-shadow:0 28px 80px rgba(0,0,0,.5);padding:24px}
+    .chapter-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+    .chapter-modal-head h2{margin:0;color:#f3eee4;font:600 28px/1.1 Georgia,serif}
+    .chapter-modal-head p{margin:7px 0 0;color:#8ea0b8;font-size:12px}
+    .chapter-close-btn{width:38px;height:38px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#aeb9c8;font-size:20px;cursor:pointer}
+    .chapter-form{display:grid;grid-template-columns:150px 1fr;gap:16px}
+    .chapter-form .full{grid-column:1/-1}
+    .chapter-form label{display:block;margin-bottom:7px;color:#dce4ef;font:700 12px/1 "DM Sans",sans-serif}
+    .chapter-form input,.chapter-form textarea{width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.11);border-radius:9px;background:#091321;color:#eef3f8;padding:12px 13px;font:15px/1.5 "DM Sans",sans-serif;outline:none}
+    .chapter-form input:focus,.chapter-form textarea:focus{border-color:rgba(231,170,49,.65);box-shadow:0 0 0 3px rgba(231,170,49,.08)}
+    .chapter-form textarea{min-height:300px;resize:vertical;font-family:Georgia,serif;line-height:1.75}
+    .chapter-help{margin:6px 0 0;color:#718198;font-size:11px}
+    .chapter-modal-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
+    .chapter-status{margin:0;color:#91a1b5;font-size:12px;min-height:18px}
+    .chapter-actions{display:flex;gap:8px}
+    .chapter-cancel-btn,.chapter-save-btn{min-height:42px;padding:0 16px;border-radius:9px;cursor:pointer;font:700 12px/1 "DM Sans",sans-serif}
+    .chapter-cancel-btn{border:1px solid rgba(255,255,255,.12);background:transparent;color:#aab5c5}
+    .chapter-save-btn{border:1px solid rgba(231,170,49,.55);background:#e7aa31;color:#111827}
+    .chapter-save-btn:disabled,.chapter-cancel-btn:disabled{opacity:.55;cursor:not-allowed}
+    @media(max-width:700px){.chapter-form{grid-template-columns:1fr}.chapter-form .full{grid-column:auto}.chapter-modal{padding:10px}.chapter-modal-card{padding:18px}.chapter-modal-footer{align-items:stretch;flex-direction:column}.chapter-actions{width:100%}.chapter-actions button{flex:1}}
+
     .novel-cancel-btn:hover{color:#eef2f7;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.04)}
     .editing-banner{display:none;margin:-8px 0 18px;padding:10px 12px;border:1px solid rgba(231,170,49,.25);border-radius:9px;background:rgba(231,170,49,.06);color:#d8c28a;font-size:11px}
     .editing-banner.visible{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -528,6 +554,34 @@
         </form>
       </section>
 
+      <div id="chapterModal" class="chapter-modal" aria-hidden="true">
+        <div class="chapter-modal-card" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle">
+          <div class="chapter-modal-head">
+            <div><h2 id="chapterModalTitle">Add Chapter</h2><p id="chapterNovelName">Create a new chapter for your novel.</p></div>
+            <button type="button" class="chapter-close-btn" id="chapterCloseButton" aria-label="Close">×</button>
+          </div>
+          <form id="chapterForm" class="chapter-form">
+            <div>
+              <label for="chapterNumber">Chapter Number</label>
+              <input id="chapterNumber" type="number" min="1" max="1000000" step="1" required>
+              <p class="chapter-help">Automatically set to the next chapter.</p>
+            </div>
+            <div>
+              <label for="chapterTitle">Chapter Title</label>
+              <input id="chapterTitle" type="text" maxlength="200" placeholder="Chapter title" required>
+            </div>
+            <div class="full">
+              <label for="chapterContent">Chapter Content</label>
+              <textarea id="chapterContent" maxlength="500000" placeholder="Write your chapter here..." required></textarea>
+            </div>
+          </form>
+          <div class="chapter-modal-footer">
+            <p id="chapterStatus" class="chapter-status"></p>
+            <div class="chapter-actions"><button type="button" class="chapter-cancel-btn" id="chapterCancelButton">Cancel</button><button type="submit" form="chapterForm" class="chapter-save-btn" id="chapterSaveButton">Publish Chapter</button></div>
+          </div>
+        </div>
+      </div>
+
       <section class="dashboard-panel published-panel">
         <div class="panel-heading">
           <h2>Your Published Novels</h2>
@@ -659,7 +713,7 @@
         document.getElementById('novelCount').textContent=ns.filter(n=>n.status==='published').length;
         document.getElementById('viewCount').textContent=ns.reduce((s,n)=>s+Number(n.views||0),0).toLocaleString();
         document.getElementById('publishedList').innerHTML=ns.length
-          ? ns.map(n=>`<article class="published-item" data-novel-id="${escapeHtml(n.id)}"><div class="published-item-content"><h3>${escapeHtml(n.title||'Untitled Novel')}</h3><p>${escapeHtml(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views · ${n.publishedAt?new Date(n.publishedAt).toLocaleDateString():''}</p></div><div class="published-item-actions"><button type="button" class="novel-edit-btn" data-edit-novel="${escapeHtml(n.id)}">Edit Novel</button></div></article>`).join('')
+          ? ns.map(n=>`<article class="published-item" data-novel-id="${escapeHtml(n.id)}"><div class="published-item-content"><h3>${escapeHtml(n.title||'Untitled Novel')}</h3><p>${escapeHtml(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views · ${n.publishedAt?new Date(n.publishedAt).toLocaleDateString():''}</p></div><div class="published-item-actions"><button type="button" class="novel-chapter-btn" data-add-chapter="${escapeHtml(n.id)}">Add Chapter</button><button type="button" class="novel-edit-btn" data-edit-novel="${escapeHtml(n.id)}">Edit Novel</button></div></article>`).join('')
           : '<div class="empty-state">No novels published yet.</div>';
       }
 
@@ -761,6 +815,100 @@
           deleteNovelButton.disabled=false;
           deleteNovelButton.textContent='Delete Novel';
           document.getElementById('publishStatus').textContent=err.message||'Unable to delete novel.';
+        }
+      });
+
+      // Chapter publishing: deliberately isolated from novel editing so a chapter
+      // failure cannot disturb the working novel form or delete flow.
+      const chapterModal=document.getElementById('chapterModal');
+      const chapterForm=document.getElementById('chapterForm');
+      const chapterNumber=document.getElementById('chapterNumber');
+      const chapterTitle=document.getElementById('chapterTitle');
+      const chapterContent=document.getElementById('chapterContent');
+      const chapterStatus=document.getElementById('chapterStatus');
+      const chapterNovelName=document.getElementById('chapterNovelName');
+      const chapterCloseButton=document.getElementById('chapterCloseButton');
+      const chapterCancelButton=document.getElementById('chapterCancelButton');
+      const chapterSaveButton=document.getElementById('chapterSaveButton');
+      let chapterNovelId=null;
+
+      const closeChapterModal=()=>{
+        chapterNovelId=null;
+        chapterModal.classList.remove('visible');
+        chapterModal.setAttribute('aria-hidden','true');
+        chapterForm.reset();
+        chapterStatus.textContent='';
+        chapterSaveButton.disabled=false;
+        chapterSaveButton.textContent='Publish Chapter';
+      };
+
+      const openChapterModal=async(novel)=>{
+        if(!novel)return;
+        chapterNovelId=String(novel.id);
+        chapterNovelName.textContent=`Create a new chapter for “${novel.title||'this novel'}”.`;
+        chapterStatus.textContent='Finding the next chapter number…';
+        chapterModal.classList.add('visible');
+        chapterModal.setAttribute('aria-hidden','false');
+        chapterTitle.value='';
+        chapterContent.value='';
+        chapterNumber.value='';
+        try{
+          const r=await fetch(`/api/novels/${encodeURIComponent(chapterNovelId)}/chapters`,{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+          const d=await r.json().catch(()=>({}));
+          if(!r.ok) throw new Error(d.error||`Unable to load chapters (${r.status}).`);
+          const chapters=Array.isArray(d.chapters)?d.chapters:[];
+          const next=chapters.reduce((max,c)=>Math.max(max,Number(c.chapterNumber||c.chapter_number||0)),0)+1;
+          chapterNumber.value=next;
+          chapterStatus.textContent=`Chapter ${next} will be published next.`;
+        }catch(err){
+          chapterNumber.value=Math.max(1,Number(novel.chapters||0)+1);
+          chapterStatus.textContent=err.message||'Could not determine the next chapter number.';
+        }
+        setTimeout(()=>chapterTitle.focus(),30);
+      };
+
+      document.getElementById('publishedList').addEventListener('click',e=>{
+        const addButton=e.target.closest('[data-add-chapter]');
+        if(!addButton)return;
+        const novel=serverNovels.find(n=>String(n.id)===String(addButton.dataset.addChapter));
+        openChapterModal(novel);
+      });
+      chapterCloseButton.addEventListener('click',closeChapterModal);
+      chapterCancelButton.addEventListener('click',closeChapterModal);
+      chapterModal.addEventListener('click',e=>{if(e.target===chapterModal)closeChapterModal();});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape'&&chapterModal.classList.contains('visible'))closeChapterModal();});
+
+      chapterForm.addEventListener('submit',async e=>{
+        e.preventDefault();
+        if(!chapterNovelId)return;
+        const number=Math.floor(Number(chapterNumber.value));
+        const title=chapterTitle.value.trim();
+        const content=chapterContent.value.trim();
+        if(!Number.isInteger(number)||number<1){chapterStatus.textContent='Enter a valid chapter number.';return;}
+        if(!title||title.length>200){chapterStatus.textContent='Enter a chapter title (maximum 200 characters).';return;}
+        if(!content){chapterStatus.textContent='Chapter content cannot be empty.';return;}
+        chapterSaveButton.disabled=true;
+        chapterCancelButton.disabled=true;
+        chapterSaveButton.textContent='Publishing…';
+        chapterStatus.textContent='Saving chapter…';
+        try{
+          const r=await fetch(`/api/novels/${encodeURIComponent(chapterNovelId)}/chapters`,{
+            method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',Accept:'application/json'},
+            body:JSON.stringify({chapterNumber:number,title,content}),cache:'no-store'
+          });
+          const d=await r.json().catch(()=>({}));
+          if(!r.ok)throw new Error(d.error||d.detail||`Unable to publish chapter (${r.status}).`);
+          const idx=serverNovels.findIndex(n=>String(n.id)===String(chapterNovelId));
+          if(idx>=0)serverNovels[idx]={...serverNovels[idx],chapters:Number(serverNovels[idx].chapters||0)+1};
+          render();
+          chapterStatus.textContent=`Chapter ${number} published successfully.`;
+          chapterSaveButton.textContent='Published';
+          setTimeout(closeChapterModal,650);
+        }catch(err){
+          chapterStatus.textContent=err.message||'Unable to publish chapter.';
+          chapterSaveButton.disabled=false;
+          chapterCancelButton.disabled=false;
+          chapterSaveButton.textContent='Publish Chapter';
         }
       });
 

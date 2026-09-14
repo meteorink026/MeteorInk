@@ -42,6 +42,19 @@ async function ensureNovelSchema() {
           );
           create index if not exists novels_author_idx on public.novels (author_id);
           create index if not exists novels_published_idx on public.novels (published_at desc);
+          create table if not exists public.chapters (
+            id uuid primary key default gen_random_uuid(),
+            novel_id uuid not null references public.novels(id) on delete cascade,
+            chapter_number integer not null check (chapter_number > 0),
+            title text not null default '',
+            content text not null default '',
+            views bigint not null default 0 check (views >= 0),
+            published_at timestamptz,
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now(),
+            unique (novel_id, chapter_number)
+          );
+          create index if not exists chapters_novel_idx on public.chapters (novel_id, chapter_number);
         `).then(() => true);
       })
       .catch(err => {
@@ -1189,6 +1202,97 @@ app.delete("/api/novels/:id", async (req, res) => {
     if (/foreign key|violates|constraint/i.test(message)) {
       return res.status(409).json({ error: "This novel could not be deleted because another record still depends on it." });
     }
+    res.status(500).json({ error: message });
+  }
+});
+
+app.get("/api/novels/:id/chapters", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  try {
+    const novelId = String(req.params.id || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(novelId)) return res.status(400).json({ error: "Invalid novel ID." });
+
+    const authors = await supabaseRequest("authors", {
+      query: { select: "id", user_id: `eq.${req.session.userId}`, limit: "1" }
+    });
+    const author = authors?.[0];
+    if (!author) return res.status(403).json({ error: "Author profile not found." });
+
+    try {
+      if (await ensureNovelSchema()) {
+        const novel = await pgPool.query("select id, author_id from public.novels where id = $1 limit 1", [novelId]);
+        if (!novel.rows[0]) return res.status(404).json({ error: "Novel not found." });
+        if (String(novel.rows[0].author_id) !== String(author.id)) return res.status(403).json({ error: "You can only manage chapters for your own novels." });
+        const result = await pgPool.query(`select id, chapter_number, title, content, views, published_at, created_at, updated_at from public.chapters where novel_id = $1 order by chapter_number asc`, [novelId]);
+        return res.json({ chapters: result.rows.map(row => ({
+          id: row.id, novelId, chapterNumber: Number(row.chapter_number), title: row.title || "", content: row.content || "", views: Number(row.views || 0), publishedAt: row.published_at, createdAt: row.created_at, updatedAt: row.updated_at
+        })) });
+      }
+    } catch (pgErr) {
+      console.warn("[MeteorInk] PostgreSQL chapter list failed, falling back to Supabase REST:", pgErr.message);
+    }
+
+    const novelRows = await supabaseRequest("novels", { query: { select: "id,author_id", id: `eq.${novelId}`, limit: "1" } });
+    const novel = novelRows?.[0];
+    if (!novel) return res.status(404).json({ error: "Novel not found." });
+    if (String(novel.author_id) !== String(author.id)) return res.status(403).json({ error: "You can only manage chapters for your own novels." });
+    const rows = await supabaseRequest("chapters", {
+      query: { select: "id,novel_id,chapter_number,title,content,views,published_at,created_at,updated_at", novel_id: `eq.${novelId}`, order: "chapter_number.asc", limit: "10000" }
+    });
+    return res.json({ chapters: (rows || []).map(row => ({ id: row.id, novelId: row.novel_id, chapterNumber: Number(row.chapter_number), title: row.title || "", content: row.content || "", views: Number(row.views || 0), publishedAt: row.published_at, createdAt: row.created_at, updatedAt: row.updated_at })) });
+  } catch (err) {
+    console.error("/api/novels/:id/chapters GET error:", err);
+    const message = String(err?.message || "Unable to load chapters.");
+    if (/relation .*chapters|could not find the table|schema cache/i.test(message)) return res.status(503).json({ error: "The chapters table is missing from Supabase. Run the existing supabase-schema.sql migration once in Supabase SQL Editor." });
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post("/api/novels/:id/chapters", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+  try {
+    const novelId = String(req.params.id || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(novelId)) return res.status(400).json({ error: "Invalid novel ID." });
+    const chapterNumber = Number(req.body.chapterNumber);
+    const title = String(req.body.title || "").trim();
+    const content = String(req.body.content || "").trim();
+    if (!Number.isInteger(chapterNumber) || chapterNumber < 1 || chapterNumber > 1000000) return res.status(400).json({ error: "Please provide a valid chapter number." });
+    if (!title || title.length > 200) return res.status(400).json({ error: "Please provide a valid chapter title." });
+    if (!content || content.length > 500000) return res.status(400).json({ error: "Chapter content must be between 1 and 500,000 characters." });
+
+    const authors = await supabaseRequest("authors", { query: { select: "id", user_id: `eq.${req.session.userId}`, limit: "1" } });
+    const author = authors?.[0];
+    if (!author) return res.status(403).json({ error: "Author profile not found." });
+    const publishedAt = new Date().toISOString();
+
+    try {
+      if (await ensureNovelSchema()) {
+        const novel = await pgPool.query("select id, author_id from public.novels where id = $1 limit 1", [novelId]);
+        if (!novel.rows[0]) return res.status(404).json({ error: "Novel not found." });
+        if (String(novel.rows[0].author_id) !== String(author.id)) return res.status(403).json({ error: "You can only add chapters to your own novels." });
+        const result = await pgPool.query(`insert into public.chapters (novel_id, chapter_number, title, content, published_at, updated_at) values ($1,$2,$3,$4,$5,$5) returning id,novel_id,chapter_number,title,content,views,published_at,created_at,updated_at`, [novelId, chapterNumber, title, content, publishedAt]);
+        const row = result.rows[0];
+        return res.status(201).json({ ok: true, chapter: { id: row.id, novelId: row.novel_id, chapterNumber: Number(row.chapter_number), title: row.title, content: row.content, views: Number(row.views || 0), publishedAt: row.published_at, createdAt: row.created_at, updatedAt: row.updated_at } });
+      }
+    } catch (pgErr) {
+      const msg=String(pgErr?.message||"");
+      if (/duplicate key|unique constraint/i.test(msg)) return res.status(409).json({ error: `Chapter ${chapterNumber} already exists.` });
+      console.warn("[MeteorInk] PostgreSQL chapter create failed, falling back to Supabase REST:", msg);
+    }
+
+    const novelRows = await supabaseRequest("novels", { query: { select: "id,author_id", id: `eq.${novelId}`, limit: "1" } });
+    const novel = novelRows?.[0];
+    if (!novel) return res.status(404).json({ error: "Novel not found." });
+    if (String(novel.author_id) !== String(author.id)) return res.status(403).json({ error: "You can only add chapters to your own novels." });
+    const rows = await supabaseRequest("chapters", { method: "POST", body: { novel_id: novelId, chapter_number: chapterNumber, title, content, published_at: publishedAt, updated_at: publishedAt }, prefer: "return=representation" });
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    if (!row) throw new Error("Chapter was saved but no record was returned.");
+    return res.status(201).json({ ok: true, chapter: { id: row.id, novelId: row.novel_id, chapterNumber: Number(row.chapter_number), title: row.title || "", content: row.content || "", views: Number(row.views || 0), publishedAt: row.published_at, createdAt: row.created_at, updatedAt: row.updated_at } });
+  } catch (err) {
+    console.error("/api/novels/:id/chapters POST error:", err);
+    const message = String(err?.message || "Unable to publish chapter.");
+    if (/duplicate key|unique constraint/i.test(message)) return res.status(409).json({ error: `Chapter already exists for this novel.` });
+    if (/relation .*chapters|could not find the table|schema cache/i.test(message)) return res.status(503).json({ error: "The chapters table is missing from Supabase. Run the existing supabase-schema.sql migration once in Supabase SQL Editor." });
     res.status(500).json({ error: message });
   }
 });
