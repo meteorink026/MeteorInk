@@ -2,15 +2,11 @@
 (function(){
   const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
   let currentUser=null;
-  const viewHashes=new Set(['home','authors','novels','library','adaptation','about','contact']);
   const nav=[
-    ['Home','home'],['Authors','authors'],['Novels','novels'],
-    ['Adaptation Room','adaptation'],
-    ['About Us','about'],['Contact','contact']
+    ['Home','index.html#home'],['Authors','index.html#authors'],['Novels','index.html#novels'],
+    ['Adaptation Room','index.html#adaptation'],
+    ['About Us','index.html#about'],['Contact','index.html#contact']
   ];
-  function navHref(hash){
-    return (path==='index.html'||path==='') ? `#${hash}` : `index.html#${hash}`;
-  }
 
   function activeFor(label){
     if(path==='novels.html') return label==='Novels';
@@ -28,7 +24,7 @@
     existing.innerHTML=`
       <a class="brand" href="index.html" aria-label="MeteorInk home"><img src="assets/logo.jpg" alt="MeteorInk logo"></a>
       <nav class="desktop-nav" aria-label="Primary navigation">
-        ${nav.map(([label,hash])=>`<a class="${activeFor(label)?'active':''}" href="${navHref(hash)}" data-mi-nav="${hash}">${label}</a>`).join('')}
+        ${nav.map(([label,href])=>`<a class="${activeFor(label)?'active':''}" href="${href}">${label}</a>`).join('')}
       </nav>
       <div class="header-actions">
         <label class="search-box"><span aria-hidden="true">⌕</span><input id="siteSearch" type="search" placeholder="Search novels and authors." aria-label="Search novels and authors" autocomplete="off"></label>
@@ -127,7 +123,7 @@
     let menu=document.getElementById('mobileMenu');
     if(!menu){
       menu=document.createElement('div'); menu.id='mobileMenu'; menu.className='mobile-menu';
-      menu.innerHTML=nav.map(([label,hash])=>`<a class="${activeFor(label)?'active':''}" href="${navHref(hash)}" data-mi-nav="${hash}">${label}</a>`).join('')+
+      menu.innerHTML=nav.map(([label,href])=>`<a class="${activeFor(label)?'active':''}" href="${href}">${label}</a>`).join('')+
         (currentUser
           ? '<div class="mobile-account"><div class="mobile-user">'+esc(currentUser.name||currentUser.email||'User')+'</div><a href="profile.html"><span class="profile-menu-icon"><img src="assets/my-profile-icon.png" alt="" aria-hidden="true"></span><span>My Profile</span></a><a href="index.html#library"><span class="library-menu-icon"><img src="assets/my-library-icon.png" alt="" aria-hidden="true"></span>My Library</a><a class="author-dashboard-menu-link" href="author-dashboard.html"><span class="profile-menu-icon author-dashboard-menu-icon"><img src="assets/author-dashboard-icon.png" alt="" aria-hidden="true"></span><span>Author Dashboard</span></a><button type="button" class="mobile-logout" id="mobileLogoutBtn">Log Out</button></div>'
           : '<a href="auth.html">Log In</a><a href="signup.html">Sign Up</a>');
@@ -264,25 +260,42 @@
       }
     };
 
-    // Handle both the static #hash links and the dynamically-rendered
-    // index.html#hash links. Only intercept these links while already on the
-    // single-window index page. Links from other pages must navigate normally.
+    // Intercept only same-document navigation. The header uses full URLs such as
+    // `index.html#authors`, while older links may use just `#authors`. Both must
+    // enter the same single-window view system without reloading index.html.
+    const viewHashes=new Set(['home','authors','novels','library','adaptation','about','contact']);
+    const navigateToView=(hash,replace=false)=>{
+      const clean=String(hash||'').replace(/^#/,'');
+      if(!viewHashes.has(clean)) return false;
+      const next='#'+clean;
+      if(location.hash===next){
+        setView();
+      }else if(replace){
+        history.replaceState({},'',location.pathname+next);
+        setView();
+      }else{
+        history.pushState({},'',location.pathname+next);
+        setView();
+      }
+      return true;
+    };
+
     document.addEventListener('click',e=>{
       if(e.defaultPrevented || e.button!==0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const link=e.target.closest('a[href]');
-      if(!link) return;
+      if(!link || link.target==='_blank' || link.hasAttribute('download')) return;
       const raw=link.getAttribute('href')||'';
       const url=new URL(raw,location.href);
-      const targetPath=(url.pathname.split('/').pop()||'index.html').toLowerCase();
-      if((targetPath!=='index.html' && targetPath!=='') || !url.hash) return;
-      const hash=url.hash.slice(1).toLowerCase();
-      if(!viewHashes.has(hash)) return;
-      if(url.origin!==location.origin) return;
-
+      const normalizePath=p=>{
+        const clean=p.replace(/\/+$/,'')||'/';
+        return clean==='/'||clean==='/index.html'?'/index.html':clean;
+      };
+      const sameDocument=url.origin===location.origin &&
+        normalizePath(url.pathname)===normalizePath(location.pathname) &&
+        !url.search && viewHashes.has(url.hash.replace(/^#/,'').toLowerCase());
+      if(!sameDocument) return;
       e.preventDefault();
-      const next=`${location.pathname||'index.html'}#${hash}`;
-      if(location.hash!==`#${hash}`) history.pushState({meteorInkView:hash},'',next);
-      setView();
+      navigateToView(url.hash);
     });
     window.addEventListener('hashchange',setView);
     window.addEventListener('popstate',setView);
