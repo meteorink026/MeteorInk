@@ -848,20 +848,35 @@ app.post("/api/novels", async (req, res) => {
       }
     }
 
-    const rows = await supabaseRequest("novels", {
-      method: "POST",
-      body: {
-        ...(clientId ? { id: clientId } : {}),
-        author_id: author.id,
-        title,
-        description,
-        genre,
-        cover,
-        status: "published",
-        published_at: new Date().toISOString()
+    const novelPayload = {
+      id: clientId || crypto.randomUUID(),
+      author_id: author.id,
+      title,
+      description,
+      genre,
+      cover,
+      status: "published",
+      published_at: new Date().toISOString()
+    };
+
+    let rows;
+    try {
+      rows = await supabaseRequest("novels", { method: "POST", body: novelPayload });
+    } catch (firstErr) {
+      // Repair a missing/stale novel schema and retry once. This prevents a
+      // deployment with an incomplete migration from breaking publishing.
+      try {
+        await ensureNovelSchema();
+        rows = await supabaseRequest("novels", { method: "POST", body: novelPayload });
+      } catch (secondErr) {
+        secondErr.cause = firstErr;
+        throw secondErr;
       }
-    });
-    res.status(201).json({ ok: true, novel: publicNovel(rows?.[0], author) });
+    }
+
+    const saved = rows?.[0];
+    if (!saved) throw new Error("The database did not return the published novel.");
+    res.status(201).json({ ok: true, novel: publicNovel(saved, author) });
   } catch (err) {
     console.error("/api/novels POST error:", err);
     const message = String(err?.message || "");
