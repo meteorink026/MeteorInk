@@ -14,8 +14,43 @@ const PORT = Number(process.env.PORT || 3000);
 const ROOT = path.join(__dirname, "..");
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  connectionTimeoutMillis: 5000
 });
+
+let novelSchemaPromise = null;
+
+async function ensureNovelSchema() {
+  if (!process.env.DATABASE_URL) return false;
+  if (!novelSchemaPromise) {
+    novelSchemaPromise = pgPool.query(`select to_regclass('public.authors') as authors_table`)
+      .then(check => {
+        if (!check.rows[0]?.authors_table) return false;
+        return pgPool.query(`
+          create table if not exists public.novels (
+            id uuid primary key default gen_random_uuid(),
+            author_id uuid not null,
+            title text not null,
+            description text not null default '',
+            genre text not null default 'Uncategorized',
+            cover text not null default '',
+            status text not null default 'published',
+            views bigint not null default 0,
+            published_at timestamptz,
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now()
+          );
+          create index if not exists novels_author_idx on public.novels (author_id);
+          create index if not exists novels_published_idx on public.novels (published_at desc);
+        `).then(() => true);
+      })
+      .catch(err => {
+        novelSchemaPromise = null;
+        throw err;
+      });
+  }
+  return novelSchemaPromise;
+}
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
   console.warn("Supabase is not configured yet. Add SUPABASE_URL and SUPABASE_SECRET_KEY to server/.env.");
@@ -746,34 +781,111 @@ async function loadNovelAuthors(rows) {
   return new Map((authors || []).map(a => [String(a.id), a]));
 }
 
+async function loadNovelsFromPostgres({ q = "", authorId = "", id = "", status = "published" } = {}) {
+  if (!(await ensureNovelSchema())) return null;
+  const params = [];
+  const where = [];
+
+  if (id) {
+    params.push(id);
+    where.push(`n.id = $${params.length}`);
+  }
+  if (authorId) {
+    params.push(authorId);
+    where.push(`n.author_id = $${params.length}`);
+  }
+  if (status) {
+    params.push(status);
+    where.push(`n.status = $${params.length}`);
+  }
+  if (q) {
+    params.push(`%${q}%`);
+    where.push(`(
+      n.title ILIKE $${params.length}
+      OR n.description ILIKE $${params.length}
+      OR n.genre ILIKE $${params.length}
+      OR COALESCE(a.name, '') ILIKE $${params.length}
+      OR COALESCE(a.username, '') ILIKE $${params.length}
+    )`);
+  }
+
+  const result = await pgPool.query(`
+    select
+      n.id, n.author_id, n.title, n.description, n.genre, n.cover,
+      n.status, n.views, n.published_at, n.created_at, n.updated_at,
+      a.username as author_username, a.name as author_name,
+      a.picture as author_picture, a.verified as author_verified
+    from public.novels n
+    left join public.authors a on a.id = n.author_id
+    ${where.length ? `where ${where.join(" and ")}` : ""}
+    order by n.published_at desc nulls last, n.created_at desc
+    limit 1000
+  `, params);
+
+  return result.rows;
+}
+
+function publicPostgresNovel(row) {
+  if (!row) return null;
+  return publicNovel(row, {
+    id: row.author_id,
+    username: row.author_username || "",
+    name: row.author_name || "Unknown Author",
+    picture: row.author_picture || "",
+    verified: !!row.author_verified
+  });
+}
+
 app.get("/api/novels", async (req, res) => {
   try {
     const q = String(req.query.q || "").trim().toLowerCase().slice(0, 100);
     const authorId = String(req.query.authorId || "").trim();
-    const status = String(req.query.status || "published").trim().toLowerCase();
-    const allowedStatus = ["published", "draft", "archived"];
+    const status = ["published", "draft", "archived"].includes(String(req.query.status || "published"))
+      ? String(req.query.status || "published")
+      : "published";
+
+    try {
+      const pgRows = await loadNovelsFromPostgres({ q, authorId, status });
+      if (pgRows) return res.json({ novels: pgRows.map(publicPostgresNovel) });
+    } catch (pgErr) {
+      console.warn("[MeteorInk] PostgreSQL novel catalog unavailable, falling back to Supabase:", pgErr.message);
+    }
+
     const rows = await supabaseRequest("novels", {
       query: {
         select: "id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at",
         ...(authorId ? { author_id: `eq.${authorId}` } : {}),
-        ...(allowedStatus.includes(status) ? { status: `eq.${status}` } : { status: "eq.published" }),
+        status: `eq.${status}`,
         order: "published_at.desc,created_at.desc",
         limit: "1000"
       }
     });
     const authors = await loadNovelAuthors(rows || []);
     let novels = (rows || []).map(row => publicNovel(row, authors.get(String(row.author_id))));
-    if (q) novels = novels.filter(n => [n.title, n.description, n.genre, n.authorName, n.authorUsername].some(v => String(v || "").toLowerCase().includes(q)));
+    if (q) novels = novels.filter(n => [n.title, n.description, n.genre, n.authorName, n.authorUsername]
+      .some(v => String(v || "").toLowerCase().includes(q)));
     res.json({ novels });
   } catch (err) {
     console.error("/api/novels error:", err);
-    res.status(500).json({ novels: [], error: "Unable to load novels." });
+    res.status(500).json({ novels: [], error: String(err?.message || "Unable to load novels.") });
   }
 });
 
 app.get("/api/novels/:id", async (req, res) => {
   try {
     const id = String(req.params.id || "").trim();
+
+    try {
+      const pgRows = await loadNovelsFromPostgres({ id, status: "published" });
+      if (pgRows) {
+        const novel = pgRows[0];
+        if (!novel) return res.status(404).json({ error: "Novel not found." });
+        return res.json({ novel: publicPostgresNovel(novel) });
+      }
+    } catch (pgErr) {
+      console.warn("[MeteorInk] PostgreSQL novel detail unavailable, falling back to Supabase:", pgErr.message);
+    }
+
     const rows = await supabaseRequest("novels", {
       query: {
         select: "id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at",
@@ -794,9 +906,14 @@ app.get("/api/novels/:id", async (req, res) => {
 
 app.post("/api/novels", async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+
   try {
     const authors = await supabaseRequest("authors", {
-      query: { select: "id,username,name,picture,verified", user_id: `eq.${req.session.userId}`, limit: "1" }
+      query: {
+        select: "id,username,name,picture,verified",
+        user_id: `eq.${req.session.userId}`,
+        limit: "1"
+      }
     });
     const author = authors?.[0];
     if (!author) return res.status(403).json({ error: "Create your author profile first." });
@@ -805,20 +922,87 @@ app.post("/api/novels", async (req, res) => {
     const description = String(req.body.description || "").trim();
     const genre = String(req.body.genre || "Uncategorized").trim() || "Uncategorized";
     const cover = String(req.body.cover || "").trim();
-    const clientId = String(req.body.id || "").trim();
+    const requestedId = String(req.body.id || "").trim();
+    const id = requestedId || crypto.randomUUID();
+
     if (!title || title.length > 160) return res.status(400).json({ error: "Please provide a valid novel title." });
     if (description.length > 5000) return res.status(400).json({ error: "Novel description is too long." });
     if (genre.length > 500) return res.status(400).json({ error: "Genre selection is too long." });
     if (cover.length > 7000000) return res.status(413).json({ error: "Novel cover is too large." });
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: "Invalid novel ID." });
 
-    if (clientId) {
-      const existing = await supabaseRequest("novels", { query: { select: "*", id: `eq.${clientId}`, limit: "1" } });
+    const publishedAt = new Date().toISOString();
+
+    // The deployed app already has DATABASE_URL because it is used by the
+    // session store. Use the same database for novels when it contains the
+    // authors table. This avoids Supabase REST schema-cache/RLS failures.
+    try {
+      if (await ensureNovelSchema()) {
+        const existing = await pgPool.query(
+          "select id, author_id, published_at from public.novels where id = $1 limit 1",
+          [id]
+        );
+
+        if (existing.rows[0] && String(existing.rows[0].author_id) !== String(author.id)) {
+          return res.status(409).json({ error: "Novel ID already belongs to another author." });
+        }
+
+        if (existing.rows[0]) {
+          const updated = await pgPool.query(`
+            update public.novels
+            set title=$1, description=$2, genre=$3, cover=$4,
+                status='published',
+                published_at=coalesce(published_at, $5::timestamptz),
+                updated_at=$5::timestamptz
+            where id=$6 and author_id=$7
+            returning id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at
+          `, [title, description, genre, cover, publishedAt, id, author.id]);
+
+          const row = updated.rows[0];
+          if (row) return res.json({ ok: true, novel: publicPostgresNovel({ ...row, author_username: author.username, author_name: author.name, author_picture: author.picture, author_verified: author.verified }) });
+        } else {
+          const inserted = await pgPool.query(`
+            insert into public.novels
+              (id, author_id, title, description, genre, cover, status, published_at, updated_at)
+            values ($1,$2,$3,$4,$5,$6,'published',$7,$7)
+            returning id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at
+          `, [id, author.id, title, description, genre, cover, publishedAt]);
+
+          const row = inserted.rows[0];
+          return res.status(201).json({
+            ok: true,
+            novel: publicPostgresNovel({
+              ...row,
+              author_username: author.username,
+              author_name: author.name,
+              author_picture: author.picture,
+              author_verified: author.verified
+            })
+          });
+        }
+      }
+    } catch (pgErr) {
+      console.warn("[MeteorInk] PostgreSQL publish failed, falling back to Supabase REST:", pgErr.message);
+    }
+
+    // Supabase fallback for deployments where DATABASE_URL is not the same
+    // database as the MeteorInk Supabase project.
+    if (requestedId) {
+      const existing = await supabaseRequest("novels", {
+        query: { select: "*", id: `eq.${requestedId}`, limit: "1" }
+      });
       if (existing?.[0]) {
-        if (existing[0].author_id !== author.id) return res.status(409).json({ error: "Novel ID already belongs to another author." });
+        if (String(existing[0].author_id) !== String(author.id)) {
+          return res.status(409).json({ error: "Novel ID already belongs to another author." });
+        }
         const updated = await supabaseRequest("novels", {
           method: "PATCH",
-          query: { id: `eq.${clientId}`, author_id: `eq.${author.id}` },
-          body: { title, description, genre, cover, status: "published", published_at: existing[0].published_at || new Date().toISOString(), updated_at: new Date().toISOString() }
+          query: { id: `eq.${requestedId}`, author_id: `eq.${author.id}` },
+          body: {
+            title, description, genre, cover, status: "published",
+            published_at: existing[0].published_at || publishedAt,
+            updated_at: publishedAt
+          }
         });
         return res.json({ ok: true, novel: publicNovel(updated?.[0] || { ...existing[0], title, description, genre, cover, status: "published" }, author) });
       }
@@ -827,20 +1011,31 @@ app.post("/api/novels", async (req, res) => {
     const rows = await supabaseRequest("novels", {
       method: "POST",
       body: {
-        ...(clientId ? { id: clientId } : {}),
+        id,
         author_id: author.id,
         title,
         description,
         genre,
         cover,
         status: "published",
-        published_at: new Date().toISOString()
+        published_at: publishedAt,
+        updated_at: publishedAt
       }
     });
-    res.status(201).json({ ok: true, novel: publicNovel(rows?.[0], author) });
+
+    const row = rows?.[0];
+    if (!row) throw new Error("Novel was saved but no record was returned.");
+    res.status(201).json({ ok: true, novel: publicNovel(row, author) });
   } catch (err) {
     console.error("/api/novels POST error:", err);
-    res.status(500).json({ error: "Unable to publish novel." });
+    const message = String(err?.message || "Unable to publish novel.");
+    if (/duplicate key|unique constraint/i.test(message)) {
+      return res.status(409).json({ error: "A novel with this ID already exists." });
+    }
+    if (/relation .*novels|could not find the table|schema cache/i.test(message)) {
+      return res.status(503).json({ error: "Novel database table is unavailable. Check the production database connection." });
+    }
+    res.status(500).json({ error: message });
   }
 });
 
