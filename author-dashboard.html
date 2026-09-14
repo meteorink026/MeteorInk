@@ -871,7 +871,10 @@
         const addButton=e.target.closest('[data-add-chapter]');
         if(!addButton)return;
         const novel=serverNovels.find(n=>String(n.id)===String(addButton.dataset.addChapter));
-        openChapterModal(novel);
+        if(!novel)return;
+        // Chapter writing now lives on its own dedicated page.
+        // Keep the dashboard chapter flow lightweight and leave the novel editor untouched.
+        location.href=`add-chapter.html?novel=${encodeURIComponent(novel.id)}`;
       });
       chapterCloseButton.addEventListener('click',closeChapterModal);
       chapterCancelButton.addEventListener('click',closeChapterModal);
