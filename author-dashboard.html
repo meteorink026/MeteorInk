@@ -598,15 +598,19 @@
       const session=MeteorInkData.getSession();
       if(!session){ location.href='auth.html?next=writer'; return; }
 
-      let author=null;
+      // Resolve the local author immediately so the dashboard never flashes
+      // the generic "Author Dashboard" heading while waiting for the API.
+      // The server response below can still refresh the author data.
+      let author=MeteorInkData.getAuthors().find(a=>a.userId===session?.id||a.id===localStorage.getItem('meteorink_author_id'))||null;
+      if(author){
+        document.getElementById('welcome').textContent=`Welcome, ${author.name}`;
+      }
+
       try{
         const r=await fetch('/api/author/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
-        if(r.ok){ const d=await r.json(); author=d.author||null; }
+        if(r.ok){ const d=await r.json(); if(d.author) author=d.author; }
       }catch(err){ console.warn('[MeteorInk] Author API unavailable:',err); }
 
-      if(!author){
-        author=MeteorInkData.getAuthors().find(a=>a.userId===session?.id||a.id===localStorage.getItem('meteorink_author_id'))||null;
-      }
       if(!author){ location.href='author-setup.html'; return; }
 
       let serverNovels=[];
