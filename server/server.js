@@ -1039,12 +1039,110 @@ app.post("/api/novels", async (req, res) => {
   }
 });
 
+
+app.patch("/api/novels/:id", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
+
+  try {
+    const novelId = String(req.params.id || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(novelId)) return res.status(400).json({ error: "Invalid novel ID." });
+
+    const authors = await supabaseRequest("authors", {
+      query: {
+        select: "id,username,name,picture,verified",
+        user_id: `eq.${req.session.userId}`,
+        limit: "1"
+      }
+    });
+    const author = authors?.[0];
+    if (!author) return res.status(403).json({ error: "Author profile not found." });
+
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const genre = String(req.body.genre || "Uncategorized").trim() || "Uncategorized";
+    const cover = String(req.body.cover || "").trim();
+    if (!title || title.length > 160) return res.status(400).json({ error: "Please provide a valid novel title." });
+    if (description.length > 5000) return res.status(400).json({ error: "Novel description is too long." });
+    if (genre.length > 500) return res.status(400).json({ error: "Genre selection is too long." });
+    if (cover.length > 7000000) return res.status(413).json({ error: "Novel cover is too large." });
+
+    const updatedAt = new Date().toISOString();
+
+    try {
+      if (await ensureNovelSchema()) {
+        const existing = await pgPool.query(
+          "select id, author_id, status, published_at from public.novels where id = $1 limit 1",
+          [novelId]
+        );
+        if (existing.rows[0]) {
+          if (String(existing.rows[0].author_id) !== String(author.id)) {
+            return res.status(403).json({ error: "You can only edit your own novels." });
+          }
+          const result = await pgPool.query(`
+            update public.novels
+            set title=$1, description=$2, genre=$3, cover=$4, updated_at=$5::timestamptz
+            where id=$6 and author_id=$7
+            returning id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at
+          `, [title, description, genre, cover, updatedAt, novelId, author.id]);
+          const row = result.rows[0];
+          if (!row) return res.status(404).json({ error: "Novel not found." });
+          return res.json({
+            ok: true,
+            novel: publicPostgresNovel({
+              ...row,
+              author_username: author.username,
+              author_name: author.name,
+              author_picture: author.picture,
+              author_verified: author.verified
+            })
+          });
+        }
+      }
+    } catch (pgErr) {
+      console.warn("[MeteorInk] PostgreSQL novel edit failed, falling back to Supabase REST:", pgErr.message);
+    }
+
+    const existing = await supabaseRequest("novels", {
+      query: { select: "*", id: `eq.${novelId}`, limit: "1" }
+    });
+    const current = existing?.[0];
+    if (!current) return res.status(404).json({ error: "Novel not found." });
+    if (String(current.author_id) !== String(author.id)) {
+      return res.status(403).json({ error: "You can only edit your own novels." });
+    }
+
+    const rows = await supabaseRequest("novels", {
+      method: "PATCH",
+      query: { id: `eq.${novelId}`, author_id: `eq.${author.id}` },
+      body: { title, description, genre, cover, updated_at: updatedAt }
+    });
+    const row = rows?.[0] || { ...current, title, description, genre, cover, updated_at: updatedAt };
+    return res.json({ ok: true, novel: publicNovel(row, author) });
+  } catch (err) {
+    console.error("/api/novels/:id PATCH error:", err);
+    res.status(500).json({ error: String(err?.message || "Unable to update novel.") });
+  }
+});
+
 app.get("/api/author/me/novels", async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: "Not authenticated." });
   try {
     const authors = await supabaseRequest("authors", { query: { select: "id,username,name,picture,verified", user_id: `eq.${req.session.userId}`, limit: "1" } });
     const author = authors?.[0];
     if (!author) return res.status(404).json({ novels: [], error: "Author profile not found." });
+    try {
+      const pgRows = await loadNovelsFromPostgres({ authorId: author.id, status: "" });
+      if (pgRows) return res.json({ novels: pgRows.map(row => publicPostgresNovel({
+        ...row,
+        author_username: author.username,
+        author_name: author.name,
+        author_picture: author.picture,
+        author_verified: author.verified
+      })) });
+    } catch (pgErr) {
+      console.warn("[MeteorInk] PostgreSQL author novel list unavailable, falling back to Supabase:", pgErr.message);
+    }
+
     const rows = await supabaseRequest("novels", {
       query: { select: "id,author_id,title,description,genre,cover,status,views,published_at,created_at,updated_at", author_id: `eq.${author.id}`, order: "created_at.desc", limit: "1000" }
     });

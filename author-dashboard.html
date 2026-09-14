@@ -334,6 +334,14 @@
       color:#8f9bad;
       font-size:11px;
     }
+    .published-item-content{min-width:0;flex:1}
+    .published-item-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .novel-edit-btn,.novel-cancel-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(231,170,49,.45);background:rgba(231,170,49,.05);color:#e8b43e;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
+    .novel-edit-btn:hover,.novel-cancel-btn:hover{background:rgba(231,170,49,.12);border-color:#e8b43e}
+    .novel-cancel-btn{background:transparent;color:#9ca8ba;border-color:rgba(255,255,255,.12)}
+    .novel-cancel-btn:hover{color:#eef2f7;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.04)}
+    .editing-banner{display:none;margin:-8px 0 18px;padding:10px 12px;border:1px solid rgba(231,170,49,.25);border-radius:9px;background:rgba(231,170,49,.06);color:#d8c28a;font-size:11px}
+    .editing-banner.visible{display:flex;align-items:center;justify-content:space-between;gap:12px}
 
     .empty-state{
       padding:38px 20px;
@@ -406,8 +414,10 @@
       .published-item{
         align-items:flex-start;
         flex-direction:column;
-        gap:6px;
+        gap:12px;
       }
+      .published-item-actions{width:100%}
+      .published-item-actions button{flex:1}
     }
   
       .cover-upload-preview{margin-top:12px;max-width:220px;border:1px solid rgba(232,180,62,.35);border-radius:10px;overflow:hidden;background:#07101c}
@@ -469,9 +479,11 @@
 
       <section class="dashboard-panel publish-panel">
         <div class="panel-heading">
-          <h2>Publish a Novel</h2>
+          <h2 id="publishPanelTitle">Publish a Novel</h2>
           <p>Give your story a title, choose its genre, add a description, and publish it to MeteorInk.</p>
         </div>
+
+        <div id="editingBanner" class="editing-banner" role="status"><span>Editing <strong id="editingNovelName">this novel</strong></span><button type="button" id="cancelEditButton" class="novel-cancel-btn">Cancel Edit</button></div>
 
         <form id="publishNovelForm" class="publish-form">
           <div class="form-field">
@@ -508,7 +520,7 @@
 
           <div class="publish-footer">
             <p id="publishStatus" class="auth-note"></p>
-            <button type="submit" class="gold-btn">Publish Novel</button>
+            <button type="submit" id="publishSubmitButton" class="gold-btn">Publish Novel</button>
           </div>
         </form>
       </section>
@@ -541,6 +553,7 @@
       const genrePicker=document.getElementById('genrePicker');
       const selectedGenres=[];
       const MAX_GENRES=6;
+      let editingNovelId=null;
 
       genrePickerMenu.innerHTML=primaryGenres.map(g=>`<button type="button" class="genre-option" role="option" aria-selected="false" data-genre="${g.replace(/"/g,'&quot;')}">${g}</button>`).join('');
 
@@ -635,17 +648,68 @@
       const editProfileButton=document.getElementById('editProfileButton');
       if(editProfileButton){ editProfileButton.href='author-profile.html?edit=1'; }
 
+      const escapeHtml=(value)=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
       function render(){
         const ns=serverNovels;
         document.getElementById('followerCount').textContent=Number(author.followers||0).toLocaleString();
         document.getElementById('novelCount').textContent=ns.filter(n=>n.status==='published').length;
         document.getElementById('viewCount').textContent=ns.reduce((s,n)=>s+Number(n.views||0),0).toLocaleString();
         document.getElementById('publishedList').innerHTML=ns.length
-          ? ns.map(n=>`<article class="published-item"><div><h3>${String(n.title||'Untitled Novel').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</h3><p>${String(n.genre||'Uncategorized').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))} · ${Number(n.views||0).toLocaleString()} views · ${n.publishedAt?new Date(n.publishedAt).toLocaleDateString():''}</p></div></article>`).join('')
+          ? ns.map(n=>`<article class="published-item" data-novel-id="${escapeHtml(n.id)}"><div class="published-item-content"><h3>${escapeHtml(n.title||'Untitled Novel')}</h3><p>${escapeHtml(n.genre||'Uncategorized')} · ${Number(n.views||0).toLocaleString()} views · ${n.publishedAt?new Date(n.publishedAt).toLocaleDateString():''}</p></div><div class="published-item-actions"><button type="button" class="novel-edit-btn" data-edit-novel="${escapeHtml(n.id)}">Edit Novel</button></div></article>`).join('')
           : '<div class="empty-state">No novels published yet.</div>';
       }
 
       render();
+
+      const publishPanelTitle=document.getElementById('publishPanelTitle');
+      const publishSubmitButton=document.getElementById('publishSubmitButton');
+      const editingBanner=document.getElementById('editingBanner');
+      const editingNovelName=document.getElementById('editingNovelName');
+      const cancelEditButton=document.getElementById('cancelEditButton');
+
+      const beginNovelEdit=(novel)=>{
+        if(!novel)return;
+        editingNovelId=novel.id;
+        document.getElementById('novelTitle').value=novel.title||'';
+        document.getElementById('novelDescription').value=novel.description||'';
+        selectedGenres.splice(0,selectedGenres.length,...String(novel.genre||'').split(',').map(x=>x.trim()).filter(Boolean).slice(0,MAX_GENRES));
+        updateGenrePicker();
+        coverField.value=novel.cover||'';
+        if(novel.cover){
+          coverPreview.innerHTML=`<img src="${escapeHtml(novel.cover)}" alt="Novel cover preview">`;
+          coverPreview.hidden=false;
+          removeCoverButton.hidden=false;
+        }else{
+          clearNovelCover();
+        }
+        editingNovelName.textContent=novel.title||'this novel';
+        editingBanner.classList.add('visible');
+        publishPanelTitle.textContent='Edit Novel';
+        publishSubmitButton.textContent='Save Changes';
+        document.querySelector('.publish-panel').scrollIntoView({behavior:'smooth',block:'start'});
+      };
+
+      const cancelNovelEdit=()=>{
+        editingNovelId=null;
+        editingBanner.classList.remove('visible');
+        publishPanelTitle.textContent='Publish a Novel';
+        publishSubmitButton.textContent='Publish Novel';
+        document.getElementById('publishNovelForm').reset();
+        selectedGenres.length=0;
+        updateGenrePicker();
+        clearNovelCover();
+        document.getElementById('publishStatus').textContent='';
+      };
+
+      document.getElementById('publishedList').addEventListener('click',e=>{
+        const button=e.target.closest('[data-edit-novel]');
+        if(!button)return;
+        const novel=serverNovels.find(n=>String(n.id)===String(button.dataset.editNovel));
+        beginNovelEdit(novel);
+      });
+
+      cancelEditButton.addEventListener('click',cancelNovelEdit);
 
       const coverFileInput=document.getElementById('novelCoverFile');
       const coverField=document.getElementById('novelCover');
@@ -728,7 +792,7 @@
           let r,d;
           for(let attempt=0;attempt<2;attempt++){
             try{
-              r=await fetch('/api/novels',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),cache:'no-store'});
+              r=await fetch(editingNovelId?`/api/novels/${encodeURIComponent(editingNovelId)}`:'/api/novels',{method:editingNovelId?'PATCH':'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),cache:'no-store'});
               d=await r.json().catch(()=>({}));
               if(r.ok) break;
               if(attempt===0 && r.status>=500){ status.textContent='Retrying publish…'; await new Promise(resolve=>setTimeout(resolve,700)); continue; }
@@ -740,11 +804,16 @@
           }
           if(!r?.ok) throw new Error(d?.error||d?.detail||'Unable to publish novel.');
           if(d.novel){ serverNovels=[d.novel,...serverNovels.filter(n=>n.id!==d.novel.id)]; }
-          status.textContent='Published. The library will update automatically.';
+          status.textContent=editingNovelId?'Changes saved.':'Published. The library will update automatically.';
           e.target.reset();
           selectedGenres.length=0;
           updateGenrePicker();
           closeGenrePicker();
+          clearNovelCover();
+          editingNovelId=null;
+          editingBanner.classList.remove('visible');
+          publishPanelTitle.textContent='Publish a Novel';
+          publishSubmitButton.textContent='Publish Novel';
           render();
         }catch(err){ status.textContent=err.message||'Unable to publish novel.'; }
       });
