@@ -25,21 +25,42 @@
   function novelCard(n,metric){
     const genres=Array.isArray(n.genres)&&n.genres.length?n.genres:String(n.genre||'NOVEL').split(',').map(x=>x.trim()).filter(Boolean);
     const visibleTags=genres.slice(0,3),more=Math.max(0,genres.length-visibleTags.length);
+    const bookmarks=new Set((MeteorInkData.getBookmarks?MeteorInkData.getBookmarks():[]).map(String));
+    const bookmarked=bookmarks.has(String(n.id));
+    const authorUrl=`author-profile.html?id=${encodeURIComponent(n.authorId||'')}`;
     return `<article class="novel-showcase-card" data-id="${esc(n.id)}">
       <div class="novel-showcase-cover">${n.cover?`<img src="${esc(n.cover)}" alt="${esc(n.title||'Novel cover')}">`:'✦'}
         <span class="novel-showcase-badge">${esc(n.genre||'NOVEL')}</span>
-        
+        <button class="novel-showcase-bookmark${bookmarked?' active':''}" type="button" data-bookmark-id="${esc(n.id)}" aria-label="${bookmarked?'Remove from':'Add to'} My Library" aria-pressed="${bookmarked?'true':'false'}" title="${bookmarked?'Remove from My Library':'Add to My Library'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5V21l-5.5-3.6L6.5 21V4.5Z"></path></svg></button>
       </div>
       <div class="novel-showcase-body">
         <h3 class="novel-showcase-title">${esc(n.title||'Untitled Novel')}</h3>
-        <p class="novel-showcase-author">${esc(n.authorName||'Unknown Author')}${n.authorVerified|| (MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName))?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p>
-        <p class="novel-showcase-desc">${esc(n.description||'A new story awaits.')}</p>
-        <div class="novel-showcase-tags">${visibleTags.map(g=>`<span class="novel-showcase-tag">${esc(g)}</span>`).join('')}${more?`<span class="novel-showcase-tag more">+${more}</span>`:''}</div>
+        <a class="novel-showcase-author" href="${authorUrl}" data-author-id="${esc(n.authorId||'')}" data-author-link>${esc(n.authorName||'Unknown Author')}${n.authorVerified|| (MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName))?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</a>
+        <div class="novel-showcase-tags">${visibleTags.map(g=>`<a class="novel-showcase-tag" href="novels.html?genre=${encodeURIComponent(g)}" data-genre-link="${esc(g)}">${esc(g)}</a>`).join('')}${more?`<span class="novel-showcase-tag more">+${more}</span>`:''}</div>
         <div class="novel-showcase-stats"><div class="novel-showcase-stat"><strong>${Number(n.chapters||0).toLocaleString()}</strong><span>Chapters</span></div><div class="novel-showcase-stat"><strong>${Number(metric??n.views??0).toLocaleString()}</strong><span>Views</span></div><div class="novel-showcase-stat"><strong>${Number(n.rating||0).toFixed(1)}</strong><span>Rating</span></div></div>
         <button class="novel-showcase-read" type="button" data-read-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H19v18H7.5A2.5 2.5 0 0 0 5 22V4.5Zm0 0V19a2.5 2.5 0 0 1 2.5-2.5H19"></path></svg>Read Now</button>
       </div>
     </article>`;
   }
+  function bindNovelCardInteractions(grid){
+    if(!grid)return;
+    grid.querySelectorAll('[data-bookmark-id]').forEach(btn=>btn.addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();
+      const id=btn.dataset.bookmarkId;
+      const active=btn.classList.contains('active');
+      const result=active?(MeteorInkData.removeBookmark&&MeteorInkData.removeBookmark(id)):(MeteorInkData.addBookmark&&MeteorInkData.addBookmark(id));
+      if(result?.reason==='limit'){alert(`My Library can hold up to ${result.limit} saved novels.`);return;}
+      btn.classList.toggle('active',!active);
+      btn.setAttribute('aria-pressed',String(!active));
+      btn.setAttribute('aria-label',`${!active?'Remove from':'Add to'} My Library`);
+      btn.title=`${!active?'Remove from':'Add to'} My Library`;
+      if(location.hash==='#library'&&window.renderMeteorInkLibrary)window.renderMeteorInkLibrary();
+    }));
+    grid.querySelectorAll('[data-author-link],[data-genre-link]').forEach(link=>link.addEventListener('click',e=>e.stopPropagation()));
+    grid.querySelectorAll('[data-read-id]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const id=btn.dataset.readId;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
+    grid.querySelectorAll('.novel-showcase-card').forEach(card=>card.addEventListener('click',e=>{if(e.target.closest('button,a'))return;const id=card.dataset.id;if(!id)return;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
+  }
+
   function authorAvatarUrl(a){
     if(a?.picture)return a.picture;
     const initials=String(a?.name||a?.username||'A').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'A';
@@ -124,6 +145,7 @@
       document.getElementById('dynamicTrendingGridPagination')?.remove();return;
     }
     grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
+    bindNovelCardInteractions(grid);
     mountPager('dynamicTrendingGrid',total,pageState.trending,'trending',()=>renderTrending(period));
   }
   async function renderAuthors(period='7days'){
@@ -163,6 +185,7 @@
       document.getElementById('dynamicLatestGridPagination')?.remove();return;
     }
     grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
+    bindNovelCardInteractions(grid);
     mountPager('dynamicLatestGrid',total,pageState.latest,'latest',renderLatest);
   }
 
@@ -199,6 +222,7 @@
     grid.hidden=false;
     grid.style.display='';
     grid.innerHTML=items.map(n=>novelCard(n,n.views)).join('');
+    bindNovelCardInteractions(grid);
   }
 
   async function renderFanFic(sort='popular'){
@@ -215,7 +239,7 @@
     const per=4;const total=Math.max(1,Math.ceil(items.length/per));pageState.fanfic=Math.min(pageState.fanfic,total);
     const pageItems=items.slice((pageState.fanfic-1)*per,pageState.fanfic*per);
     if(!items.length){empty.hidden=false;grid.hidden=true;grid.innerHTML='';document.getElementById('fanficGridPagination')?.remove();return;}
-    empty.hidden=true;grid.hidden=false;grid.innerHTML=pageItems.map(n=>novelCard(n,n.views)).join('');mountPager('fanficGrid',total,pageState.fanfic,'fanfic',()=>renderFanFic(sort));
+    empty.hidden=true;grid.hidden=false;grid.innerHTML=pageItems.map(n=>novelCard(n,n.views)).join('');bindNovelCardInteractions(grid);mountPager('fanficGrid',total,pageState.fanfic,'fanfic',()=>renderFanFic(sort));
   }
 
   function bind(){
@@ -338,45 +362,34 @@ window.renderMeteorInkAuthors=function(){
 /* Embedded My Library view behavior. */
 window.renderMeteorInkLibrary=function(){
   const data=window.MeteorInkData;
+  const savedGrid=document.getElementById('librarySavedGrid');
+  const savedCount=document.getElementById('librarySavedCount');
   const grid=document.getElementById('libraryGrid');
   const count=document.getElementById('libraryCount');
   if(!grid||!data)return;
   const session=data.getSession?data.getSession():null;
   if(!session){
-    if(count) count.textContent='';
+    if(savedGrid)savedGrid.innerHTML='<div class="library-auth-gate"><div class="library-auth-actions"><a class="text-btn" href="auth.html">Log In</a><a class="gold-btn small" href="signup.html">Sign Up</a></div></div>';
     grid.innerHTML='<div class="library-auth-gate"><div class="library-auth-actions"><a class="text-btn" href="auth.html">Log In</a><a class="gold-btn small" href="signup.html">Sign Up</a></div></div>';
-    return;
+    if(savedCount)savedCount.textContent=''; if(count)count.textContent=''; return;
+  }
+  const novels=data.getCatalogNovels?data.getCatalogNovels():data.getNovels();
+  const byId=new Map((novels||[]).map(n=>[String(n.id),n]));
+  const bookmarks=(data.getBookmarks?data.getBookmarks():[]).map(String);
+  const saved=bookmarks.map(id=>byId.get(id)).filter(Boolean);
+  if(savedCount)savedCount.textContent=`${saved.length} ${saved.length===1?'novel':'novels'}`;
+  if(savedGrid){
+    savedGrid.innerHTML=saved.length?saved.map(n=>`<article class="library-card" data-id="${String(n.id).replace(/[^a-zA-Z0-9_-]/g,'')}"><div class="library-cover">${n.cover?`<img src="${String(n.cover).replace(/"/g,'&quot;')}" alt="">`:'✦'}</div><div class="library-body"><div class="library-meta">${String(n.genre||'NOVEL').replace(/[&<>"']/g,'')}</div><h3>${String(n.title||'Untitled Novel').replace(/[&<>"']/g,'')}</h3><p class="library-author">${String(n.authorName||'Unknown Author').replace(/[&<>"']/g,'')}</p><div class="library-stats"><span>Saved to My Library</span></div><button class="library-read-btn" type="button">Open Novel</button></div></article>`).join(''):'<div class="library-empty"><div class="library-empty-inner"><div class="star">✦</div><h3>No saved novels yet.</h3><p>Use the bookmark on any novel card to save a story here.</p></div></div>';
+    savedGrid.querySelectorAll('.library-card').forEach(card=>card.addEventListener('click',()=>{const id=card.dataset.id;if(id)location.href='novel.html?id='+encodeURIComponent(id)}));
   }
   let history=[];
   try{history=data.getReadingHistory?data.getReadingHistory():[]}catch(_e){history=[]}
   history=Array.isArray(history)?history.slice().sort((a,b)=>new Date(b.lastReadAt||0)-new Date(a.lastReadAt||0)):[];
-
-  const novels=data.getCatalogNovels?data.getCatalogNovels():data.getNovels();
-  const byId=new Map((novels||[]).map(n=>[String(n.id),n]));
   const items=history.map(h=>({h,n:byId.get(String(h.novelId))})).filter(x=>x.n);
-
   if(count) count.textContent=`${items.length} ${items.length===1?'story':'stories'}`;
   if(!items.length){
-    grid.innerHTML='<div class="library-empty"><div class="library-empty-inner"><div class="star">✦</div><h3>Your library is waiting.</h3><p>Open a novel and it will appear here automatically, ready for you to continue reading.</p></div></div>';
-    return;
+    grid.innerHTML='<div class="library-empty"><div class="library-empty-inner"><div class="star">✦</div><h3>Your reading history is waiting.</h3><p>Open a novel and it will appear here automatically, ready for you to continue reading.</p></div></div>'; return;
   }
-
-  grid.innerHTML=items.map(({h:nr,n})=>`<article class="library-card" data-id="${String(n.id).replace(/[^a-zA-Z0-9_-]/g,'')}">
-    <div class="library-cover">${n.cover?`<img src="${String(n.cover).replace(/"/g,'&quot;')}" alt="">`:'✦'}</div>
-    <div class="library-body">
-      <div class="library-meta">${String(n.genre||'NOVEL').replace(/[&<>"']/g,'')}</div>
-      <h3>${String(n.title||'Untitled Novel').replace(/[&<>"']/g,'')}</h3>
-      <p class="library-author">${String(n.authorName||'Unknown Author').replace(/[&<>"']/g,'')}</p>
-      <div class="library-stats"><span>Read ${Number(nr.count||1)} ${Number(nr.count||1)===1?'time':'times'}</span><span>${nr.lastReadAt?new Date(nr.lastReadAt).toLocaleDateString():''}</span></div>
-      <button class="library-read-btn" type="button">Continue Reading</button>
-    </div>
-  </article>`).join('');
-
-  grid.querySelectorAll('.library-card').forEach(card=>card.addEventListener('click',e=>{
-    const id=card.dataset.id;
-    if(!id)return;
-    data.recordView(id);
-    data.recordRead(id);
-    location.href='novel.html?id='+encodeURIComponent(id);
-  }));
+  grid.innerHTML=items.map(({h:nr,n})=>`<article class="library-card" data-id="${String(n.id).replace(/[^a-zA-Z0-9_-]/g,'')}"><div class="library-cover">${n.cover?`<img src="${String(n.cover).replace(/"/g,'&quot;')}" alt="">`:'✦'}</div><div class="library-body"><div class="library-meta">${String(n.genre||'NOVEL').replace(/[&<>"']/g,'')}</div><h3>${String(n.title||'Untitled Novel').replace(/[&<>"']/g,'')}</h3><p class="library-author">${String(n.authorName||'Unknown Author').replace(/[&<>"']/g,'')}</p><div class="library-stats"><span>Read ${Number(nr.count||1)} ${Number(nr.count||1)===1?'time':'times'}</span><span>${nr.lastReadAt?new Date(nr.lastReadAt).toLocaleDateString():''}</span></div><button class="library-read-btn" type="button">Continue Reading</button></div></article>`).join('');
+  grid.querySelectorAll('.library-card').forEach(card=>card.addEventListener('click',()=>{const id=card.dataset.id;if(!id)return;data.recordView(id);data.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
 };

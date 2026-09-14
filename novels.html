@@ -110,7 +110,7 @@
     (()=>{
       const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const grid=document.getElementById('novelGrid'), search=document.getElementById('novelSearch'), genre=document.getElementById('genreFilter'), result=document.getElementById('novelResultText'), genreOpenBtn=document.getElementById('genreOpenBtn');
-      let sort='latest'; let currentPage=1; const novelsPerPage=16;
+      let sort='latest'; let currentPage=1; const novelsPerPage=16; const initialGenre=new URLSearchParams(location.search).get('genre');
       const primaryGenres=[
         'Fantasy','Science Fiction','Mystery','Thriller','Horror','Romance','Crime','Historical','Literary Fiction','Adventure','Action','Drama',
         'Young Adult',"Children's Fiction",'Comedy','Western','Supernatural / Paranormal','Spiritual / Religious','Military / War',
@@ -118,6 +118,7 @@
         'School / Academy','Webnovel-Specific / Modern Digital Genres','Mythology / Folklore','Other / Hybrid'
       ];
       primaryGenres.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;genre.appendChild(o)});
+      if(initialGenre){const option=[...genre.options].find(o=>o.value.toLowerCase()===String(initialGenre).trim().toLowerCase());if(option)genre.value=option.value;}
 
       const genrePanel=document.createElement('div');
       genrePanel.className='genre-panel-backdrop';
@@ -141,7 +142,7 @@
         const q=search.value.trim().toLowerCase(), g=genre.value;
         let items=(await getServerNovels()).slice().filter(n=>{
           const matchesQ=!q||[n.title,n.authorName,n.genre,n.description].filter(Boolean).some(v=>String(v).toLowerCase().includes(q));
-          const matchesG=g==='all'||String(n.genre||'')===g;
+          const novelGenres=Array.isArray(n.genres)&&n.genres.length?n.genres:String(n.genre||'').split(',').map(v=>v.trim()).filter(Boolean); const matchesG=g==='all'||novelGenres.some(v=>String(v).toLowerCase()===String(g).toLowerCase());
           return matchesQ&&matchesG;
         });
         const novelTimestamp=n=>{const raw=n?.publishedAt||n?.uploadedAt||n?.createdAt||0;const t=Date.parse(raw);return Number.isFinite(t)?t:0;};
@@ -158,13 +159,15 @@
           const genres=Array.isArray(n.genres)&&n.genres.length?n.genres:String(n.genre||'NOVEL').split(',').map(x=>x.trim()).filter(Boolean);
           const visible=genres.slice(0,3),more=Math.max(0,genres.length-visible.length);
           return `<article class="novel-showcase-card" data-id="${esc(n.id)}">
-            <div class="novel-showcase-cover">${n.cover?`<img src="${esc(n.cover)}" alt="${esc(n.title||'Novel cover')}">`:'✦'}<span class="novel-showcase-badge">${esc(n.genre||'NOVEL')}</span></div>
-            <div class="novel-showcase-body"><h3 class="novel-showcase-title">${esc(n.title||'Untitled Novel')}</h3><p class="novel-showcase-author">${esc(n.authorName||'Unknown Author')}${n.authorVerified|| (MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName))?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</p><p class="novel-showcase-desc">${esc(n.description||'A new story awaits.')}</p><div class="novel-showcase-tags">${visible.map(g=>`<span class="novel-showcase-tag">${esc(g)}</span>`).join('')}${more?`<span class="novel-showcase-tag more">+${more}</span>`:''}</div><div class="novel-showcase-stats"><div class="novel-showcase-stat"><strong>${Number(n.chapters||0).toLocaleString()}</strong><span>Chapters</span></div><div class="novel-showcase-stat"><strong>${Number(n.views||0).toLocaleString()}</strong><span>Views</span></div><div class="novel-showcase-stat"><strong>${Number(n.rating||0).toFixed(1)}</strong><span>Rating</span></div></div><button class="novel-showcase-read" type="button" data-read-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H19v18H7.5A2.5 2.5 0 0 0 5 22V4.5Zm0 0V19a2.5 2.5 0 0 1 2.5-2.5H19"></path></svg>Read Now</button></div>
+            <div class="novel-showcase-cover">${n.cover?`<img src="${esc(n.cover)}" alt="${esc(n.title||'Novel cover')}">`:'✦'}<span class="novel-showcase-badge">${esc(n.genre||'NOVEL')}</span><button class="novel-showcase-bookmark${(MeteorInkData.getBookmarks?MeteorInkData.getBookmarks():[]).map(String).includes(String(n.id))?' active':''}" type="button" data-bookmark-id="${esc(n.id)}" aria-label="${(MeteorInkData.getBookmarks?MeteorInkData.getBookmarks():[]).map(String).includes(String(n.id))?'Remove from':'Add to'} My Library" aria-pressed="${(MeteorInkData.getBookmarks?MeteorInkData.getBookmarks():[]).map(String).includes(String(n.id))?'true':'false'}" title="${(MeteorInkData.getBookmarks?MeteorInkData.getBookmarks():[]).map(String).includes(String(n.id))?'Remove from My Library':'Add to My Library'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5V21l-5.5-3.6L6.5 21V4.5Z"></path></svg></button></div>
+            <div class="novel-showcase-body"><h3 class="novel-showcase-title">${esc(n.title||'Untitled Novel')}</h3><a class="novel-showcase-author" href="author-profile.html?id=${encodeURIComponent(n.authorId||'')}" data-author-link>${esc(n.authorName||'Unknown Author')}${n.authorVerified|| (MeteorInkData.isAuthorVerified&&MeteorInkData.isAuthorVerified(n.authorId,n.authorName))?`<img class="novel-showcase-verified" src="${MeteorInkData.verificationBadgeAsset(n.authorId,n.authorName)}" alt="Verified Author" title="Verified Author">`:''}</a><div class="novel-showcase-tags">${visible.map(g=>`<a class="novel-showcase-tag" href="novels.html?genre=${encodeURIComponent(g)}" data-genre-link>${esc(g)}</a>`).join('')}${more?`<span class="novel-showcase-tag more">+${more}</span>`:''}</div><div class="novel-showcase-stats"><div class="novel-showcase-stat"><strong>${Number(n.chapters||0).toLocaleString()}</strong><span>Chapters</span></div><div class="novel-showcase-stat"><strong>${Number(n.views||0).toLocaleString()}</strong><span>Views</span></div><div class="novel-showcase-stat"><strong>${Number(n.rating||0).toFixed(1)}</strong><span>Rating</span></div></div><button class="novel-showcase-read" type="button" data-read-id="${esc(n.id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H19v18H7.5A2.5 2.5 0 0 0 5 22V4.5Zm0 0V19a2.5 2.5 0 0 1 2.5-2.5H19"></path></svg>Read Now</button></div>
           </article>`;
         };
         grid.innerHTML=pageItems.map(novelCard).join('');
+        grid.querySelectorAll('[data-bookmark-id]').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=btn.dataset.bookmarkId,active=btn.classList.contains('active');const result=active?MeteorInkData.removeBookmark(id):MeteorInkData.addBookmark(id);if(result?.reason==='limit'){alert(`My Library can hold up to ${result.limit} saved novels.`);return;}btn.classList.toggle('active',!active);btn.setAttribute('aria-pressed',String(!active));btn.setAttribute('aria-label',`${!active?'Remove from':'Add to'} My Library`);btn.title=`${!active?'Remove from':'Add to'} My Library`; }));
+        grid.querySelectorAll('[data-author-link],[data-genre-link]').forEach(link=>link.addEventListener('click',e=>e.stopPropagation()));
         grid.querySelectorAll('[data-read-id]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const id=btn.dataset.readId;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
-        grid.querySelectorAll('.novel-showcase-card').forEach(card=>card.addEventListener('click',e=>{if(e.target.closest('button'))return;const id=card.dataset.id;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
+        grid.querySelectorAll('.novel-showcase-card').forEach(card=>card.addEventListener('click',e=>{if(e.target.closest('button,a'))return;const id=card.dataset.id;MeteorInkData.recordView(id);MeteorInkData.recordRead(id);location.href='novel.html?id='+encodeURIComponent(id)}));
         if(pagination){
           const maxButtons=7, half=Math.floor(maxButtons/2);
           let first=Math.max(1,currentPage-half), last=Math.min(totalPages,first+maxButtons-1); first=Math.max(1,last-maxButtons+1);
