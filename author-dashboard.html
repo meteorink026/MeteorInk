@@ -339,9 +339,9 @@
     .novel-edit-btn,.novel-cancel-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(231,170,49,.45);background:rgba(231,170,49,.05);color:#e8b43e;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
     .novel-edit-btn:hover,.novel-cancel-btn:hover{background:rgba(231,170,49,.12);border-color:#e8b43e}
     .novel-cancel-btn{background:transparent;color:#9ca8ba;border-color:rgba(255,255,255,.12)}
-    .novel-delete-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(220,80,80,.55);background:rgba(220,80,80,.06);color:#ef8585;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
-    .novel-delete-btn:hover{background:rgba(220,80,80,.14);border-color:#ef8585;color:#ff9a9a}
-    .editing-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .novel-delete-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid rgba(220,82,82,.45);background:rgba(220,82,82,.06);color:#ef8b8b;font:700 12px/1 "DM Sans",sans-serif;cursor:pointer}
+    .novel-delete-btn:hover{background:rgba(220,82,82,.12);border-color:#e56d6d;color:#ffabab}
+    .novel-delete-btn:disabled{opacity:.55;cursor:not-allowed}
     .novel-cancel-btn:hover{color:#eef2f7;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.04)}
     .editing-banner{display:none;margin:-8px 0 18px;padding:10px 12px;border:1px solid rgba(231,170,49,.25);border-radius:9px;background:rgba(231,170,49,.06);color:#d8c28a;font-size:11px}
     .editing-banner.visible{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -486,7 +486,7 @@
           <p>Give your story a title, choose its genre, add a description, and publish it to MeteorInk.</p>
         </div>
 
-        <div id="editingBanner" class="editing-banner" role="status"><span>Editing <strong id="editingNovelName">this novel</strong></span><div class="editing-actions"><button type="button" id="deleteNovelButton" class="novel-delete-btn">Delete Novel</button><button type="button" id="cancelEditButton" class="novel-cancel-btn">Cancel Edit</button></div></div>
+        <div id="editingBanner" class="editing-banner" role="status"><span>Editing <strong id="editingNovelName">this novel</strong></span><span style="display:flex;align-items:center;gap:8px"><button type="button" id="deleteNovelButton" class="novel-delete-btn">Delete Novel</button><button type="button" id="cancelEditButton" class="novel-cancel-btn">Cancel Edit</button></span></div>
 
         <form id="publishNovelForm" class="publish-form">
           <div class="form-field">
@@ -688,6 +688,8 @@
           clearNovelCover();
         }
         editingNovelName.textContent=novel.title||'this novel';
+        deleteNovelButton.disabled=false;
+        deleteNovelButton.textContent='Delete Novel';
         editingBanner.classList.add('visible');
         publishPanelTitle.textContent='Edit Novel';
         publishSubmitButton.textContent='Save Changes';
@@ -696,6 +698,8 @@
 
       const cancelNovelEdit=()=>{
         editingNovelId=null;
+        deleteNovelButton.disabled=false;
+        deleteNovelButton.textContent='Delete Novel';
         editingBanner.classList.remove('visible');
         publishPanelTitle.textContent='Publish a Novel';
         publishSubmitButton.textContent='Publish Novel';
@@ -713,54 +717,54 @@
         beginNovelEdit(novel);
       });
 
-      cancelEditButton.addEventListener('click',cancelNovelEdit);
-
       deleteNovelButton.addEventListener('click',async()=>{
-        if(!editingNovelId) return;
-        const novel=serverNovels.find(n=>String(n.id)===String(editingNovelId));
-        const title=novel?.title || editingNovelName.textContent || 'this novel';
-        const confirmed=window.confirm(`Delete “${title}”?\n\nThis permanently removes the novel from MeteorInk. Its chapters and other records linked with the novel may also be removed. This action cannot be undone.`);
-        if(!confirmed) return;
+        if(!editingNovelId)return;
+        const novelId=String(editingNovelId);
+        const novel=serverNovels.find(n=>String(n.id)===novelId);
+        const title=novel?.title||editingNovelName.textContent||'this novel';
+        const confirmed=window.confirm(`Delete “${title}”?\n\nThis permanently removes the novel and its chapters. This action cannot be undone.`);
+        if(!confirmed)return;
 
-        const originalText=deleteNovelButton.textContent;
         deleteNovelButton.disabled=true;
-        cancelEditButton.disabled=true;
-        publishSubmitButton.disabled=true;
         deleteNovelButton.textContent='Deleting…';
         document.getElementById('publishStatus').textContent='Deleting novel…';
-
         try{
-          const r=await fetch(`/api/novels/${encodeURIComponent(editingNovelId)}`,{
+          const r=await fetch(`/api/novels/${encodeURIComponent(novelId)}`,{
             method:'DELETE',
             credentials:'same-origin',
-            headers:{'Accept':'application/json'},
+            headers:{Accept:'application/json'},
             cache:'no-store'
           });
           const d=await r.json().catch(()=>({}));
-          if(!r.ok) throw new Error(d.error||`Unable to delete novel (${r.status}).`);
+          if(!r.ok)throw new Error(d.error||d.detail||`Unable to delete novel (${r.status}).`);
 
-          const deletedId=String(editingNovelId);
-          serverNovels=serverNovels.filter(n=>String(n.id)!==deletedId);
+          serverNovels=serverNovels.filter(n=>String(n.id)!==novelId);
+          // Remove the legacy local copy too, otherwise the dashboard's compatibility
+          // bridge could recreate a successfully deleted novel on the next refresh.
+          try{
+            const key=MeteorInkData.KEYS?.NOVELS||'meteorink_novels';
+            const local=MeteorInkData.getNovels().filter(n=>String(n.id)!==novelId);
+            localStorage.setItem(key,JSON.stringify(local));
+          }catch(localErr){ console.warn('[MeteorInk] Could not clean local novel copy:',localErr); }
+
           editingNovelId=null;
-          editingBanner.classList.remove('visible');
-          publishPanelTitle.textContent='Publish a Novel';
-          publishSubmitButton.textContent='Publish Novel';
           document.getElementById('publishNovelForm').reset();
           selectedGenres.length=0;
           updateGenrePicker();
           clearNovelCover();
+          editingBanner.classList.remove('visible');
+          publishPanelTitle.textContent='Publish a Novel';
+          publishSubmitButton.textContent='Publish Novel';
           document.getElementById('publishStatus').textContent='Novel deleted successfully.';
           render();
-          window.scrollTo({top:0,behavior:'smooth'});
         }catch(err){
-          document.getElementById('publishStatus').textContent=err.message||'Unable to delete novel.';
-        }finally{
           deleteNovelButton.disabled=false;
-          cancelEditButton.disabled=false;
-          publishSubmitButton.disabled=false;
-          deleteNovelButton.textContent=originalText;
+          deleteNovelButton.textContent='Delete Novel';
+          document.getElementById('publishStatus').textContent=err.message||'Unable to delete novel.';
         }
       });
+
+      cancelEditButton.addEventListener('click',cancelNovelEdit);
 
       const coverFileInput=document.getElementById('novelCoverFile');
       const coverField=document.getElementById('novelCover');
